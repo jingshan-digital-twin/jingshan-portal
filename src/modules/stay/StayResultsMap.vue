@@ -43,14 +43,20 @@ function redrawMarkers() {
 
   for (const { hotel, room } of props.listings) {
     const popupContent = document.createElement('div')
+    const pinContent = document.createElement('span')
+    const hotelIcon = document.createElement('span')
+    hotelIcon.className = 'stay-hotel-icon'
+    hotelIcon.setAttribute('aria-hidden', 'true')
+    hotelIcon.textContent = '🏨'
     const label = document.createElement('span')
     label.textContent = `¥${room.eventPrice}`
+    pinContent.append(hotelIcon, label)
     const marker = L.marker([hotel.lat, hotel.lng], {
       icon: L.divIcon({
         className: 'stay-price-pin',
-        html: label,
-        iconSize: [60, 32],
-        iconAnchor: [30, 36],
+        html: pinContent,
+        iconSize: [76, 32],
+        iconAnchor: [38, 36],
         popupAnchor: [0, -34],
       }),
       title: `${hotel.name}，${room.eventPrice} 元起`,
@@ -174,6 +180,15 @@ onUnmounted(() => map?.remove())
   font-weight: 800;
   box-shadow: var(--shadow-md);
 }
+
+.stay-map-area :deep(.stay-price-pin > span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.stay-map-area :deep(.stay-hotel-icon) { line-height: 1; }
 
 .stay-map-area :deep(.stay-price-pin::after) {
   content: '';

@@ -31,21 +31,23 @@ function toggleSeat(seatId: string) {
   else selectedSeats.value.push(seatId)
 }
 
-function confirmCinemaOrder() {
+async function confirmCinemaOrder() {
   if (!selectedSeats.value.length) {
     showToast('请先在下方座位图点击选择至少 1 个空座位')
     return
   }
   const total = showtime.value.memberPrice * selectedSeats.value.length
-  createQuickOrder(
+  const booked = await createQuickOrder(
     '门票',
     `京山国际影城 · 《${movie.value.title}》(${selectedSeats.value.length}张)`,
     `今日 ${showtime.value.time} ${showtime.value.hall} · 座位：${selectedSeats.value.join('、')}`,
     total,
     30,
   )
-  state.showCinemaModal = false
-  selectedSeats.value = []
+  if (booked) {
+    state.showCinemaModal = false
+    selectedSeats.value = []
+  }
 }
 </script>
 

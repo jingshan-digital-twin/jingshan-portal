@@ -35,6 +35,7 @@ const props = defineProps<{
   customAmenities?: AmenityMapPoint[]
   parkingLocations?: { id: string; name: string; address: string; lat: number; lng: number; remain: number; total: number; isCharger?: boolean }[]
   selectedLocationId?: string
+  trafficPreviewCenter?: [number, number]
 }>()
 
 const emit = defineEmits<{
@@ -104,7 +105,7 @@ const VENUE_POIS: Record<string, MapPoi[]> = {
 }
 
 const activeCenter = computed<[number, number]>(() =>
-  props.selectedVenue ? [props.selectedVenue.lat, props.selectedVenue.lng] : DEFAULT_CENTER,
+  props.trafficPreviewCenter ?? (props.selectedVenue ? [props.selectedVenue.lat, props.selectedVenue.lng] : DEFAULT_CENTER),
 )
 
 const activePois = computed(() => {
@@ -280,34 +281,36 @@ function renderOverlays(animatePan = false) {
   const center = activeCenter.value
 
   if (props.mode === 'traffic') {
-    L.marker(DEFAULT_CENTER, { icon: makeSimpleIcon('🎾 京山国际网球中心', '#0B251D', '#C4F63D', '#C4F63D') })
-      .bindPopup(popupHtml('京山国际网球中心', '9片标准硬地/红土+中心赛场 · 07:00-22:00', DEFAULT_CENTER[0], DEFAULT_CENTER[1]))
-      .addTo(overlayGroup)
+    if (!props.trafficPreviewCenter) {
+      L.marker(DEFAULT_CENTER, { icon: makeSimpleIcon('🎾 京山国际网球中心', '#0B251D', '#C4F63D', '#C4F63D') })
+        .bindPopup(popupHtml('京山国际网球中心', '9片标准硬地/红土+中心赛场 · 07:00-22:00', DEFAULT_CENTER[0], DEFAULT_CENTER[1]))
+        .addTo(overlayGroup)
 
-    L.polyline(
-      [
-        [31.0234, 113.1142],
-        [31.0228, 113.1195],
-        [31.0222, 113.1258],
-      ],
-      { color: '#DF2E38', weight: 7, opacity: 0.92 },
-    )
-      .bindPopup('<strong>⛔ 温泉大道国际网球中心段</strong><br/>中青赛期间 07:30-19:00 临时封闭，社会车辆请绕行京山大道。')
-      .addTo(overlayGroup)
+      L.polyline(
+        [
+          [31.0234, 113.1142],
+          [31.0228, 113.1195],
+          [31.0222, 113.1258],
+        ],
+        { color: '#DF2E38', weight: 7, opacity: 0.92 },
+      )
+        .bindPopup('<strong>⛔ 温泉大道国际网球中心段</strong><br/>中青赛期间 07:30-19:00 临时封闭，社会车辆请绕行京山大道。')
+        .addTo(overlayGroup)
 
-    L.polyline(
-      [
-        [31.0285, 113.1186],
-        [31.0218, 113.1189],
-        [31.0155, 113.1191],
-      ],
-      { color: '#F07C19', weight: 6, dashArray: '10 7', opacity: 0.9 },
-    )
-      .bindPopup('<strong>⚠️ 京山大道东段</strong><br/>赛事缓冲限行禁停，推荐驶入P1/P2停车场。')
-      .addTo(overlayGroup)
+      L.polyline(
+        [
+          [31.0285, 113.1186],
+          [31.0218, 113.1189],
+          [31.0155, 113.1191],
+        ],
+        { color: '#F07C19', weight: 6, dashArray: '10 7', opacity: 0.9 },
+      )
+        .bindPopup('<strong>⚠️ 京山大道东段</strong><br/>赛事缓冲限行禁停，推荐驶入P1/P2停车场。')
+        .addTo(overlayGroup)
 
-    L.marker([31.0242, 113.1202], { icon: makeSimpleIcon('⛔ 温泉大道段 临时封闭', '#DF2E38') }).addTo(overlayGroup)
-    L.marker([31.0268, 113.1172], { icon: makeSimpleIcon('⚠️ 京山大道 限行禁停', '#E87112') }).addTo(overlayGroup)
+      L.marker([31.0242, 113.1202], { icon: makeSimpleIcon('⛔ 温泉大道段 临时封闭', '#DF2E38') }).addTo(overlayGroup)
+      L.marker([31.0268, 113.1172], { icon: makeSimpleIcon('⚠️ 京山大道 限行禁停', '#E87112') }).addTo(overlayGroup)
+    }
 
     for (const location of props.parkingLocations ?? []) {
       const availability = `${location.isCharger ? '闲' : '剩'}${location.remain}/${location.total}`
@@ -433,6 +436,11 @@ onMounted(() => {
 })
 
 watch(baseType, (val) => setBasemap(val))
+watch(() => props.trafficPreviewCenter, () => {
+  if (props.mode !== 'traffic') return
+  map?.panTo(activeCenter.value, { animate: false })
+  renderOverlays()
+})
 watch(
   () => [props.venues, props.selectedVenue?.id, props.mode, props.radius, props.poiCategory, props.customAmenities, props.parkingLocations] as const,
   ([venues, venueId], [previousVenues, previousVenueId]) => {

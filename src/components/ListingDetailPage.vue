@@ -130,6 +130,18 @@ function submitHotelBooking(targetRoom?: NonNullable<typeof hotel.value>['rooms'
     `${periodDesc} · ${rm.breakfast} · 票根专享价`,
     total,
     60 * roomCount.value,
+    0,
+    {
+      fields: [
+        { label: '房型', value: rm.name },
+        { label: isLong ? '起租日期' : '入住日期', value: inLabel },
+        ...(isLong
+          ? [{ label: '租赁周期', value: rm.leaseUnit === '/月' ? '1 个月' : '1 周' }]
+          : [{ label: '退房日期', value: outLabel }, { label: '住宿晚数', value: `${hotelNights.value} 晚` }]),
+        { label: '房间数量', value: `${roomCount.value} ${isLong ? '套' : '间'}` },
+        { label: '房型权益', value: rm.breakfast },
+      ],
+    },
   )
 }
 
@@ -215,7 +227,7 @@ async function submitVenueBooking() {
     scrollToSection('dp-options')
     return
   }
-  await confirmCourtBooking({
+  const booked = await confirmCourtBooking({
     venueId: venue.value.id,
     date: venueDate.value,
     selectedSlots: venueSlotDetails.value,
@@ -223,7 +235,7 @@ async function submitVenueBooking() {
     bookCharger: venueBookCharger.value,
     usePoints: venueUsePoints.value,
   })
-  venueCells.value = []
+  if (booked) venueCells.value = []
 }
 
 // 4. Cinema state
@@ -242,21 +254,27 @@ function toggleCinemaSeat(seatId: string) {
   else if (cinemaSeats.value.length >= 4) showToast('单次最多选择 4 个座位')
   else cinemaSeats.value.push(seatId)
 }
-function submitCinemaOrder() {
+async function submitCinemaOrder() {
   if (!cinemaSeats.value.length) {
     showToast('请先在左侧座位图选择至少 1 个空座位')
     scrollToSection('dp-options')
     return
   }
   const total = cinemaShowtime.value.memberPrice * cinemaSeats.value.length
-  createQuickOrder(
+  const booked = await createQuickOrder(
     '门票',
     `京山国际影城 · 《${cinemaMovie.value.title}》(${cinemaSeats.value.length}张)`,
     `今日 ${cinemaShowtime.value.time} ${cinemaShowtime.value.hall} · 座位：${cinemaSeats.value.join('、')}`,
     total,
     30,
+    0,
+    { fields: [
+      { label: '场次', value: `今日 ${cinemaShowtime.value.time} · ${cinemaShowtime.value.hall}` },
+      { label: '座位', value: cinemaSeats.value.join('、') },
+      { label: '票数', value: `${cinemaSeats.value.length} 张` },
+    ] },
   )
-  cinemaSeats.value = []
+  if (booked) cinemaSeats.value = []
 }
 
 // 5. Place generic reservation state
@@ -315,6 +333,13 @@ function submitPlaceBooking() {
       `${dLabel} ${placeSlot.value} · ${placeQty.value}人桌 · 凭电子票根 ${state.ticketStubCode} 享优惠`,
       0,
       60,
+      0,
+      { fields: [
+        { label: '用餐日期', value: dLabel },
+        { label: '用餐时段', value: placeSlot.value },
+        { label: '桌型', value: `${placeQty.value} 人桌` },
+        { label: '电子票根', value: state.ticketStubCode },
+      ] },
     )
     return
   }
@@ -325,6 +350,12 @@ function submitPlaceBooking() {
     `${dLabel} ${placeSlot.value} · 官方平台预订保障`,
     unit * placeQty.value,
     unit > 0 ? 80 : 30,
+    0,
+    { fields: [
+      { label: '预约日期', value: dLabel },
+      { label: '预约时段', value: placeSlot.value },
+      { label: '预约数量', value: `${placeQty.value} 份` },
+    ] },
   )
 }
 

@@ -24,7 +24,7 @@ function close() {
   state.activeHotelId = null
 }
 
-function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) {
+async function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) {
   if (!hotel.value) return
   const isLongTerm = room.leaseUnit === '/月' || room.leaseUnit === '/周'
   const total = isLongTerm ? room.eventPrice * roomCount.value : room.eventPrice * nights.value * roomCount.value
@@ -33,14 +33,14 @@ function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) {
   const periodDesc = isLongTerm
     ? `${inLabel}起租 · ${roomCount.value}套`
     : `${inLabel}入住 - ${outLabel}离店（共${nights.value}晚 × ${roomCount.value}间）`
-  createQuickOrder(
+  const booked = await createQuickOrder(
     '住宿',
     `${hotel.value.name} · ${room.name}`,
     `${periodDesc} · ${room.breakfast} · 票根专享价`,
     total,
     60 * roomCount.value,
   )
-  close()
+  if (booked) close()
 }
 </script>
 

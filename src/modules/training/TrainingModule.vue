@@ -11,6 +11,7 @@ import {
   type TennisClub,
   type YouthTournament,
 } from '../../mock/trainingData'
+import { requestReservation } from '../../store/reservationFlow'
 import { usePortalStore } from '../../store/usePortalStore'
 import type { GroupClassItem, PrivateCoach } from '../../types/portal'
 
@@ -18,7 +19,6 @@ const {
   state,
   switchModule,
   openPhoto,
-  openOrderSuccess,
   openNavigation,
   runUpgradeTest,
   showToast,
@@ -132,28 +132,30 @@ function submitSchoolInquiry() {
     showToast('请填写学员姓名和家长联系电话，方便省网校招生老师联系您')
     return
   }
-  const code = `HBTW-${Date.now().toString().slice(-4)}`
-  const student = schoolForm.studentName.trim()
-  const track = schoolForm.track
-  const visitDate = schoolForm.visitDate
-  const level = schoolForm.level
-  schoolInquiryHistory.value.unshift({
-    id: code,
-    track,
-    studentName: student,
-    visitDate,
+  const application = { ...schoolForm, studentName: schoolForm.studentName.trim(), phone: schoolForm.phone.trim() }
+  return requestReservation({
+    title: '湖北省网球学校招生咨询',
+    fields: [
+      { label: '咨询项目', value: application.track },
+      { label: '学员姓名', value: application.studentName },
+      { label: '年龄', value: application.age },
+      { label: '网球基础', value: application.level },
+      { label: '到访日期', value: application.visitDate },
+      { label: '联系电话', value: application.phone },
+    ],
+    successTitle: '咨询申请已提交',
+    successMessage: '请留意联系电话，等候招生办确认探校与试训安排。',
+  }, () => {
+    const code = `HBTW-${Date.now().toString().slice(-4)}`
+    schoolInquiryHistory.value.unshift({
+      id: code,
+      track: application.track,
+      studentName: application.studentName,
+      visitDate: application.visitDate,
+    })
+    schoolForm.studentName = ''
+    schoolForm.phone = ''
   })
-  openOrderSuccess({
-    headline: '咨询提交成功',
-    orderId: code,
-    category: '省网校招生',
-    title: `湖北省网球学校 · ${track}`,
-    subtitle: `学员 ${student}（${level}） · 意向探校 ${visitDate}`,
-    amount: 0,
-    note: '省网校招生办将在 2 小时内致电确认探校与试训安排',
-  })
-  schoolForm.studentName = ''
-  schoolForm.phone = ''
 }
 
 // ===== 5. 青少年网球比赛 =====

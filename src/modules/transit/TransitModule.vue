@@ -91,6 +91,10 @@ const ROAD_CLOSURES: RoadClosureItem[] = [
 ]
 
 const currentClosures = computed(() => ROAD_CLOSURES.filter((c) => c.stage === matchStage.value))
+const trafficPreviewCenter = computed<[number, number] | undefined>(() => {
+  const detour = matchStage.value === 'upcoming' ? currentClosures.value[0] : undefined
+  return detour ? [detour.lat, detour.lng] : undefined
+})
 
 // 1. 停车场与充电桩预约时段
 const parkDate = ref(BOOKING_DATES[0]!.shortDate)
@@ -123,6 +127,7 @@ const shownLots = computed(() => showTrafficMap.value && selectedLotId.value
 watch(visibleLots, (lots) => {
   if (!lots.some((lot) => lot.id === selectedLotId.value)) selectedLotId.value = undefined
 })
+watch(matchStage, () => { selectedLotId.value = undefined })
 
 function selectLot(id: string) {
   if (selectedLotId.value === id) trafficMap.value?.openSelectedLocation()
@@ -310,6 +315,16 @@ function bookDriver(drv: RecommendedDriver) {
     `${parkDate.value} · 车牌 ${drv.plate} · ${drv.priceLabel}`,
     0,
     30,
+    0,
+    {
+      fields: [
+        { label: '出行日期', value: parkDate.value },
+        { label: '车辆号牌', value: drv.plate },
+        { label: '参考车费', value: drv.priceLabel },
+      ],
+      successTitle: '约车申请已提交',
+      successMessage: '请留意来电，等候司机确认上车点。',
+    },
   )
 }
 </script>
@@ -390,9 +405,8 @@ function bookDriver(drv: RecommendedDriver) {
       <!-- 左侧：赛前/赛中保障一张图 + 封闭限行路段清单 -->
       <div class="card" style="display: flex; flex-direction: column">
         <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 13px 18px; gap: 10px; flex-wrap: wrap">
-          <strong style="font-size: 17.5px">🗺️ 赛期封闭限行与周边保障一张图</strong>
+          <strong style="font-size: 17.5px">{{ matchStage === 'live' ? '🗺️ 赛期封闭限行与周边保障一张图' : '🗺️ 赛前周边停车与充电' }}</strong>
           <div class="flex-row">
-            <span class="tag green">实时绕行封闭段</span>
             <MapViewToggle v-model="showTrafficMap" />
           </div>
         </div>
@@ -408,6 +422,7 @@ function bookDriver(drv: RecommendedDriver) {
             <ServiceCircleMap
               ref="trafficMap"
               mode="traffic"
+              :traffic-preview-center="trafficPreviewCenter"
               :parking-locations="parkingLocations"
               :selected-location-id="selectedLotId"
               @select-location="selectedLotId = $event"

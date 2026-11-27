@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
+import { requestReservation } from '../store/reservationFlow'
 import { usePortalStore } from '../store/usePortalStore'
 
 const { state, showToast, createQuickOrder } = usePortalStore()
@@ -45,15 +46,36 @@ function close() {
   state.actionModal = null
 }
 
-function submitInquiryForm() {
-  if (!inquiryName.value.trim() || !inquiryPhone.value.trim()) {
+async function submitInquiryForm() {
+  const name = inquiryName.value.trim()
+  const phone = inquiryPhone.value.trim()
+  if (!name || !phone) {
     showToast('请填写联系人姓名与手机号')
     return
   }
-  const title = state.actionModal?.type === 'inquiry' ? state.actionModal.title : '在线咨询'
-  showToast(`「${title}」已提交成功！专属服务专员将在15分钟内联系 ${inquiryPhone.value}`)
-  inquiryNote.value = ''
-  close()
+  const inquiry = state.actionModal
+  if (inquiry?.type !== 'inquiry') return
+  const count = inquiryCount.value.trim()
+  const note = inquiryNote.value.trim()
+  const sent = await requestReservation({
+    title: inquiry.title,
+    fields: [
+      { label: '联系人', value: name },
+      { label: '联系电话', value: phone },
+      ...(count ? [{ label: '预计人数', value: count }] : []),
+      ...(note ? [{ label: '补充需求', value: note }] : []),
+    ],
+    successTitle: '预约申请已提交',
+    successMessage: '请留意联系人电话，等候服务专员确认。',
+  }, () => { inquiryNote.value = '' })
+  if (sent && state.actionModal === inquiry) close()
+}
+
+async function reserveRestaurant() {
+  const menu = state.actionModal
+  if (menu?.type !== 'menu') return
+  const booked = await createQuickOrder('门票', `${menu.shopName} · 订座核销`, `已绑定电子票根 ${state.ticketStubCode}`, 0, 60)
+  if (booked && state.actionModal === menu) close()
 }
 
 function redeemStubAtMerchant() {
@@ -164,10 +186,7 @@ function redeemStubAtMerchant() {
           <span style="font-size: 13.5px; color: var(--ink-2)">到店出示电子票根即享票根价结算</span>
           <button
             class="btn-orange"
-            @click="
-              createQuickOrder('门票', `${state.actionModal.shopName} · 订座核销`, `已绑定电子票根 ${state.ticketStubCode}`, 0, 60);
-              close()
-            "
+            @click="reserveRestaurant"
           >
             免费预约餐位
           </button>
