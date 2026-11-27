@@ -9,7 +9,8 @@ const { openProductDetail, openPhoto, openActionModal, openNavigation } = usePor
 // 主分区切换：特色商品购买 / 纪念品店铺
 const shopView = ref<'goods' | 'stores'>('goods')
 
-const PAGE_SIZE = 4
+const GOODS_PAGE_SIZE = 10
+const STORE_PAGE_SIZE = 4
 
 // ===== 一、特色商品购买搜索与下拉筛选 =====
 const shopKeyword = ref('')
@@ -49,8 +50,8 @@ const visibleProducts = computed(() => {
 })
 
 const pagedProducts = computed(() => {
-  const start = (shopPage.value - 1) * PAGE_SIZE
-  return visibleProducts.value.slice(start, start + PAGE_SIZE)
+  const start = (shopPage.value - 1) * GOODS_PAGE_SIZE
+  return visibleProducts.value.slice(start, start + GOODS_PAGE_SIZE)
 })
 
 watch(visibleProducts, () => {
@@ -221,8 +222,8 @@ const visibleStores = computed(() => {
 })
 
 const pagedStores = computed(() => {
-  const start = (storePage.value - 1) * PAGE_SIZE
-  return visibleStores.value.slice(start, start + PAGE_SIZE)
+  const start = (storePage.value - 1) * STORE_PAGE_SIZE
+  return visibleStores.value.slice(start, start + STORE_PAGE_SIZE)
 })
 
 function resetStoreFilters() {
@@ -294,20 +295,20 @@ watch(visibleStores, () => {
 
     <!-- ===== 一、特色商品购买 ===== -->
     <template v-if="shopView === 'goods'">
-      <div class="card card-pad filter-workbench">
-        <div class="dd-filter-top">
-          <div class="search-bar" style="flex: 1; min-width: 240px; max-width: 420px; height: 42px; border-radius: 6px">
+      <div class="card filter-workbench shop-filter-compact">
+        <div class="dd-filter-top" style="margin-bottom: 8px">
+          <div class="search-bar" style="flex: 1; min-width: 240px; max-width: 400px; height: 36px; border-radius: 6px; padding: 2px 10px">
             <span>🔍</span>
-            <input v-model="shopKeyword" type="text" placeholder="搜索京山桥米、葛粉、白花菜、网球文创…" />
-            <button v-if="shopKeyword" class="btn-ghost" style="padding: 3px 9px; font-size: 12.5px" @click="shopKeyword = ''">清空</button>
+            <input v-model="shopKeyword" type="text" placeholder="搜索京山桥米、葛粉、白花菜、网球文创…" style="font-size: 13px" />
+            <button v-if="shopKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 12px" @click="shopKeyword = ''">清空</button>
           </div>
-          <div class="flex-row" style="gap: 10px">
-            <button class="btn-ghost" style="border-radius: 6px" @click="resetGoodsFilters">重置筛选</button>
-            <span class="dd-count-pill">共找到 {{ visibleProducts.length }} 款特色好物</span>
+          <div class="flex-row" style="gap: 8px">
+            <button class="btn-ghost" style="border-radius: 6px; padding: 5px 11px; font-size: 12.5px" @click="resetGoodsFilters">重置筛选</button>
+            <span class="dd-count-pill">共 {{ visibleProducts.length }} 款</span>
           </div>
         </div>
 
-        <div class="dd-filter-grid cols-4">
+        <div class="dd-filter-grid cols-4 shop-filter-grid">
           <label class="dd-field">
             <span class="dd-field-label">商品分类</span>
             <select v-model="shopTab" class="dd-select" :class="{ active: shopTab !== '全部' }">
@@ -349,37 +350,40 @@ watch(visibleStores, () => {
         </div>
       </div>
 
-      <div v-if="pagedProducts.length === 0" class="card card-pad" style="text-align: center; padding: 40px 20px">
-        <strong style="font-size: 16px; display: block; margin-bottom: 10px">当前筛选条件下暂无匹配商品</strong>
+      <div v-if="pagedProducts.length === 0" class="card card-pad" style="text-align: center; padding: 32px 20px">
+        <strong style="font-size: 15.5px; display: block; margin-bottom: 10px">当前筛选条件下暂无匹配商品</strong>
         <button class="btn-primary" @click="resetGoodsFilters">重置全部筛选</button>
       </div>
 
       <template v-else>
-        <div class="grid-4">
-          <div v-for="item in pagedProducts" :key="item.id" class="card" style="display: flex; flex-direction: column">
+        <div class="shop-grid-5">
+          <div v-for="item in pagedProducts" :key="item.id" class="card shop-goods-card">
             <div
-              class="photo-box"
-              style="height: 190px"
+              class="photo-box shop-goods-photo"
               @click="openProduct(item.id)"
             >
               <img :src="item.photo" :alt="item.name" />
-              <span class="badge-tl">{{ item.badge }}</span>
+              <span class="badge-tl shop-goods-badge">{{ item.badge }}</span>
             </div>
-            <div class="card-pad" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+            <div class="shop-goods-body">
               <div>
-                <div class="flex-between" style="align-items: flex-start; gap: 6px; margin-bottom: 6px">
-                  <strong style="font-size: 16px; cursor: pointer" @click="openProduct(item.id)">{{ item.name }}</strong>
-                  <span class="rating-pill">★ {{ item.rating }}</span>
-                </div>
-                <div style="font-size: 13px; color: var(--ink-2)">
-                  {{ item.originPlace }} · 已售 {{ item.sold }}
+                <strong
+                  class="shop-goods-title"
+                  :title="item.name"
+                  @click="openProduct(item.id)"
+                >
+                  {{ item.name }}
+                </strong>
+                <div class="shop-goods-meta">
+                  <span style="color: #b47400; font-weight: 800">★ {{ item.rating }}</span>
+                  <span>已售 {{ item.sold }}</span>
                 </div>
               </div>
 
-              <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
-                <span class="price" style="font-size: 20px">¥{{ item.memberPrice }}<small>会员价</small></span>
-                <button class="btn-primary" style="padding: 6px 12px; font-size: 13px" @click="openProduct(item.id)">
-                  查看详情
+              <div class="shop-goods-foot">
+                <span class="price shop-goods-price">¥{{ item.memberPrice }}</span>
+                <button class="btn-primary shop-goods-btn" @click="openProduct(item.id)">
+                  详情购买
                 </button>
               </div>
             </div>
@@ -389,7 +393,7 @@ watch(visibleStores, () => {
         <PaginationBar
           :total="visibleProducts.length"
           :page="shopPage"
-          :page-size="PAGE_SIZE"
+          :page-size="GOODS_PAGE_SIZE"
           unit="件商品"
           @update:page="shopPage = $event"
         />
@@ -524,7 +528,7 @@ watch(visibleStores, () => {
         <PaginationBar
           :total="visibleStores.length"
           :page="storePage"
-          :page-size="PAGE_SIZE"
+          :page-size="STORE_PAGE_SIZE"
           unit="家店铺"
           @update:page="storePage = $event"
         />
@@ -532,3 +536,83 @@ watch(visibleStores, () => {
     </template>
   </section>
 </template>
+
+<style scoped>
+.shop-filter-compact {
+  padding: 12px 16px;
+}
+.shop-filter-grid {
+  gap: 10px;
+}
+.shop-filter-grid .dd-field-label {
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+.shop-filter-grid .dd-select {
+  height: 36px;
+  font-size: 13px;
+  padding: 0 10px;
+}
+.shop-grid-5 {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.shop-goods-card {
+  display: flex;
+  flex-direction: column;
+}
+.shop-goods-photo {
+  height: 132px;
+}
+.shop-goods-badge {
+  font-size: 11px;
+  padding: 3px 7px;
+}
+.shop-goods-body {
+  flex: 1;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+.shop-goods-title {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 4px;
+}
+.shop-goods-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.shop-goods-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.shop-goods-price {
+  font-size: 17px;
+}
+.shop-goods-btn {
+  padding: 4px 9px;
+  font-size: 12px;
+}
+@media (max-width: 1120px) {
+  .shop-grid-5 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+</style>

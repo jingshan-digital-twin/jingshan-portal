@@ -329,6 +329,7 @@ export interface LightboxPayload {
   priceInfo?: string
   priceNum?: number
   priceUnit?: string
+  quantityLimit?: number
   address?: string
   lng?: number
   lat?: number
@@ -387,6 +388,19 @@ export interface MenuDish {
   price: number
   stubPrice: number
   tag?: string
+}
+
+export interface OrderSuccessModalPayload {
+  headline: string
+  orderId?: string
+  category: string
+  title: string
+  subtitle: string
+  time?: string
+  amount?: number
+  pointsGain?: number
+  pointsSpent?: number
+  note?: string
 }
 
 export type ActionModalPayload =

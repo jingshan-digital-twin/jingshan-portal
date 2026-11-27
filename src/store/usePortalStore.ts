@@ -34,6 +34,7 @@ import type {
   LiveMatch,
   MatchmakingGame,
   ModuleId,
+  OrderSuccessModalPayload,
   PortalOrder,
   PrivateCoach,
   RadiusOption,
@@ -163,6 +164,7 @@ const state = reactive({
   activeDetail: null as DetailPagePayload | null,
   bookingDraft: null as BookingDraft | null,
   actionModal: null as ActionModalPayload | null,
+  orderSuccessModal: null as OrderSuccessModalPayload | null,
   toastMessage: '',
 })
 
@@ -462,6 +464,14 @@ export function usePortalStore() {
     }
     updateDocumentTitle(id, id !== 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function openOrderSuccess(payload: OrderSuccessModalPayload) {
+    state.orderSuccessModal = payload
+  }
+
+  function closeOrderSuccess() {
+    state.orderSuccessModal = null
   }
 
   function returnFromModulePage() {
@@ -889,9 +899,20 @@ export function usePortalStore() {
     if (category === '商品') {
       await apiRequest('/orders', { method: 'POST', body: JSON.stringify(order) }, () => order)
       state.orders.unshift(order)
-      if (pointsSpent > 0 && state.points >= pointsSpent) state.points -= pointsSpent
+      const actualSpent = pointsSpent > 0 && state.points >= pointsSpent ? pointsSpent : 0
+      if (actualSpent > 0) state.points -= actualSpent
       state.points += pointsGain
-      showToast(`支付成功：「${title}」（¥${amount}）已同步至个人中心，获赠 +${pointsGain} 金网积分！`)
+      openOrderSuccess({
+        headline: '购买成功',
+        orderId: order.id,
+        category,
+        title,
+        subtitle,
+        amount,
+        pointsGain,
+        pointsSpent: actualSpent,
+        note: '支付已完成，我们将尽快安排原产地打包发货并同步物流',
+      })
       return true
     }
 
@@ -1119,6 +1140,8 @@ export function usePortalStore() {
     openCinemaDetail,
     buildModuleUrl,
     openActionModal,
+    openOrderSuccess,
+    closeOrderSuccess,
     openNavigation,
     closeEventModal,
     openMatchRecap,
