@@ -22,7 +22,7 @@ const CENTER: [number, number] = [31.0218, 113.1195] // 京山国际网球中心
 function makePillIcon(text: string, bg: string, border = '#ffffff', textColor = '#ffffff') {
   return L.divIcon({
     className: 'js-map-pin',
-    html: `<div style="display:inline-flex;align-items:center;white-space:nowrap;padding:3px 9px;border-radius:99px;background:${bg};color:${textColor};border:2px solid ${border};font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.22);transform:translate(-50%,-50%);">${text}</div>`,
+    html: `<div style="display:inline-flex;align-items:center;white-space:nowrap;padding:3px 9px;border-radius: 0;background:${bg};color:${textColor};border:2px solid ${border};font-size:11px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,0.22);transform:translate(-50%,-50%);">${text}</div>`,
     iconSize: [0, 0],
     iconAnchor: [0, 0],
   })
@@ -61,8 +61,8 @@ function popupHtml(title: string, desc: string, lat: number, lng: number) {
     <strong style="font-size:13px;color:#10251F;">${title}</strong>
     <div style="font-size:11.5px;color:#526861;margin:4px 0 8px;">${desc}<br/><span style="color:#859B93;">坐标：${lng.toFixed(4)}°E, ${lat.toFixed(4)}°N</span></div>
     <div style="display:flex;gap:6px;">
-      <a href="${amap}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;border-radius:6px;background:#0D7A58;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">高德导航</a>
-      <a href="${baidu}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;border-radius:6px;background:#1C73E8;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">百度导航</a>
+      <a href="${amap}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;border-radius: 0;background:#0D7A58;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">高德导航</a>
+      <a href="${baidu}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;border-radius: 0;background:#1C73E8;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">百度导航</a>
     </div>
   </div>`
 }
@@ -174,7 +174,7 @@ onUnmounted(() => {
         z-index: 400;
         background: rgba(255, 255, 255, 0.95);
         border: 1px solid #d5e3dd;
-        border-radius: 10px;
+        border-radius: 0;
         padding: 3px;
         display: flex;
         gap: 4px;

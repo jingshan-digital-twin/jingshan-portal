@@ -9,6 +9,15 @@ import {
   INITIAL_POSTS,
 } from '../mock/data'
 import { ENRICHED_MATCHES } from '../mock/details'
+import {
+  BOOKING_DATES,
+  formatHourRange,
+  INITIAL_BOOKED_COACH_KEYS,
+  INITIAL_BOOKED_COURT_KEYS,
+  INITIAL_GROUP_CLASSES,
+  INITIAL_MATCHMAKING_GAMES,
+  INITIAL_PRIVATE_COACHES,
+} from '../mock/schedules'
 import type {
   AbilityDimensions,
   ActionModalPayload,
@@ -17,10 +26,13 @@ import type {
   CouponItem,
   CourtVenue,
   FeedbackPost,
+  GroupClassItem,
   LightboxPayload,
   LiveMatch,
+  MatchmakingGame,
   ModuleId,
   PortalOrder,
+  PrivateCoach,
   RadiusOption,
   VisitorOrigin,
 } from '../types/portal'
@@ -69,9 +81,9 @@ function parseModuleFromUrl(): ModuleId | null {
   return null
 }
 
-function parseSurfaceFromUrl(): '全部' | '硬地' | '红土' | '室内风雨' {
+function parseSurfaceFromUrl(): '全部' | '硬地' | '红土' | '室内风雨' | '匹克球' {
   const s = new URLSearchParams(window.location.search).get('surface')
-  if (s === '硬地' || s === '红土' || s === '室内风雨') return s
+  if (s === '硬地' || s === '红土' || s === '室内风雨' || s === '匹克球') return s
   return '全部'
 }
 
@@ -95,6 +107,10 @@ interface PersistedState {
   complaints: ComplaintTicket[]
   claimedHomeSubsidy: boolean
   dismissedEventModal: boolean
+  bookedCourtKeys: string[]
+  matchmakingGames: MatchmakingGame[]
+  groupClasses: GroupClassItem[]
+  bookedCoachKeys: string[]
 }
 
 function loadSaved(): Partial<PersistedState> {
@@ -128,6 +144,11 @@ const state = reactive({
   ability: (saved.ability ?? { ...INITIAL_ABILITY }) as AbilityDimensions,
   liveMatches: structuredClone(ENRICHED_MATCHES) as LiveMatch[],
   courts: structuredClone(INITIAL_COURTS) as CourtVenue[],
+  bookedCourtKeys: (saved.bookedCourtKeys ?? [...INITIAL_BOOKED_COURT_KEYS]) as string[],
+  matchmakingGames: (saved.matchmakingGames ?? structuredClone(INITIAL_MATCHMAKING_GAMES)) as MatchmakingGame[],
+  groupClasses: (saved.groupClasses ?? structuredClone(INITIAL_GROUP_CLASSES)) as GroupClassItem[],
+  privateCoaches: structuredClone(INITIAL_PRIVATE_COACHES) as PrivateCoach[],
+  bookedCoachKeys: (saved.bookedCoachKeys ?? [...INITIAL_BOOKED_COACH_KEYS]) as string[],
   orders: (saved.orders ?? structuredClone(INITIAL_ORDERS)) as PortalOrder[],
   coupons: (saved.coupons ?? structuredClone(INITIAL_COUPONS)) as CouponItem[],
   favorites: (saved.favorites ?? ['京山国际网球公寓', '桥米公馆', '钟祥明显陵延伸线']) as string[],
@@ -136,9 +157,9 @@ const state = reactive({
   claimedHomeSubsidy: saved.claimedHomeSubsidy ?? false,
   ticketStubCode: 'JS-20261126-089',
   parkingLots: [
-    { id: 'p1', name: '国际网球中心 P1', address: '温泉街道网球大道北侧P1入口', lng: 113.1185, lat: 31.0226, remain: 84, total: 160, rating: 4.9, note: '含12个快充桩 · 订场免费停3h', reserved: false },
-    { id: 'ev1', name: '温泉新区超充站', address: '温泉街道温泉大道与京山大道交叉口', lng: 113.1228, lat: 31.0212, remain: 14, total: 18, rating: 4.9, note: '120kW快充 · 距场馆200m', isCharger: true, reserved: false },
-    { id: 'p2', name: '文峰公园 P2', address: '新市街道文峰路文峰公园南门', lng: 113.1128, lat: 31.0185, remain: 42, total: 120, rating: 4.8, note: '距文峰夜市150m · 可预约', reserved: false },
+    { id: 'p1', name: '国际网球中心 P1', address: '温泉街道网球大道北侧P1入口', lng: 113.1185, lat: 31.0226, remain: 84, total: 160, rating: 4.9, note: '含12个快充桩 · 订场免费停3h', reserved: false, reservedSlot: '' },
+    { id: 'ev1', name: '温泉新区超充站', address: '温泉街道温泉大道与京山大道交叉口', lng: 113.1228, lat: 31.0212, remain: 14, total: 18, rating: 4.9, note: '120kW快充 · 距场馆200m', isCharger: true, reserved: false, reservedSlot: '' },
+    { id: 'p2', name: '文峰公园 P2', address: '新市街道文峰路文峰公园南门', lng: 113.1128, lat: 31.0185, remain: 42, total: 120, rating: 4.8, note: '距文峰夜市150m · 可预约', reserved: false, reservedSlot: '' },
   ],
   lightbox: null as LightboxPayload | null,
   bookingDraft: null as BookingDraft | null,
@@ -160,6 +181,10 @@ function getPersistSnapshot(): PersistedState {
     complaints: state.complaints,
     claimedHomeSubsidy: state.claimedHomeSubsidy,
     dismissedEventModal: state.dismissedEventModal,
+    bookedCourtKeys: state.bookedCourtKeys,
+    matchmakingGames: state.matchmakingGames,
+    groupClasses: state.groupClasses,
+    bookedCoachKeys: state.bookedCoachKeys,
   }
 }
 
@@ -183,6 +208,10 @@ function applySavedSnapshot(next: Partial<PersistedState>) {
   if (Array.isArray(next.complaints)) state.complaints = next.complaints
   if (typeof next.claimedHomeSubsidy === 'boolean') state.claimedHomeSubsidy = next.claimedHomeSubsidy
   if (typeof next.dismissedEventModal === 'boolean') state.dismissedEventModal = next.dismissedEventModal
+  if (Array.isArray(next.bookedCourtKeys)) state.bookedCourtKeys = next.bookedCourtKeys
+  if (Array.isArray(next.matchmakingGames)) state.matchmakingGames = next.matchmakingGames
+  if (Array.isArray(next.groupClasses)) state.groupClasses = next.groupClasses
+  if (Array.isArray(next.bookedCoachKeys)) state.bookedCoachKeys = next.bookedCoachKeys
 }
 
 function updateDocumentTitle(moduleId: ModuleId, standalone: boolean) {
@@ -433,27 +462,46 @@ export function usePortalStore() {
     showToast(`已从「网球记」同步最新局分：${m.playerA} ${m.setsA.join('-')} vs ${m.playerB} ${m.setsB.join('-')}`)
   }
 
-  function reserveParkingOrCharger(lotId: string) {
+  function reserveParkingOrCharger(lotId: string, arrivalDate?: string, arrivalSlot?: string) {
     const lot = state.parkingLots.find((l) => l.id === lotId)
     if (!lot) return
-    if (lot.reserved) {
-      showToast(`您已预约「${lot.name}」，无需重复锁位`)
+    const slotText = arrivalDate && arrivalSlot ? `${arrivalDate} ${arrivalSlot}` : '今日最近时段（保留30分钟）'
+    if (lot.reserved && lot.reservedSlot === slotText) {
+      showToast(`您已预约「${lot.name}」（${slotText}），无需重复锁位`)
       return
     }
+    if (!lot.reserved) {
+      lot.remain = Math.max(0, lot.remain - 1)
+    }
     lot.reserved = true
-    lot.remain = Math.max(0, lot.remain - 1)
-    showToast(`预约成功！已为您锁定「${lot.name}」（保留30分钟，凭订场码免费核销）`)
+    lot.reservedSlot = slotText
+    showToast(`预约成功！已为您锁定「${lot.name}」· ${slotText}（凭订场码核销）`)
   }
 
   async function confirmCourtBooking(opts: {
+    date?: string
+    selectedSlots?: { courtId: string; courtName: string; hour: string; price: number; memberPrice: number }[]
     bookParking: boolean
     bookCharger: boolean
     usePoints: boolean
   }) {
     const draft = state.bookingDraft
     if (!draft) return
+    const dateIso = opts.date ?? draft.date ?? BOOKING_DATES[0]!.iso
+    const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
+    const picked = opts.selectedSlots && opts.selectedSlots.length > 0
+      ? opts.selectedSlots
+      : [{
+          courtId: draft.courtId ?? 'default',
+          courtName: '标准场地',
+          hour: draft.slotTime,
+          price: draft.price,
+          memberPrice: draft.memberPrice,
+        }]
+
+    const memberSum = picked.reduce((acc, s) => acc + s.memberPrice, 0)
     const discountFromPoints = opts.usePoints && state.points >= 200 ? 20 : 0
-    const finalPrice = Math.max(0, draft.memberPrice - discountFromPoints)
+    const finalPrice = Math.max(0, memberSum - discountFromPoints)
     const linked = [
       opts.bookParking ? draft.parkingName : '',
       opts.bookCharger ? draft.chargerName : '',
@@ -461,12 +509,16 @@ export function usePortalStore() {
       .filter(Boolean)
       .join(' + ')
 
+    const slotSummary = picked
+      .map((s) => `${s.courtName} ${formatHourRange(s.hour)}`)
+      .join('、')
+
     const newOrder: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '场地',
-      title: `${draft.venueName.split('（')[0]} · 今日 ${draft.slotTime}`,
-      subtitle: linked ? `已联动预约：${linked}` : '支持开场前2小时免费取消',
-      time: `今日 ${draft.slotTime}`,
+      title: `${draft.venueName.split('（')[0]} · ${dateLabel}（${picked.length}小时）`,
+      subtitle: `${slotSummary}${linked ? ` ｜ 已联动：${linked}` : ''}`,
+      time: `${dateLabel} ${formatHourRange(picked[0]!.hour)}`,
       amount: finalPrice,
       status: '待核销',
       cancellable: true,
@@ -476,7 +528,15 @@ export function usePortalStore() {
 
     state.orders.unshift(newOrder)
     if (discountFromPoints > 0) state.points -= 200
-    state.points += 50
+    state.points += 50 * picked.length
+
+    for (const s of picked) {
+      const key = `${draft.venueId}|${dateIso}|${s.courtId}|${s.hour}`
+      if (!state.bookedCourtKeys.includes(key)) {
+        state.bookedCourtKeys.push(key)
+      }
+    }
+
     const v = state.courts.find((c) => c.id === draft.venueId)
     const slot = v?.slots.find((s) => s.time === draft.slotTime)
     if (slot) {
@@ -484,7 +544,104 @@ export function usePortalStore() {
       slot.remaining = Math.max(0, slot.remaining - 1)
     }
     state.bookingDraft = null
-    showToast(`订场成功！实付 ¥${finalPrice}，获得 +50 积分，电子票根 ${state.ticketStubCode} 已激活`)
+    showToast(`订场成功！${dateLabel} ${slotSummary}，实付 ¥${finalPrice}，获赠 +${50 * picked.length} 积分`)
+  }
+
+  function joinMatchmakingGame(gameId: string) {
+    const g = state.matchmakingGames.find((x) => x.id === gameId)
+    if (!g) return
+    if (g.joinedByMe) {
+      g.joinedByMe = false
+      g.currentPlayers = Math.max(1, g.currentPlayers - 1)
+      showToast(`已取消报名「${g.title}」`)
+      return
+    }
+    if (g.currentPlayers >= g.maxPlayers) {
+      showToast('该球局人数已满，请选择其他可加入球局')
+      return
+    }
+    g.joinedByMe = true
+    g.currentPlayers += 1
+    state.points += 30
+    const dateLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date
+    state.orders.unshift({
+      id: `ORD-${Date.now().toString().slice(-6)}`,
+      category: '场地',
+      title: `约球：${g.title}`,
+      subtitle: `${g.venueName} · CUTR ${g.cutrBand} · ${g.format}`,
+      time: `${dateLabel} ${g.startTime}-${g.endTime}`,
+      amount: g.feePerPerson,
+      status: '待核销',
+      cancellable: true,
+    })
+    showToast(`成功加入「${g.title}」（${dateLabel} ${g.startTime}-${g.endTime}），获赠 +30 积分！`)
+  }
+
+  function publishMatchmakingGame(payload: Omit<MatchmakingGame, 'id' | 'hostName' | 'hostOrigin' | 'currentPlayers' | 'joinedByMe'>) {
+    const next: MatchmakingGame = {
+      ...payload,
+      id: `mg-${Date.now()}`,
+      hostName: '林先生（我发起）',
+      hostOrigin: state.origin.slice(0, 2),
+      currentPlayers: 1,
+      joinedByMe: true,
+    }
+    state.matchmakingGames.unshift(next)
+    state.points += 40
+    showToast(`约球发布成功！「${next.title}」已上线，同水平球友均可报名（+40积分）`)
+  }
+
+  function bookGroupClass(classId: string) {
+    const cls = state.groupClasses.find((c) => c.id === classId)
+    if (!cls) return
+    if (cls.bookedByMe) {
+      showToast(`您已预约「${cls.title}」，无需重复报名`)
+      return
+    }
+    if (cls.enrolled >= cls.capacity) {
+      showToast('本节团体课名额已满，请选择其他日期或时段')
+      return
+    }
+    cls.bookedByMe = true
+    cls.enrolled += 1
+    const dateLabel = BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate ?? cls.date
+    state.orders.unshift({
+      id: `ORD-${Date.now().toString().slice(-6)}`,
+      category: '课程',
+      title: `团体课：${cls.title}`,
+      subtitle: `${cls.coachName} · ${cls.venueName}`,
+      time: `${dateLabel} ${cls.startTime}-${cls.endTime}`,
+      amount: cls.memberPrice,
+      status: '待上课',
+      cancellable: true,
+    })
+    state.points += 60
+    showToast(`预约成功！${dateLabel} ${cls.startTime}-${cls.endTime}「${cls.title}」（¥${cls.memberPrice}，+60分）`)
+  }
+
+  function bookPrivateCoachSlot(coachId: string, dateIso: string, hour: string) {
+    const coach = state.privateCoaches.find((c) => c.id === coachId)
+    if (!coach) return
+    const key = `${coachId}|${dateIso}|${hour}`
+    if (state.bookedCoachKeys.includes(key)) {
+      showToast('该时段已被预约，请选择教练其他空闲时段')
+      return
+    }
+    state.bookedCoachKeys.push(key)
+    const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
+    const range = formatHourRange(hour)
+    state.orders.unshift({
+      id: `ORD-${Date.now().toString().slice(-6)}`,
+      category: '课程',
+      title: `私教课：${coach.name}（${coach.specialty}）`,
+      subtitle: `${coach.venueName} · ${coach.tier} · 1对1专属指导`,
+      time: `${dateLabel} ${range}`,
+      amount: coach.memberPrice,
+      status: '待上课',
+      cancellable: true,
+    })
+    state.points += 80
+    showToast(`私教课预约成功！${coach.name} · ${dateLabel} ${range}（实付 ¥${coach.memberPrice}，+80分）`)
   }
 
   async function createQuickOrder(
@@ -704,6 +861,10 @@ export function usePortalStore() {
     refreshLiveScores,
     reserveParkingOrCharger,
     confirmCourtBooking,
+    joinMatchmakingGame,
+    publishMatchmakingGame,
+    bookGroupClass,
+    bookPrivateCoachSlot,
     createQuickOrder,
     cancelOrder,
     redeemPoints,

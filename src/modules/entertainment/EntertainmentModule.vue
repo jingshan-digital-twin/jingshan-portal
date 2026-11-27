@@ -97,7 +97,7 @@ const visibleItems = computed(() =>
 
           <div
             v-if="e.id === 'ent-6'"
-            style="background: #f6f1fc; border: 1px solid #dfd1f5; border-radius: 9px; padding: 7px 9px; font-size: 11px; color: #4b238a; margin: 6px 0; cursor: pointer"
+            style="background: #f6f1fc; border: 1px solid #dfd1f5; border-radius: 0; padding: 7px 9px; font-size: 11px; color: #4b238a; margin: 6px 0; cursor: pointer"
             @click="state.showCinemaModal = true"
           >
             <strong>🎬 今日热映：</strong>{{ CINEMA_MOVIES.map((m) => `《${m.title}》`).join(' / ') }}

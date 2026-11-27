@@ -77,7 +77,7 @@ function confirmCinemaOrder() {
           <div
             v-for="(m, idx) in CINEMA_MOVIES"
             :key="m.id"
-            style="border-radius: 13px; overflow: hidden; cursor: pointer; border: 2px solid var(--line)"
+            style="border-radius: 0; overflow: hidden; cursor: pointer; border: 2px solid var(--line)"
             :style="movieIdx === idx ? 'border-color: var(--primary); background: #EFFAF4;' : 'background: #fff;'"
             @click="movieIdx = idx"
           >
@@ -115,8 +115,8 @@ function confirmCinemaOrder() {
             </div>
           </div>
 
-          <div style="background: #f5f8f7; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px">
-            <div style="text-align: center; font-size: 11px; color: var(--ink-3); background: #dce7e2; border-radius: 99px; padding: 3px; margin-bottom: 12px">
+          <div style="background: #f5f8f7; border: 1px solid var(--line); border-radius: 0; padding: 12px 14px">
+            <div style="text-align: center; font-size: 11px; color: var(--ink-3); background: #dce7e2; border-radius: 0; padding: 3px; margin-bottom: 12px">
               银幕方向 · {{ showtime.hall }}
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px; align-items: center">
@@ -125,7 +125,7 @@ function confirmCinemaOrder() {
                 <button
                   v-for="c in cols"
                   :key="c"
-                  style="width: 28px; height: 24px; border-radius: 6px; border: 1px solid #c9dad3; font-size: 10px; font-weight: 700"
+                  style="width: 28px; height: 24px; border-radius: 0; border: 1px solid #c9dad3; font-size: 10px; font-weight: 700"
                   :style="
                     showtime.takenSeats.includes(`${r}${c}`)
                       ? 'background: #D6DEDC; color: #8B9B95; cursor: not-allowed;'

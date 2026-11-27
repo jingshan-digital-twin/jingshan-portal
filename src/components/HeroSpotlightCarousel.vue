@@ -113,12 +113,12 @@ function submitQuickPackage() {
         <p class="hero-main-desc">{{ currentSlide.desc }}</p>
 
         <div class="hero-cta-row">
-          <button class="btn-orange" style="padding: 9px 18px; font-size: 13px; border-radius: 99px" @click="triggerSlideAction(currentSlide.primaryAction)">
+          <button class="btn-orange" style="padding: 9px 18px; font-size: 13px; border-radius: 0" @click="triggerSlideAction(currentSlide.primaryAction)">
             {{ currentSlide.primaryAction.label }}
           </button>
           <button
             class="btn-ghost"
-            style="padding: 8px 16px; font-size: 13px; border-radius: 99px; background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.34)"
+            style="padding: 8px 16px; font-size: 13px; border-radius: 0; background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.34)"
             @click="triggerSlideAction(currentSlide.secondaryAction)"
           >
             {{ currentSlide.secondaryAction.label }}
@@ -266,7 +266,7 @@ function submitQuickPackage() {
 
         <div class="hw-quick-row">
           <button class="hw-mini" @click="switchModule(2)">
-            <span style="width: 34px; height: 34px; border-radius: 10px; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
+            <span style="width: 34px; height: 34px; border-radius: 0; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
               🏆
             </span>
             <div>
@@ -275,7 +275,7 @@ function submitQuickPackage() {
             </div>
           </button>
           <button class="hw-mini" @click="switchModule(5)">
-            <span style="width: 34px; height: 34px; border-radius: 10px; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
+            <span style="width: 34px; height: 34px; border-radius: 0; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
               🏠
             </span>
             <div>

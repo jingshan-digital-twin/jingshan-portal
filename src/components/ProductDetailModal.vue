@@ -74,7 +74,7 @@ function submitPayment() {
       <div class="card-pad" style="overflow-y: auto; flex: 1; display: grid; grid-template-columns: 320px 1fr; gap: 20px">
         <!-- Left: 商品实拍图 + 详情/评价切换 -->
         <div style="display: flex; flex-direction: column; gap: 12px">
-          <div class="photo-box" style="height: 225px; border-radius: 14px; cursor: default">
+          <div class="photo-box" style="height: 225px; border-radius: 0; cursor: default">
             <img :src="product.photo" :alt="product.name" />
             <span class="badge-tl">{{ product.badge }}</span>
             <span class="badge-bl">★ {{ product.rating }} ({{ product.reviewCount }}条真实评价)</span>
@@ -85,7 +85,7 @@ function submitPayment() {
             <button class="m-tab" :class="{ active: detailTab === 'reviews' }" @click="detailTab = 'reviews'">💬 买家评价 ({{ product.reviews.length }})</button>
           </div>
 
-          <div v-if="detailTab === 'detail'" style="background: #f6faf8; border-radius: 12px; padding: 11px 12px; font-size: 11.5px; color: var(--ink-2)">
+          <div v-if="detailTab === 'detail'" style="background: #f6faf8; border-radius: 0; padding: 11px 12px; font-size: 11.5px; color: var(--ink-2)">
             <div v-for="(h, i) in product.highlights" :key="i" style="margin-bottom: 5px">✔ {{ h }}</div>
             <div style="border-top: 1px dashed #d6e4de; margin-top: 8px; padding-top: 8px">
               <div v-for="p in product.params" :key="p.k" class="flex-between" style="margin-bottom: 3px">
@@ -96,7 +96,7 @@ function submitPayment() {
           </div>
 
           <div v-else style="display: flex; flex-direction: column; gap: 8px">
-            <div v-for="(rev, i) in product.reviews" :key="i" style="background: #fafdfc; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font-size: 11.5px">
+            <div v-for="(rev, i) in product.reviews" :key="i" style="background: #fafdfc; border: 1px solid var(--line); border-radius: 0; padding: 9px 11px; font-size: 11.5px">
               <div class="flex-between" style="margin-bottom: 3px">
                 <strong>{{ rev.user }} <span style="color: #e2a227">★★★★★</span></strong>
                 <span style="color: var(--ink-3); font-size: 10.5px">{{ rev.date }}</span>
@@ -109,7 +109,7 @@ function submitPayment() {
 
         <!-- Right: 规格选择、收货地址与在线支付结算 -->
         <div style="display: flex; flex-direction: column; gap: 11px">
-          <div style="background: #fff7f3; border: 1px solid #ffd5c2; border-radius: 12px; padding: 11px 14px" class="flex-between">
+          <div style="background: #fff7f3; border: 1px solid #ffd5c2; border-radius: 0; padding: 11px 14px" class="flex-between">
             <div>
               <span class="price" style="font-size: 24px">¥{{ unitPrice }}</span>
               <span style="font-size: 12px; color: var(--ink-3); margin-left: 6px"><s>原价 ¥{{ product.price }}</s></span>
@@ -144,11 +144,11 @@ function submitPayment() {
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px">
-            <label class="flex-between" style="background: #f5faf8; padding: 7px 10px; border-radius: 8px; cursor: pointer">
+            <label class="flex-between" style="background: #f5faf8; padding: 7px 10px; border-radius: 0; cursor: pointer">
               <span><input v-model="useStubDiscount" type="checkbox" style="margin-right: 6px" />🎫 使用打球电子票根（满¥150立减¥30）</span>
               <strong style="color: var(--accent)">{{ stubOff > 0 ? `-¥${stubOff}` : '未满¥150' }}</strong>
             </label>
-            <label v-if="state.points >= 100" class="flex-between" style="background: #fff9eb; padding: 7px 10px; border-radius: 8px; cursor: pointer">
+            <label v-if="state.points >= 100" class="flex-between" style="background: #fff9eb; padding: 7px 10px; border-radius: 0; cursor: pointer">
               <span><input v-model="usePoints" type="checkbox" style="margin-right: 6px" />👑 使用 100 金网积分抵现 ¥10</span>
               <strong style="color: #8a5600">{{ pointsOff > 0 ? '-¥10' : '可用' }}</strong>
             </label>

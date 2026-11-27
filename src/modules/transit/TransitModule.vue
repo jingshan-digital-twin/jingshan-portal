@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
+import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, reserveParkingOrCharger, openActionModal, openNavigation, showToast } = usePortalStore()
 const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交与租车'>('全部')
+const parkDate = ref(BOOKING_DATES[0]!.shortDate)
+const parkSlot = ref('16:00-18:00')
+const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00']
 </script>
 
 <template>
@@ -59,11 +63,27 @@ const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交�
         <ServiceCircleMap mode="traffic" />
 
         <div class="card-pad">
+          <div class="filter-row mb-12" style="background: #f5faf8; padding: 8px 11px; border-radius: 0; border: 1px solid #d9ebe2">
+            <span class="filter-label">🕒 选择车位/充电预约时段：</span>
+            <select v-model="parkDate" class="f-input" style="width: 112px; padding: 4px 8px; font-size: 11.5px">
+              <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.shortDate">{{ d.shortDate }} {{ d.weekday }}</option>
+            </select>
+            <button
+              v-for="s in parkSlots"
+              :key="s"
+              class="filter-pill"
+              :class="{ active: parkSlot === s }"
+              @click="parkSlot = s"
+            >
+              {{ s }}
+            </button>
+          </div>
+
           <div class="grid-3" style="gap: 10px">
             <div
               v-for="lot in state.parkingLots"
               :key="lot.id"
-              style="background: #f3faf6; border: 1px solid #c8e7d8; border-radius: 11px; padding: 10px"
+              style="background: #f3faf6; border: 1px solid #c8e7d8; border-radius: 0; padding: 10px"
             >
               <div class="flex-between">
                 <strong style="font-size: 12.5px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>
@@ -75,13 +95,16 @@ const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交�
               <div style="font-size: 10.5px; color: var(--ink-2); margin-bottom: 6px">
                 📍 {{ lot.address }}（{{ lot.lng.toFixed(4) }}, {{ lot.lat.toFixed(4) }}）
               </div>
+              <div v-if="lot.reservedSlot" style="font-size: 10.5px; color: var(--primary); font-weight: 800; margin-bottom: 6px">
+                ✔ 已锁时段：{{ lot.reservedSlot }}
+              </div>
               <div class="flex-between">
                 <button
                   :class="lot.reserved ? 'btn-ghost' : 'btn-primary'"
                   style="padding: 4px 9px; font-size: 11px"
-                  @click="reserveParkingOrCharger(lot.id)"
+                  @click="reserveParkingOrCharger(lot.id, parkDate, parkSlot)"
                 >
-                  {{ lot.reserved ? '✅ 已锁位' : lot.isCharger ? '预约充电桩' : '提前预约车位' }}
+                  {{ lot.reserved ? '更新锁位时段' : lot.isCharger ? `约 ${parkSlot} 充电` : `锁 ${parkSlot} 车位` }}
                 </button>
                 <button
                   class="btn-ghost"
@@ -113,14 +136,14 @@ const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交�
             <span class="tag gold">全程评星监督</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px">
-            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 11px">
+            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 0">
               <div>
                 <strong style="font-size: 13px">张师傅 · 7座商务车（京网十佳司机）</strong> <span class="rating-pill">★ 5.0</span>
                 <div style="font-size: 11px; color: var(--ink-3)">高铁接送/全城包车/代搬球包 · 182条零差评</div>
               </div>
               <button class="btn-primary" @click="showToast('已向张师傅发送约车通知，预计5分钟内来电确认上车点')">一键约车</button>
             </div>
-            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 11px">
+            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 0">
               <div>
                 <strong style="font-size: 13px">李师傅 · 新能源专车（熟悉全城球场）</strong> <span class="rating-pill">★ 4.9</span>
                 <div style="font-size: 11px; color: var(--ink-3)">京山南站→网球中心直达 ¥28一口价 · 票根减¥5</div>

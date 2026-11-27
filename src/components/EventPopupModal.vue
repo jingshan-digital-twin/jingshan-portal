@@ -90,15 +90,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
       <div class="card-pad" style="display: flex; flex-direction: column; gap: 12px">
         <div class="grid-3" style="gap: 10px">
-          <div style="background: #f3faf6; border: 1px solid #cce6da; border-radius: 11px; padding: 10px">
+          <div style="background: #f3faf6; border: 1px solid #cce6da; border-radius: 0; padding: 10px">
             <strong style="font-size: 13px; color: var(--primary)">📊 网球记实时赛况</strong>
             <div style="font-size: 11px; color: var(--ink-3); margin-top: 3px">同步「网球记」各场馆实时比分、场次占用与赛期交通避堵指引</div>
           </div>
-          <div style="background: #fff6f2; border: 1px solid #ffd5c2; border-radius: 11px; padding: 10px">
+          <div style="background: #fff6f2; border: 1px solid #ffd5c2; border-radius: 0; padding: 10px">
             <strong style="font-size: 13px; color: var(--accent)">🏠 赛期购房减5万元</strong>
             <div style="font-size: 11px; color: var(--ink-3); margin-top: 3px">市房管局联合品质楼盘：凭赛事/订场记录直减 ¥50,000</div>
           </div>
-          <div style="background: #eef5ff; border: 1px solid #c9defc; border-radius: 11px; padding: 10px">
+          <div style="background: #eef5ff; border: 1px solid #c9defc; border-radius: 0; padding: 10px">
             <strong style="font-size: 13px; color: var(--blue)">🎫 79家联盟票根85折</strong>
             <div style="font-size: 11px; color: var(--ink-3); margin-top: 3px">凭电子票根享酒店85折、桥米85折、温泉立减¥60与免费摆渡</div>
           </div>

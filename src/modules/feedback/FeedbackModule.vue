@@ -48,7 +48,7 @@ async function onSubmit() {
             <button class="btn-primary" @click="formMode = 'review'">+ 发布打卡与星级点评</button>
           </div>
           <div class="grid-3" style="gap: 12px">
-            <div v-for="p in state.posts.slice(0, 6)" :key="p.id" style="border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+            <div v-for="p in state.posts.slice(0, 6)" :key="p.id" style="border: 1px solid var(--line); border-radius: 0; overflow: hidden">
               <div class="photo-box" style="height: 105px"><img :src="p.photo" :alt="p.title" /></div>
               <div style="padding: 9px 10px">
                 <div style="font-size: 12.5px; font-weight: 800; margin-bottom: 5px">{{ p.title }}</div>
@@ -73,7 +73,7 @@ async function onSubmit() {
             <span class="tag red">投诉查实自动降星预警</span>
           </div>
           <div class="grid-2" style="gap: 12px">
-            <div style="background: #effaf4; border: 1px solid #c2e8d5; border-radius: 12px; padding: 11px 13px">
+            <div style="background: #effaf4; border: 1px solid #c2e8d5; border-radius: 0; padding: 11px 13px">
               <strong style="font-size: 13px; color: #0a6947; display: block; margin-bottom: 6px">🏅 本月五星诚信红榜（优先推荐）</strong>
               <div style="font-size: 11.5px; line-height: 1.85; color: var(--ink-2)">
                 • 京山国际网球中心（★4.9 · 零投诉）<br />
@@ -81,7 +81,7 @@ async function onSubmit() {
                 • 桥米公馆 / 陈浩陪练团队（★5.0 · 好评率100%）
               </div>
             </div>
-            <div style="background: #fff3f3; border: 1px solid #f7c6c9; border-radius: 12px; padding: 11px 13px">
+            <div style="background: #fff3f3; border: 1px solid #f7c6c9; border-radius: 0; padding: 11px 13px">
               <strong style="font-size: 13px; color: #b81d27; display: block; margin-bottom: 6px">⚠️ 消费预警与整改督办提示</strong>
               <div style="font-size: 11.5px; line-height: 1.85; color: #73272c">
                 • <strong>黄牌预警：</strong>XX路社会停车点（价格公示不清，已转城管/市监整改）<br />
@@ -144,7 +144,7 @@ async function onSubmit() {
           {{ formMode === 'complaint' ? '提交反馈 / 直联 12345 上报' : '发布打卡评价 (+20分)' }}
         </button>
 
-        <div style="background: #f5f9f7; border-radius: 10px; padding: 9px 11px; font-size: 11.5px; color: var(--ink-2)">
+        <div style="background: #f5f9f7; border-radius: 0; padding: 9px 11px; font-size: 11.5px; color: var(--ink-2)">
           <strong>📌 我的反馈处置闭环记录（共 {{ state.complaints.length }} 条）：</strong>
           <div v-for="c in state.complaints.slice(0, 4)" :key="c.id" style="margin-top: 5px">
             #{{ c.id }} [{{ c.target }}] {{ c.content }} →

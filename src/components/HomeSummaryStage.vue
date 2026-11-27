@@ -272,14 +272,14 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
                   <div class="flex-row">
                     <button
                       class="btn-orange"
-                      style="border-radius: 99px; padding: 5px 12px"
+                      style="border-radius: 0; padding: 5px 12px"
                       @click.stop="openActionModal({ type: 'video', title: '《中国网球之城 · 生态京山》官方城市宣传片', duration: '02:15' })"
                     >
                       ▶ 宣传片
                     </button>
                     <button
                       class="btn-ghost"
-                      style="border-radius: 99px; padding: 5px 11px"
+                      style="border-radius: 0; padding: 5px 11px"
                       @click.stop="openActionModal({ type: 'audio', spotName: '京山网球城市全景导览', duration: '全城2日游推荐', photo: '/images/hero.jpg', script: '欢迎来到中国网球之城——湖北京山。全市拥有356片标准网球场，每万人拥有5.67片，您可以以京山国际网球中心为起点，串联天沐温泉、绿林山、空山洞、文峰夜市与桥米美食，开启挥拍山水间的惬意旅程。' })"
                     >
                       🗺️ 语音导览
@@ -309,11 +309,11 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
                 <strong style="font-size: 13.5px">🏆 近期焦点赛事</strong>
                 <button class="home-more-link" @click="switchModule(2)">看实时比分 →</button>
               </div>
-              <div class="flex-between" style="background: #f5faf8; padding: 6px 10px; border-radius: 9px">
+              <div class="flex-between" style="background: #f5faf8; padding: 6px 10px; border-radius: 0">
                 <div style="font-size: 12px; font-weight: 800">2026中青赛总决赛 <span class="tag red">进行中</span></div>
                 <button class="btn-primary" style="padding: 4px 9px; font-size: 11px" @click="openModuleInNewWindow(2)">赛况 ↗</button>
               </div>
-              <div class="flex-between" style="background: #fff8f4; padding: 6px 10px; border-radius: 9px">
+              <div class="flex-between" style="background: #fff8f4; padding: 6px 10px; border-radius: 0">
                 <div style="font-size: 12px; font-weight: 800">京山周末分级赛（{{ state.abilityLevel }}） <span class="tag orange">余12位</span></div>
                 <button class="btn-orange" style="padding: 4px 9px; font-size: 11px" @click="openModuleInNewWindow(2)">报名 ↗</button>
               </div>
@@ -949,7 +949,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
               </div>
             </div>
 
-            <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(196, 246, 61, 0.25); border-radius: 13px; padding: 12px 14px">
+            <div style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(196, 246, 61, 0.25); border-radius: 0; padding: 12px 14px">
               <div class="flex-between" style="margin-bottom: 6px">
                 <span style="font-size: 12px; font-weight: 800; color: var(--lime)">🎫 有效卡券与电子票根</span>
                 <span style="font-size: 11px; color: rgba(255, 255, 255, 0.75)">编号 {{ state.ticketStubCode }}</span>
@@ -971,7 +971,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
                   v-for="order in state.orders.slice(0, 4)"
                   :key="order.id"
                   class="flex-between"
-                  style="background: #f6faf8; border: 1px solid #e4efe9; padding: 10px 12px; border-radius: 11px"
+                  style="background: #f6faf8; border: 1px solid #e4efe9; padding: 10px 12px; border-radius: 0"
                 >
                   <div style="min-width: 0">
                     <div style="font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">

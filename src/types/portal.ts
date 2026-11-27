@@ -66,20 +66,34 @@ export interface CourtSlot {
   booked?: boolean
 }
 
+export interface CourtUnit {
+  id: string
+  name: string
+  surface: '硬地' | '红土' | '室内风雨' | '匹克球'
+  env: '室内' | '室外' | '风雨棚'
+  dayPrice: number
+  nightPrice: number
+}
+
 export interface CourtVenue {
   id: string
   name: string
   region: '温泉街道' | '新市街道' | '永兴街道'
   address: string
+  distanceKm: number
+  phone: string
   lng: number
   lat: number
-  surfaces: ('硬地' | '红土' | '室内风雨')[]
+  surfaces: ('硬地' | '红土' | '室内风雨' | '匹克球')[]
+  envs: ('室内' | '室外' | '风雨棚')[]
+  amenities: string[]
   photo: string
   galleryCount: number
   liveViewers: number
   rating: number
   reviewCount: number
   openHours: string
+  minPrice: number
   priceDesc: string
   tags: string[]
   parkingName: string
@@ -87,7 +101,78 @@ export interface CourtVenue {
   chargerName: string
   chargerRemain: number
   quote: string
+  courts: CourtUnit[]
   slots: CourtSlot[]
+}
+
+export type CutrBand =
+  | '2.00-2.49'
+  | '2.50-2.99'
+  | '3.00-3.49'
+  | '3.50-3.99'
+  | '4.00-4.49'
+  | '4.50-4.99'
+  | '5.00-5.49'
+  | '5.50+'
+
+export interface MatchmakingGame {
+  id: string
+  title: string
+  hostName: string
+  hostOrigin: string
+  venueId: string
+  venueName: string
+  region: '温泉街道' | '新市街道' | '永兴街道'
+  distanceKm: number
+  date: string
+  startTime: string
+  endTime: string
+  cutrBand: CutrBand
+  venueType: '室内' | '室外' | '风雨棚' | '学练馆'
+  activityType: '拉球' | '比赛' | '发球机' | '人工训练'
+  gender: '不限' | '男' | '女'
+  format: '单打' | '双打'
+  amenities: string[]
+  feePerPerson: number
+  maxPlayers: number
+  currentPlayers: number
+  joinedByMe?: boolean
+  note: string
+}
+
+export interface GroupClassItem {
+  id: string
+  date: string
+  startTime: string
+  endTime: string
+  title: string
+  category: '零基础入门' | '多球强化' | '双打战术' | '发球专项'
+  level: '零基础' | 'CUTR 2.0-3.0' | 'CUTR 3.0-4.0' | '青少年'
+  coachName: string
+  venueName: string
+  price: number
+  memberPrice: number
+  capacity: number
+  enrolled: number
+  bookedByMe?: boolean
+  tags: string[]
+}
+
+export interface PrivateCoach {
+  id: string
+  name: string
+  title: string
+  tier: '省网校国家级' | '金网5.0' | 'CTA高级'
+  specialty: '零基础启蒙' | '发球提速' | '网前截击' | '比赛实战' | '青少年'
+  photo: string
+  rating: number
+  lessonsCount: number
+  venueName: string
+  price: number
+  memberPrice: number
+  intro: string
+  tags: string[]
+  availableHours: string[]
 }
 
 export interface HotelRoom {
@@ -254,6 +339,8 @@ export interface LightboxPayload {
 export interface BookingDraft {
   venueId: string
   venueName: string
+  date?: string
+  courtId?: string
   slotTime: string
   price: number
   memberPrice: number

@@ -1,33 +1,233 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
+import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
-import type { RadiusOption } from '../../types/portal'
+import type { CutrBand, RadiusOption } from '../../types/portal'
 
 const {
   state,
+  memberTier,
   switchModule,
   openPhoto,
   openBookingModal,
   openActionModal,
   openNavigation,
   refreshLiveScores,
+  joinMatchmakingGame,
+  publishMatchmakingGame,
   createQuickOrder,
   showToast,
 } = usePortalStore()
 
-const subView = ref<'all' | 'courts' | 'scores' | 'matchmaking'>('all')
+const subView = ref<'all' | 'courts' | 'matchmaking' | 'scores'>('all')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
-const surfaces: ('全部' | '硬地' | '红土' | '室内风雨')[] = ['全部', '硬地', '红土', '室内风雨']
 
-const filteredCourts = computed(() =>
-  state.courts.filter((c) => {
-    const okSurface =
-      state.courtSurfaceFilter === '全部' || c.surfaces.includes(state.courtSurfaceFilter)
+// ===== 场地预约多维筛选 =====
+const venueKeyword = ref('')
+const selectedCourtDate = ref(BOOKING_DATES[0]!.iso)
+const courtTimePeriod = ref<'全天' | '上午' | '下午' | '晚间'>('全天')
+const venueSort = ref<'distance' | 'price' | 'rating' | 'slots'>('distance')
+const selectedEnv = ref<'全部' | '室内' | '室外' | '风雨棚'>('全部')
+const onlyBookable = ref(true)
+const selectedVenueAmenities = ref<string[]>([])
+const surfaces: ('全部' | '硬地' | '红土' | '室内风雨' | '匹克球')[] = ['全部', '硬地', '红土', '室内风雨', '匹克球']
+const venueAmenityOptions = ['公益免费', '免费停车', '有充电桩', '有空调', '灯光夜场', '可看实况']
+
+function toggleVenueAmenity(tag: string) {
+  const idx = selectedVenueAmenities.value.indexOf(tag)
+  if (idx >= 0) selectedVenueAmenities.value.splice(idx, 1)
+  else selectedVenueAmenities.value.push(tag)
+}
+
+function getPeriodHours(period: '全天' | '上午' | '下午' | '晚间'): string[] {
+  if (period === '上午') return ['08:00', '09:00', '10:00', '11:00']
+  if (period === '下午') return ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+  if (period === '晚间') return ['18:00', '19:00', '20:00', '21:00']
+  return [...COURT_HOURS]
+}
+
+function getVenueAvailableCount(venueId: string, dateIso: string, period: '全天' | '上午' | '下午' | '晚间') {
+  const venue = state.courts.find((c) => c.id === venueId)
+  if (!venue) return 0
+  const hours = getPeriodHours(period)
+  let count = 0
+  for (const ct of venue.courts) {
+    for (const h of hours) {
+      if (!state.bookedCourtKeys.includes(`${venueId}|${dateIso}|${ct.id}|${h}`)) count++
+    }
+  }
+  return count
+}
+
+function getVenuePreviewHours(venueId: string) {
+  const hours = getPeriodHours(courtTimePeriod.value)
+  const sample = hours.length >= 6 ? [hours[0]!, hours[2]!, hours[4]!, hours[hours.length - 2]!] : hours.slice(0, 4)
+  const venue = state.courts.find((c) => c.id === venueId)
+  if (!venue) return []
+  return sample.map((h) => {
+    const isNight = Number(h.split(':')[0]) >= 18
+    const freeCourts = venue.courts.filter(
+      (ct) => !state.bookedCourtKeys.includes(`${venueId}|${selectedCourtDate.value}|${ct.id}|${h}`),
+    )
+    const firstCourt = freeCourts[0] ?? venue.courts[0]!
+    const rawPrice = isNight ? firstCourt.nightPrice : firstCourt.dayPrice
+    const memberPrice = Math.round(rawPrice * memberTier.value.discount)
+    return {
+      hour: h,
+      range: formatHourRange(h),
+      freeCount: freeCourts.length,
+      courtId: firstCourt.id,
+      price: rawPrice,
+      memberPrice,
+    }
+  })
+}
+
+const filteredCourts = computed(() => {
+  const q = venueKeyword.value.trim().toLowerCase()
+  const list = state.courts.filter((c) => {
+    const okQ = !q || c.name.toLowerCase().includes(q) || c.address.toLowerCase().includes(q) || c.region.includes(q)
+    const okSurface = state.courtSurfaceFilter === '全部' || c.surfaces.includes(state.courtSurfaceFilter)
     const okRegion = state.courtRegionFilter === '全部' || c.region === state.courtRegionFilter
-    return okSurface && okRegion
-  }),
-)
+    const okEnv = selectedEnv.value === '全部' || c.envs.includes(selectedEnv.value)
+    const okAmenities = selectedVenueAmenities.value.every((a) => c.amenities.includes(a))
+    const okBookable = !onlyBookable.value || getVenueAvailableCount(c.id, selectedCourtDate.value, courtTimePeriod.value) > 0
+    return okQ && okSurface && okRegion && okEnv && okAmenities && okBookable
+  })
+  return [...list].sort((a, b) => {
+    if (venueSort.value === 'distance') return a.distanceKm - b.distanceKm
+    if (venueSort.value === 'price') return a.minPrice - b.minPrice
+    if (venueSort.value === 'rating') return b.rating - a.rating
+    return (
+      getVenueAvailableCount(b.id, selectedCourtDate.value, courtTimePeriod.value) -
+      getVenueAvailableCount(a.id, selectedCourtDate.value, courtTimePeriod.value)
+    )
+  })
+})
+
+function resetCourtFilters() {
+  venueKeyword.value = ''
+  state.courtSurfaceFilter = '全部'
+  state.courtRegionFilter = '全部'
+  selectedEnv.value = '全部'
+  courtTimePeriod.value = '全天'
+  selectedVenueAmenities.value = []
+  onlyBookable.value = true
+}
+
+// ===== 同城约球多维筛选（参照图1） =====
+const mgSearch = ref('')
+const mgSort = ref<'distance' | 'time' | 'spots'>('distance')
+const mgDate = ref<string>('全部')
+const mgCutr = ref<'全部' | CutrBand>('全部')
+const mgVenueType = ref<'全部' | '室内' | '室外' | '风雨棚' | '学练馆'>('全部')
+const mgActivityType = ref<'全部' | '拉球' | '比赛' | '发球机' | '人工训练'>('全部')
+const mgGender = ref<'不限' | '男' | '女'>('不限')
+const mgFormat = ref<'全部' | '单打' | '双打'>('全部')
+const mgTimeStart = ref('00:00')
+const mgTimeEnd = ref('24:00')
+const mgAmenities = ref<string[]>([])
+const mgScopeTab = ref<'全部' | '我报名的' | '可加入'>('全部')
+const showMgAdvanced = ref(true)
+const showPublishModal = ref(false)
+
+const mgAmenityOptions = ['有空调', '免费停车', '有充电桩', '有休息区', '好停车']
+const timePickOptions = [
+  '00:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '20:00', '22:00', '24:00',
+]
+
+function toggleMgAmenity(tag: string) {
+  const idx = mgAmenities.value.indexOf(tag)
+  if (idx >= 0) mgAmenities.value.splice(idx, 1)
+  else mgAmenities.value.push(tag)
+}
+
+function resetMgFilters() {
+  mgSearch.value = ''
+  mgDate.value = '全部'
+  mgCutr.value = '全部'
+  mgVenueType.value = '全部'
+  mgActivityType.value = '全部'
+  mgGender.value = '不限'
+  mgFormat.value = '全部'
+  mgTimeStart.value = '00:00'
+  mgTimeEnd.value = '24:00'
+  mgAmenities.value = []
+  mgScopeTab.value = '全部'
+}
+
+const filteredGames = computed(() => {
+  const q = mgSearch.value.trim().toLowerCase()
+  const list = state.matchmakingGames.filter((g) => {
+    const okQ = !q || g.title.toLowerCase().includes(q) || g.venueName.toLowerCase().includes(q) || g.hostName.toLowerCase().includes(q)
+    const okDate = mgDate.value === '全部' || g.date === mgDate.value
+    const okCutr = mgCutr.value === '全部' || g.cutrBand === mgCutr.value
+    const okVenue = mgVenueType.value === '全部' || g.venueType === mgVenueType.value
+    const okAct = mgActivityType.value === '全部' || g.activityType === mgActivityType.value
+    const okGender = mgGender.value === '不限' || g.gender === '不限' || g.gender === mgGender.value
+    const okFormat = mgFormat.value === '全部' || g.format === mgFormat.value
+    const okTime = g.startTime >= mgTimeStart.value && g.endTime <= mgTimeEnd.value
+    const okAmenities = mgAmenities.value.every((a) => g.amenities.includes(a))
+    const okScope =
+      mgScopeTab.value === '全部' ||
+      (mgScopeTab.value === '我报名的' && !!g.joinedByMe) ||
+      (mgScopeTab.value === '可加入' && g.currentPlayers < g.maxPlayers && !g.joinedByMe)
+    return okQ && okDate && okCutr && okVenue && okAct && okGender && okFormat && okTime && okAmenities && okScope
+  })
+
+  return [...list].sort((a, b) => {
+    if (mgSort.value === 'distance') return a.distanceKm - b.distanceKm
+    if (mgSort.value === 'time') return `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)
+    return (b.maxPlayers - b.currentPlayers) - (a.maxPlayers - a.currentPlayers)
+  })
+})
+
+const publishForm = reactive({
+  title: '',
+  venueId: 'venue-international',
+  date: BOOKING_DATES[0]!.iso,
+  startTime: '19:00',
+  endTime: '21:00',
+  cutrBand: '3.50-3.99' as CutrBand,
+  venueType: '室外' as '室内' | '室外' | '风雨棚' | '学练馆',
+  activityType: '拉球' as '拉球' | '比赛' | '发球机' | '人工训练',
+  gender: '不限' as '不限' | '男' | '女',
+  format: '双打' as '单打' | '双打',
+  feePerPerson: 35,
+  maxPlayers: 4,
+  note: '',
+})
+
+function submitNewGame() {
+  if (!publishForm.title.trim()) {
+    showToast('请填写约球标题（例如：国际中心夜场双打拉球）')
+    return
+  }
+  const venue = state.courts.find((c) => c.id === publishForm.venueId) ?? state.courts[0]!
+  publishMatchmakingGame({
+    title: publishForm.title.trim(),
+    venueId: venue.id,
+    venueName: venue.name.split('（')[0] ?? venue.name,
+    region: venue.region,
+    distanceKm: venue.distanceKm,
+    date: publishForm.date,
+    startTime: publishForm.startTime,
+    endTime: publishForm.endTime,
+    cutrBand: publishForm.cutrBand,
+    venueType: publishForm.venueType,
+    activityType: publishForm.activityType,
+    gender: publishForm.gender,
+    format: publishForm.format,
+    amenities: venue.amenities.slice(0, 3),
+    feePerPerson: Number(publishForm.feePerPerson) || 0,
+    maxPlayers: Number(publishForm.maxPlayers) || 4,
+    note: publishForm.note.trim() || '欢迎同水平球友一起开心挥拍！',
+  })
+  publishForm.title = ''
+  publishForm.note = ''
+  showPublishModal.value = false
+}
 </script>
 
 <template>
@@ -36,19 +236,17 @@ const filteredCourts = computed(() =>
       <div class="mh-left">
         <div class="mh-num">02</div>
         <div>
-          <h1 class="mh-title">“打”：网球场地服务</h1>
+          <h1 class="mh-title">“打”：网球场地预约与同城约球</h1>
           <div class="mh-desc">
-            全市地图检索（实景/实况直播/开放时间/收费标准）、订场支付取消、周边500m/1公里/2公里服务圈、车位充电桩联动预约、网球记实时比分、陪练与康复
+            支持按日期、时段、区域、场地类型、设施标签多维筛选与具体场地×小时选场订场；同步内置 CUTR 分级约球与网球记实时赛况
           </div>
         </div>
       </div>
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: subView === 'all' }" @click="subView = 'all'">全部功能</button>
+        <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>
+        <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">同城约球（CUTR分级）</button>
         <button class="m-tab" :class="{ active: subView === 'scores' }" @click="subView = 'scores'">网球记实时赛况</button>
-        <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">在线订场与地图</button>
-        <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">
-          陪练/约球({{ state.abilityLevel }})与康复
-        </button>
       </div>
     </div>
 
@@ -76,7 +274,7 @@ const filteredCourts = computed(() =>
             style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.28)"
             @click="switchModule(6)"
           >
-            🚦 查赛期封闭限行与停车
+            🚦 查赛期封闭限行
           </button>
           <button
             class="btn-orange"
@@ -87,11 +285,7 @@ const filteredCourts = computed(() =>
         </div>
       </div>
       <div class="score-grid">
-        <div
-          v-for="m in state.liveMatches"
-          :key="m.id"
-          class="score-card"
-        >
+        <div v-for="m in state.liveMatches" :key="m.id" class="score-card">
           <div class="sc-head">
             <span>📍 {{ m.venue }} · <strong>{{ m.courtNo }}</strong></span>
             <span :style="{ color: m.status === '已完赛' ? 'var(--lime)' : '#FF7B6B' }">
@@ -104,9 +298,7 @@ const filteredCourts = computed(() =>
           <div class="sc-row">
             <span>{{ m.playerA }}</span>
             <div class="sc-sets">
-              <span v-for="(s, idx) in m.setsA" :key="idx" :class="{ cur: idx > 0 && m.status !== '已完赛' }">
-                {{ s }}
-              </span>
+              <span v-for="(s, idx) in m.setsA" :key="idx" :class="{ cur: idx > 0 && m.status !== '已完赛' }">{{ s }}</span>
             </div>
           </div>
           <div class="sc-row">
@@ -119,315 +311,612 @@ const filteredCourts = computed(() =>
       </div>
     </div>
 
-    <!-- 左侧订场（含地面/区域筛选 + 3大场馆） + 右侧 500m/1公里/2公里 服务圈地图 -->
-    <div v-if="subView === 'all' || subView === 'courts'" class="grid-split mb-16">
-      <div style="display: flex; flex-direction: column; gap: 12px">
-        <div class="card card-pad flex-between" style="padding: 10px 14px; background: #fafdfc">
+    <!-- 场地预约多维检索区 + 左侧场馆列表 + 右侧服务圈地图 -->
+    <div v-if="subView === 'all' || subView === 'courts'" class="mb-18">
+      <!-- 顶部多维筛选面板（参照图2） -->
+      <div class="card card-pad mb-16 filter-workbench">
+        <div class="flex-between" style="gap: 12px; margin-bottom: 12px">
+          <div class="search-bar" style="max-width: 440px; height: 38px">
+            <span style="color: var(--ink-3)">🔍</span>
+            <input v-model="venueKeyword" type="text" placeholder="搜索场馆名称、片区、街道或球场特色…" />
+            <button v-if="venueKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 11px" @click="venueKeyword = ''">清空</button>
+          </div>
           <div class="flex-row">
-            <strong style="font-size: 12.5px">地面筛选：</strong>
+            <select v-model="state.courtRegionFilter" class="f-input" style="width: auto; padding: 6px 12px">
+              <option value="全部">全部区域</option>
+              <option value="温泉街道">温泉街道</option>
+              <option value="新市街道">新市街道</option>
+              <option value="永兴街道">永兴街道</option>
+            </select>
+            <select v-model="venueSort" class="f-input" style="width: auto; padding: 6px 12px">
+              <option value="distance">按距离最近</option>
+              <option value="price">按最低价格</option>
+              <option value="rating">按球友评分最高</option>
+              <option value="slots">按可约时段最多</option>
+            </select>
+            <label class="m-tab" :class="{ active: onlyBookable }" style="cursor: pointer">
+              <input v-model="onlyBookable" type="checkbox" style="display: none" />
+              {{ onlyBookable ? '✔ 仅看可预订' : '全部场馆' }}
+            </label>
+            <button class="btn-ghost" @click="resetCourtFilters">重置筛选</button>
+          </div>
+        </div>
+
+        <!-- 7日日期条 + 时段区间 -->
+        <div style="display: grid; grid-template-columns: 1fr 310px; gap: 14px; align-items: center; margin-bottom: 12px">
+          <div class="date-strip-7">
+            <button
+              v-for="d in BOOKING_DATES"
+              :key="d.iso"
+              class="date-chip"
+              :class="{ active: selectedCourtDate === d.iso }"
+              @click="selectedCourtDate = d.iso"
+            >
+              <strong>{{ d.weekday }}</strong>
+              <span>{{ d.shortDate }}</span>
+            </button>
+          </div>
+          <div class="flex-row" style="justify-content: flex-end">
+            <span style="font-size: 12px; font-weight: 800; color: var(--ink-2)">时段：</span>
+            <button
+              v-for="p in (['全天', '上午', '下午', '晚间'] as const)"
+              :key="p"
+              class="m-tab"
+              :class="{ active: courtTimePeriod === p }"
+              @click="courtTimePeriod = p"
+            >
+              {{ p }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 场地地面 + 室内外 + 设施标签 -->
+        <div class="filter-rows">
+          <div class="filter-row">
+            <span class="filter-label">场地类型：</span>
             <button
               v-for="sf in surfaces"
               :key="sf"
-              class="m-tab"
+              class="filter-pill"
               :class="{ active: state.courtSurfaceFilter === sf }"
               @click="state.courtSurfaceFilter = sf"
             >
               {{ sf }}
             </button>
+            <span class="filter-divider" />
+            <span class="filter-label">环境：</span>
+            <button
+              v-for="env in (['全部', '室内', '室外', '风雨棚'] as const)"
+              :key="env"
+              class="filter-pill"
+              :class="{ active: selectedEnv === env }"
+              @click="selectedEnv = env"
+            >
+              {{ env }}
+            </button>
           </div>
-          <div class="flex-row">
-            <select v-model="state.courtRegionFilter" class="f-input" style="width: auto; padding: 4px 10px; font-size: 12px">
-              <option value="全部">全部片区</option>
-              <option value="温泉街道">温泉街道</option>
-              <option value="新市街道">新市街道</option>
-            </select>
-            <span class="tag green">共 {{ filteredCourts.length }} 处精选场馆</span>
+
+          <div class="filter-row">
+            <span class="filter-label">设施标签：</span>
+            <button
+              v-for="tag in venueAmenityOptions"
+              :key="tag"
+              class="filter-pill"
+              :class="{ active: selectedVenueAmenities.includes(tag) }"
+              @click="toggleVenueAmenity(tag)"
+            >
+              {{ tag }}
+            </button>
+            <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
+              筛选结果：{{ filteredCourts.length }} 家可约场馆
+            </span>
           </div>
         </div>
+      </div>
 
-        <div v-for="venue in filteredCourts" :key="venue.id" class="court-item">
-          <div
-            class="photo-box"
-            style="height: 196px; border-radius: 12px"
-            @click="
-              openPhoto({
-                title: venue.name,
-                category: '网球场馆实景详情',
-                photo: venue.photo,
-                rating: venue.rating,
-                subtitle: `${venue.region} ｜ ${venue.reviewCount}条球友真实评价`,
-                intro: `${venue.name}采用国际网联(ITF)赛事级场地涂装与防眩光专业灯光，支持扫码自助开灯、实时视频画面查看与开场前2小时免费取消；订场同时可一键联动锁位${venue.parkingName}与${venue.chargerName}，完赛自动激活79家联盟商家电子票根。`,
-                openHours: venue.openHours,
-                priceInfo: venue.priceDesc,
-                address: venue.address,
-                lng: venue.lng,
-                lat: venue.lat,
-                tags: venue.tags,
-                hotItemsTitle: '🎾 场馆核心配套与特色服务',
-                hotItems: [
-                  { name: '订场联动停车预约', price: `剩余 ${venue.parkingRemain} 位`, tag: '免费停3h', desc: venue.parkingName },
-                  { name: '120kW 智慧快充联动', price: `闲置 ${venue.chargerRemain} 桩`, tag: '打球即满电', desc: venue.chargerName },
-                ],
-                reviews: [
-                  { user: '武汉球友老林', origin: '武汉', score: 5.0, date: '2026-11-24', content: venue.quote.replace(/^.*评：“|”$/g, '') },
-                  { user: '长沙球友小郑', origin: '长沙', score: 4.9, date: '2026-11-21', content: '场地弹性与夜间灯光都是一流水平，更衣室热水充足，周边吃住走几步就能搞定！' },
-                ],
-              })
-            "
-          >
-            <img :src="venue.photo" :alt="venue.name" />
-            <span class="badge-tl"><span class="live-dot" />实况直播 · {{ venue.liveViewers }}人在看</span>
-            <span class="badge-bl">★ {{ venue.rating }}分 · 点看实景{{ venue.galleryCount }}图</span>
+      <!-- 左侧场馆列表 + 右侧服务圈地图 -->
+      <div class="grid-split">
+        <div style="display: flex; flex-direction: column; gap: 12px">
+          <div v-if="filteredCourts.length === 0" class="card card-pad" style="text-align: center; padding: 48px 20px">
+            <div style="font-size: 32px; margin-bottom: 8px">🎾</div>
+            <strong style="font-size: 15px; display: block; margin-bottom: 6px">当前筛选条件下暂无匹配场馆</strong>
+            <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 12px">可尝试放宽设施标签、环境或切换其他日期</div>
+            <button class="btn-primary" @click="resetCourtFilters">重置全部筛选条件</button>
           </div>
-          <div>
-            <div class="flex-between">
-              <strong style="font-size: 16px">{{ venue.name }}</strong>
-              <span class="rating-pill">★ {{ venue.rating }} ({{ venue.reviewCount }}条评价)</span>
+
+          <div v-for="venue in filteredCourts" :key="venue.id" class="court-item">
+            <div
+              class="photo-box"
+              style="height: 214px; border-radius: 0"
+              @click="
+                openPhoto({
+                  title: venue.name,
+                  category: '网球场馆实景详情',
+                  photo: venue.photo,
+                  rating: venue.rating,
+                  subtitle: `${venue.region} ｜ 距您 ${venue.distanceKm} km ｜ 📞 ${venue.phone}`,
+                  intro: `${venue.name}支持按日期与具体场地编号精确预约小时时段，开场前2小时免费取消；订场同步联动锁位${venue.parkingName}与${venue.chargerName}。`,
+                  openHours: venue.openHours,
+                  priceInfo: venue.priceDesc,
+                  address: venue.address,
+                  lng: venue.lng,
+                  lat: venue.lat,
+                  tags: venue.tags,
+                  reviews: [venue.quote],
+                })
+              "
+            >
+              <img :src="venue.photo" :alt="venue.name" />
+              <span class="badge-tl"><span class="live-dot" />实况 · {{ venue.liveViewers }}人在看</span>
+              <span class="badge-bl">★ {{ venue.rating }} · 距您 {{ venue.distanceKm }}km</span>
             </div>
-            <div style="font-size: 11.5px; color: var(--ink-3); margin: 3px 0">
-              📍 {{ venue.address }}（<span class="coord-mono">{{ venue.lng.toFixed(4) }}°E, {{ venue.lat.toFixed(4) }}°N</span>）｜ 🕒 {{ venue.openHours }} ｜ 💰 {{ venue.priceDesc }}
-            </div>
-            <div class="slots-4">
-              <div
-                v-for="slot in venue.slots"
-                :key="slot.time"
-                class="slot"
-                :class="{ hot: slot.remaining <= 3 && !slot.booked }"
-                @click="
-                  openBookingModal({
-                    venueId: venue.id,
-                    venueName: venue.name,
-                    slotTime: slot.time,
-                    price: slot.price,
-                    memberPrice: slot.memberPrice,
-                    parkingName: venue.parkingName,
-                    chargerName: venue.chargerName,
-                  })
-                "
-              >
-                <strong>{{ slot.time }}</strong>
-                <span>
-                  {{ slot.booked ? '已订 · 可取消' : slot.price === 0 ? '公益免费' : `可约 ¥${slot.memberPrice}` }}
+            <div>
+              <div class="flex-between">
+                <strong style="font-size: 16px">{{ venue.name }}</strong>
+                <span class="tag green">
+                  {{ BOOKING_DATES.find((d) => d.iso === selectedCourtDate)?.shortDate }} {{ courtTimePeriod }}余
+                  {{ getVenueAvailableCount(venue.id, selectedCourtDate, courtTimePeriod) }} 个场次
                 </span>
               </div>
-            </div>
+              <div class="flex-row" style="margin: 5px 0; gap: 5px">
+                <span v-for="t in venue.tags.slice(0, 3)" :key="t" class="tag">{{ t }}</span>
+                <span class="tag blue">{{ venue.region }}</span>
+                <span style="font-size: 11px; color: var(--ink-3)">📞 {{ venue.phone }} · 🕒 {{ venue.openHours }}</span>
+              </div>
+              <div style="font-size: 11.5px; color: var(--ink-3); margin-bottom: 6px">
+                📍 {{ venue.address }} ｜ 最低价格：<strong style="color: var(--accent)">¥{{ venue.minPrice }}元起</strong>
+              </div>
 
-            <div class="link-park-box">
-              <span>
-                ☑️ 订场联动预约：<strong>🅿️ {{ venue.parkingName }}</strong> +
-                <strong>⚡ {{ venue.chargerName }}</strong>
-              </span>
-              <span style="text-decoration: underline; cursor: pointer" @click="switchModule(6)">切换车位/桩</span>
-            </div>
-            <div class="review-quote">💬 {{ venue.quote }}</div>
-            <div class="flex-between" style="margin-top: 8px">
-              <span class="tag green" style="cursor: pointer" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">
-                🎫 查看「网球联盟电子票根」
-              </span>
-              <div class="flex-row">
+              <!-- 精确日期×具体小时时段快捷选择 -->
+              <div class="slots-4">
                 <button
-                  class="btn-ghost"
-                  @click="
-                    openNavigation({
-                      placeName: venue.name.split('（')[0] ?? venue.name,
-                      address: venue.address,
-                      lng: venue.lng,
-                      lat: venue.lat,
-                      distance: '2.5 km',
-                      driveMin: '约 6 分钟',
-                      tip: `支持联动预约 ${venue.parkingName} 与 ${venue.chargerName}`,
-                    })
-                  "
-                >
-                  🧭 导航
-                </button>
-                <button
-                  class="btn-ghost"
-                  @click="openActionModal({ type: 'livecam', venueName: venue.name, photo: venue.photo, viewers: venue.liveViewers })"
-                >
-                  📹 看实时画面
-                </button>
-                <button
-                  class="btn-primary"
+                  v-for="item in getVenuePreviewHours(venue.id)"
+                  :key="item.hour"
+                  type="button"
+                  class="slot"
+                  :class="{ hot: item.freeCount > 0 && item.freeCount <= 1 }"
+                  :disabled="item.freeCount === 0"
+                  :style="item.freeCount === 0 ? 'opacity: 0.45; cursor: not-allowed' : ''"
                   @click="
                     openBookingModal({
                       venueId: venue.id,
                       venueName: venue.name,
-                      slotTime: venue.slots[1]?.time ?? '16:00',
-                      price: venue.slots[1]?.price ?? 80,
-                      memberPrice: venue.slots[1]?.memberPrice ?? 68,
+                      date: selectedCourtDate,
+                      courtId: item.courtId,
+                      slotTime: item.hour,
+                      price: item.price,
+                      memberPrice: item.memberPrice,
                       parkingName: venue.parkingName,
                       chargerName: venue.chargerName,
                     })
                   "
                 >
-                  在线支付订场
+                  <strong>{{ item.range }}</strong>
+                  <span>
+                    {{ item.freeCount === 0 ? '已满' : item.memberPrice === 0 ? `免费·余${item.freeCount}片` : `¥${item.memberPrice}·余${item.freeCount}片` }}
+                  </span>
                 </button>
+              </div>
+
+              <div class="link-park-box">
+                <span>☑️ 联动预约：<strong>🅿️ {{ venue.parkingName }}</strong> + <strong>⚡ {{ venue.chargerName }}</strong></span>
+                <span style="text-decoration: underline; cursor: pointer" @click="switchModule(6)">切换车位/桩</span>
+              </div>
+
+              <div class="flex-between" style="margin-top: 8px">
+                <span style="font-size: 11px; color: var(--ink-3)">共 {{ venue.courts.length }} 片独立编号场地可选</span>
+                <div class="flex-row">
+                  <button
+                    class="btn-ghost"
+                    @click="
+                      openNavigation({
+                        placeName: venue.name.split('（')[0] ?? venue.name,
+                        address: venue.address,
+                        lng: venue.lng,
+                        lat: venue.lat,
+                        distance: `${venue.distanceKm} km`,
+                        driveMin: '约 6 分钟',
+                        tip: `支持联动预约 ${venue.parkingName}`,
+                      })
+                    "
+                  >
+                    🧭 导航
+                  </button>
+                  <button
+                    class="btn-ghost"
+                    @click="openActionModal({ type: 'livecam', venueName: venue.name, photo: venue.photo, viewers: venue.liveViewers })"
+                  >
+                    📹 实况
+                  </button>
+                  <button
+                    class="btn-primary"
+                    @click="
+                      openBookingModal({
+                        venueId: venue.id,
+                        venueName: venue.name,
+                        date: selectedCourtDate,
+                        courtId: venue.courts[0]?.id,
+                        slotTime: getVenuePreviewHours(venue.id)[0]?.hour ?? '16:00',
+                        price: venue.courts[0]?.dayPrice ?? 80,
+                        memberPrice: Math.round((venue.courts[0]?.dayPrice ?? 80) * memberTier.discount),
+                        parkingName: venue.parkingName,
+                        chargerName: venue.chargerName,
+                      })
+                    "
+                  >
+                    选场地/具体时段预约 →
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); background: #fafdfc">
-          <strong style="font-size: 14px">🗺️ 订场周边服务设施（支持三档半径切换）</strong>
-          <div class="flex-row">
-            <button
-              v-for="r in radii"
-              :key="r"
-              class="m-tab"
-              :class="{ active: state.radius === r }"
-              @click="state.radius = r"
-            >
-              {{ r }}
-            </button>
+        <div class="card">
+          <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); background: #fafdfc">
+            <strong style="font-size: 14px">🗺️ 订场周边服务设施（支持三档半径切换）</strong>
+            <div class="flex-row">
+              <button
+                v-for="r in radii"
+                :key="r"
+                class="m-tab"
+                :class="{ active: state.radius === r }"
+                @click="state.radius = r"
+              >
+                {{ r }}
+              </button>
+            </div>
           </div>
-        </div>
-        <ServiceCircleMap mode="courts" :radius="state.radius" />
-        <div class="card-pad">
-          <div class="flex-between" style="margin-bottom: 8px">
-            <strong style="font-size: 13px">当前 {{ state.radius }} 范围内可直达配套（含实景与评分）</strong>
-            <button
-              class="btn-ghost"
-              style="padding: 4px 9px; font-size: 11px"
-              @click="
-                openNavigation({
-                  placeName: '京山国际网球中心',
-                  address: '湖北省荆门市京山市温泉街道网球大道1号',
-                  lng: 113.1195,
-                  lat: 31.0218,
-                  distance: '3.2 km',
-                  driveMin: '约 8 分钟',
-                  tip: '温泉大道东段赛事临时封闭，系统已为您规划从京山大道西入口直达 P1 停车场',
-                })
-              "
-            >
-              🗺️ 跳转高德/百度导航
-            </button>
-          </div>
-          <div class="grid-4" style="gap: 8px; text-align: center">
-            <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 9px; cursor: pointer" @click="switchModule(5)">
-              <strong style="color: var(--primary); display: block">
-                {{ state.radius === '500m' ? 2 : state.radius === '1公里' ? 6 : 14 }} 家
-              </strong>
-              <span style="font-size: 10.5px; color: var(--ink-3)">联盟酒店/公寓</span>
+          <ServiceCircleMap mode="courts" :radius="state.radius" />
+          <div class="card-pad">
+            <div class="flex-between" style="margin-bottom: 8px">
+              <strong style="font-size: 13px">当前 {{ state.radius }} 范围内可直达配套</strong>
+              <button
+                class="btn-ghost"
+                style="padding: 4px 9px; font-size: 11px"
+                @click="
+                  openNavigation({
+                    placeName: '京山国际网球中心',
+                    address: '湖北省荆门市京山市温泉街道网球大道1号',
+                    lng: 113.1195,
+                    lat: 31.0218,
+                    distance: '2.1 km',
+                    driveMin: '约 6 分钟',
+                    tip: '系统已规划避开温泉大道东段赛事临时封闭路段',
+                  })
+                "
+              >
+                🗺️ 高德/百度导航
+              </button>
             </div>
-            <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 9px; cursor: pointer" @click="switchModule(4)">
-              <strong style="color: var(--primary); display: block">
-                {{ state.radius === '500m' ? 5 : state.radius === '1公里' ? 19 : 42 }} 家
-              </strong>
-              <span style="font-size: 10.5px; color: var(--ink-3)">餐饮/夜市</span>
-            </div>
-            <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 9px; cursor: pointer" @click="switchModule(6)">
-              <strong style="color: var(--primary); display: block">
-                {{ state.radius === '500m' ? 12 : state.radius === '1公里' ? 18 : 36 }} 桩
-              </strong>
-              <span style="font-size: 10.5px; color: var(--ink-3)">可约充电桩</span>
-            </div>
-            <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 9px; cursor: pointer" @click="switchModule(10)">
-              <strong style="color: var(--primary); display: block">
-                {{ state.radius === '500m' ? 1 : state.radius === '1公里' ? 3 : 6 }} 处
-              </strong>
-              <span style="font-size: 10.5px; color: var(--ink-3)">医疗/运动康复</span>
+            <div class="grid-4" style="gap: 8px; text-align: center">
+              <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 0; cursor: pointer" @click="switchModule(5)">
+                <strong style="color: var(--primary); display: block">{{ state.radius === '500m' ? 2 : state.radius === '1公里' ? 6 : 14 }} 家</strong>
+                <span style="font-size: 10.5px; color: var(--ink-3)">联盟酒店</span>
+              </div>
+              <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 0; cursor: pointer" @click="switchModule(4)">
+                <strong style="color: var(--primary); display: block">{{ state.radius === '500m' ? 5 : state.radius === '1公里' ? 19 : 42 }} 家</strong>
+                <span style="font-size: 10.5px; color: var(--ink-3)">餐饮夜市</span>
+              </div>
+              <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 0; cursor: pointer" @click="switchModule(6)">
+                <strong style="color: var(--primary); display: block">{{ state.radius === '500m' ? 12 : state.radius === '1公里' ? 18 : 36 }} 桩</strong>
+                <span style="font-size: 10.5px; color: var(--ink-3)">可约充电桩</span>
+              </div>
+              <div style="background: #f3f8f6; padding: 7px 4px; border-radius: 0; cursor: pointer" @click="switchModule(10)">
+                <strong style="color: var(--primary); display: block">{{ state.radius === '500m' ? 1 : state.radius === '1公里' ? 3 : 6 }} 处</strong>
+                <span style="font-size: 10.5px; color: var(--ink-3)">医疗康复</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 下方4大子服务卡片 -->
-    <div v-if="subView === 'all' || subView === 'matchmaking'" class="grid-4">
-      <div class="card card-pad">
-        <div
-          class="photo-box"
-          style="height: 105px; border-radius: 10px; margin-bottom: 8px"
-          @click="
-            openPhoto({
-              title: '陈浩 · 金网认证5.0陪练达人',
-              category: '金网认证陪练详情',
-              photo: '/images/coach_1.jpg',
-              rating: 5.0,
-              subtitle: '累计接单 326 场 · 零投诉 · 前省级青年队主力',
-              intro: '持有中国网协(CTA)高级教练与金网5.0陪练认证，擅长根据学员五维能力雷达图弱项制定针对性多球喂球与实战拉练方案，支持1对1高强度对抗或2–3人球友拼单陪练。',
-              openHours: '08:00 – 21:30（支持提前预约）',
-              priceInfo: '标准价 ¥180/时 · Lv.3会员 ¥162/时 · 完课积+80分',
-              address: '京山国际网球中心 / 训练基地 / 文峰公园均可上门',
-              lng: 113.1195,
-              lat: 31.0218,
-              tags: ['金网5.0认证', '零差评口碑', '支持多人拼单', '免费赛后视频复盘'],
-              hotItemsTitle: '🎾 热门约练项目',
-              hotItems: [
-                { name: '底线稳定性与多球喂球', price: '¥162/时', tag: '人气最旺', desc: '高频率精准喂球，快速固化正反手引拍与击球节奏。' },
-                { name: '网前截击与双打站位特训', price: '¥162/时', tag: '晋升必练', desc: '针对性补齐五维图网前短板，助力通过晋升复测。' },
-              ],
-              reviews: [
-                { user: '武汉球友林先生', origin: '武汉', score: 5.0, date: '2026-11-24', content: '喂球落点稳得像发球机，还会边打边提醒脚步重心，练了两节截击成功率翻倍！' },
-                { user: '长沙小王', origin: '长沙', score: 5.0, date: '2026-11-19', content: '态度特别好，打完还免费帮我录了一段慢动作发球视频分析问题，物超所值！' },
-              ],
-            })
-          "
-        >
-          <img src="/images/coach_1.jpg" alt="陪练" />
-          <span class="badge-tl">★ 5.0 认证陪练</span>
+    <!-- 同城约球完整工作台（参照图1：CUTR分级、日期、精确时间段、室内外、拉球/比赛、性别、单双打、设施标签、发布约球） -->
+    <div v-if="subView === 'all' || subView === 'matchmaking'" class="card card-pad">
+      <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
+        <div>
+          <strong style="font-size: 17px">🤝 同城约球大厅（CUTR 分级精准匹配）</strong>
+          <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px">
+            按日期、CUTR 水平区间、场馆类型、拉球/比赛、男女、单双打与精确起止时间筛选球局，支持一键报名或发起约球
+          </div>
         </div>
-        <strong style="font-size: 14px">陈浩 · 金网5.0陪练达人</strong>
-        <div style="font-size: 11px; color: var(--ink-3); margin: 3px 0">326条好评 · 会员¥162/时 · 积+80分</div>
-        <div class="review-quote">“喂球极稳，帮我针对五维图网前弱项特训！”</div>
-        <div class="flex-between" style="margin-top: 8px">
-          <span class="price" style="font-size: 16px">¥180<small>/时</small></span>
-          <button class="btn-primary" @click="createQuickOrder('课程', '陈浩 · 金网5.0陪练预约 (1小时)', '多球喂球与网前专项指导 · 课后可评星', 162, 80)">
-            预约/评价
+        <div class="flex-row">
+          <div class="search-bar" style="width: 240px; height: 36px">
+            <span>🔍</span>
+            <input v-model="mgSearch" type="text" placeholder="搜场馆/球局关键词…" />
+          </div>
+          <select v-model="mgSort" class="f-input" style="width: auto; padding: 6px 10px">
+            <option value="distance">距离最近</option>
+            <option value="time">开球最早</option>
+            <option value="spots">空位最多</option>
+          </select>
+          <button class="btn-orange" @click="showPublishModal = true">＋ 发布约球</button>
+          <button class="btn-ghost" @click="mgScopeTab = mgScopeTab === '我报名的' ? '全部' : '我报名的'">
+            我的约球（{{ state.matchmakingGames.filter((g) => g.joinedByMe).length }}）
           </button>
         </div>
       </div>
 
-      <div class="card card-pad">
-        <div class="photo-box" style="height: 105px; border-radius: 10px; margin-bottom: 8px">
-          <img src="/images/coach_2.jpg" alt="集训营" />
-          <span class="badge-tl">★ 4.9 教练约课</span>
-        </div>
-        <strong style="font-size: 14px">青少年 & 成人短期集训营</strong>
-        <div style="font-size: 11px; color: var(--ink-3); margin: 3px 0">周末提高班/1对1私教 · 含结营晋升评测</div>
-        <div class="review-quote">“上完6节课直接预约晋升测试升到了JS-4.0！”</div>
-        <div class="flex-between" style="margin-top: 8px">
-          <span class="price" style="font-size: 16px">¥399<small>/期起</small></span>
-          <button class="btn-primary" @click="switchModule(9)">报名通道</button>
-        </div>
-      </div>
-
-      <div class="card card-pad">
-        <div class="flex-between" style="margin-bottom: 8px">
-          <strong style="font-size: 14px">🤝 同城约球精准匹配</strong>
-          <span class="tag green">按 {{ state.abilityLevel }} 匹配</span>
-        </div>
-        <div style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px">基于您的五维能力评估自动推荐同水平球局：</div>
-        <div style="background: #f4faf7; padding: 8px; border-radius: 9px; margin-bottom: 7px; font-size: 11.5px">
-          <strong>今晚19:00 · 文峰公园4号场</strong><br />
-          <span style="color: var(--ink-3)">匹配度 96% · 球友等级 {{ state.abilityLevel }} · 缺1人</span>
-        </div>
-        <div style="background: #f4faf7; padding: 8px; border-radius: 9px; margin-bottom: 8px; font-size: 11.5px">
-          <strong>明早08:30 · 国际网球中心</strong><br />
-          <span style="color: var(--ink-3)">匹配度 92% · 武汉/深圳游客局 · 缺1人</span>
-        </div>
-        <button class="btn-orange" style="width: 100%" @click="showToast(`已成功加入今晚 19:00 文峰公园4号场（按 ${state.abilityLevel} 精准匹配，已发球友入群通知）`)">
-          一键加入匹配球局
+      <!-- 日期选择条 -->
+      <div class="date-strip-8 mb-12">
+        <button class="date-chip" :class="{ active: mgDate === '全部' }" @click="mgDate = '全部'">
+          <strong>全部</strong>
+          <span>不限日期</span>
+        </button>
+        <button
+          v-for="d in BOOKING_DATES"
+          :key="d.iso"
+          class="date-chip"
+          :class="{ active: mgDate === d.iso }"
+          @click="mgDate = d.iso"
+        >
+          <strong>{{ d.weekday }}</strong>
+          <span>{{ d.shortDate }}</span>
         </button>
       </div>
 
-      <div class="card card-pad">
-        <div class="photo-box" style="height: 105px; border-radius: 10px; margin-bottom: 8px">
-          <img src="/images/hotel.jpg" alt="运动康复机构" />
-          <span class="badge-tl">🏥 官方认证康复</span>
-        </div>
-        <strong style="font-size: 14px">运动康复机构保障</strong>
-        <div style="font-size: 11px; color: var(--ink-3); margin: 3px 0">★ 4.9 · 人民医院康复中心(1.8km) / 中医院 / 世杰郭医生</div>
-        <div class="review-quote">“打完3小时来贴肌贴+筋膜松解，第二天满血复活。”</div>
-        <div class="flex-between" style="margin-top: 8px">
-          <span class="tag blue">赛期绿色通道</span>
-          <button class="btn-primary" @click="createQuickOrder('课程', '京山市人民医院运动康复理疗预约', '赛后筋膜松解与网球肘防护评估', 98, 40)">
-            预约康复
+      <!-- CUTR 多档水平卡片 + 多维筛选 -->
+      <div v-if="showMgAdvanced" class="mg-filter-box mb-16">
+        <div class="cutr-grid mb-12">
+          <button
+            class="cutr-all-btn"
+            :class="{ active: mgCutr === '全部' }"
+            @click="mgCutr = '全部'"
+          >
+            全部<br />水平
           </button>
+          <div class="cutr-tiers">
+            <button
+              v-for="band in CUTR_BANDS"
+              :key="band.value"
+              class="cutr-card"
+              :class="{ active: mgCutr === band.value }"
+              :style="{
+                borderColor: mgCutr === band.value ? band.color : `${band.color}55`,
+                background: mgCutr === band.value ? band.bg : '#fff',
+                color: band.color,
+              }"
+              @click="mgCutr = band.value"
+            >
+              <small>CUTR</small>
+              <strong>{{ band.value }}</strong>
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-rows">
+          <div class="filter-row">
+            <span class="filter-label">场馆环境：</span>
+            <button
+              v-for="vt in (['全部', '室内', '室外', '风雨棚', '学练馆'] as const)"
+              :key="vt"
+              class="filter-pill"
+              :class="{ active: mgVenueType === vt }"
+              @click="mgVenueType = vt"
+            >
+              {{ vt }}
+            </button>
+            <span class="filter-divider" />
+            <span class="filter-label">活动形式：</span>
+            <button
+              v-for="at in (['全部', '拉球', '比赛', '发球机', '人工训练'] as const)"
+              :key="at"
+              class="filter-pill"
+              :class="{ active: mgActivityType === at }"
+              @click="mgActivityType = at"
+            >
+              {{ at }}
+            </button>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-label">性别要求：</span>
+            <div class="seg-group">
+              <button
+                v-for="g in (['不限', '男', '女'] as const)"
+                :key="g"
+                :class="{ active: mgGender === g }"
+                @click="mgGender = g"
+              >
+                {{ g }}
+              </button>
+            </div>
+            <span class="filter-label" style="margin-left: 10px">赛制：</span>
+            <div class="seg-group">
+              <button
+                v-for="fm in (['全部', '单打', '双打'] as const)"
+                :key="fm"
+                :class="{ active: mgFormat === fm }"
+                @click="mgFormat = fm"
+              >
+                {{ fm }}
+              </button>
+            </div>
+            <span class="filter-label" style="margin-left: 10px">约球时间：</span>
+            <select v-model="mgTimeStart" class="f-input" style="width: 96px; padding: 4px 8px">
+              <option v-for="t in timePickOptions" :key="`s-${t}`" :value="t">🕒 {{ t }}</option>
+            </select>
+            <span style="font-size: 12px; color: var(--ink-3)">至</span>
+            <select v-model="mgTimeEnd" class="f-input" style="width: 96px; padding: 4px 8px">
+              <option v-for="t in timePickOptions" :key="`e-${t}`" :value="t">🕒 {{ t }}</option>
+            </select>
+          </div>
+
+          <div class="filter-row">
+            <span class="filter-label">配套设施：</span>
+            <button
+              v-for="am in mgAmenityOptions"
+              :key="am"
+              class="filter-pill"
+              :class="{ active: mgAmenities.includes(am) }"
+              @click="toggleMgAmenity(am)"
+            >
+              {{ am }}
+            </button>
+            <div style="margin-left: auto" class="flex-row">
+              <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="resetMgFilters">重置筛选</button>
+              <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="showMgAdvanced = false">收起筛选 ▲</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="flex-between mb-12" style="background: #f5faf8; padding: 8px 12px; border-radius: 0">
+        <span style="font-size: 12px; color: var(--ink-2)">已收起高级筛选条件（当前命中 {{ filteredGames.length }} 场球局）</span>
+        <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="showMgAdvanced = true">展开全部筛选 ▼</button>
+      </div>
+
+      <!-- 范围切换 + 约球卡片结果 -->
+      <div class="flex-between mb-12">
+        <div class="flex-row">
+          <button
+            v-for="tab in (['全部', '我报名的', '可加入'] as const)"
+            :key="tab"
+            class="m-tab"
+            :class="{ active: mgScopeTab === tab }"
+            @click="mgScopeTab = tab"
+          >
+            {{ tab }}
+          </button>
+        </div>
+        <span style="font-size: 12px; color: var(--ink-3)">共匹配 <strong style="color: var(--primary)">{{ filteredGames.length }}</strong> 场可参与球局</span>
+      </div>
+
+      <div v-if="filteredGames.length === 0" style="text-align: center; padding: 36px 20px; background: #fafdfc; border-radius: 0; border: 1px dashed var(--line)">
+        <div style="font-size: 28px; margin-bottom: 6px">🎾</div>
+        <strong style="font-size: 14px; display: block; margin-bottom: 5px">当前筛选条件下暂无约球局</strong>
+        <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 12px">您可以重置筛选条件，或立即发起一场属于您的新球局</div>
+        <div class="flex-row" style="justify-content: center">
+          <button class="btn-ghost" @click="resetMgFilters">重置筛选</button>
+          <button class="btn-orange" @click="showPublishModal = true">＋ 立即发布约球</button>
+        </div>
+      </div>
+
+      <div v-else class="grid-3">
+        <div v-for="g in filteredGames" :key="g.id" class="card card-pad" style="display: flex; flex-direction: column; justify-content: space-between; background: #fcfefd">
+          <div>
+            <div class="flex-between" style="margin-bottom: 6px">
+              <span class="tag green">CUTR {{ g.cutrBand }}</span>
+              <span class="tag blue">{{ g.venueType }} · {{ g.activityType }} · {{ g.format }}</span>
+            </div>
+            <strong style="font-size: 14.5px; display: block; margin-bottom: 6px">{{ g.title }}</strong>
+            <div style="font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-bottom: 8px">
+              📅 <strong>{{ BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date }} {{ g.startTime }}-{{ g.endTime }}</strong><br />
+              📍 {{ g.venueName }}（距您 {{ g.distanceKm }} km）<br />
+              👤 发起人：{{ g.hostName }}（{{ g.hostOrigin }}） · 性别：{{ g.gender }}
+            </div>
+            <div class="flex-row" style="gap: 5px; margin-bottom: 8px">
+              <span v-for="am in g.amenities" :key="am" class="tag">{{ am }}</span>
+            </div>
+            <div class="review-quote" style="margin-top: 0; margin-bottom: 10px">“{{ g.note }}”</div>
+          </div>
+
+          <div class="flex-between" style="padding-top: 9px; border-top: 1px dashed var(--line)">
+            <div>
+              <strong style="color: var(--accent); font-size: 16px">¥{{ g.feePerPerson }}</strong>
+              <span style="font-size: 11px; color: var(--ink-3)">/人 · 已报 {{ g.currentPlayers }}/{{ g.maxPlayers }}人</span>
+            </div>
+            <button
+              :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-primary'"
+              :disabled="!g.joinedByMe && g.currentPlayers >= g.maxPlayers"
+              @click="joinMatchmakingGame(g.id)"
+            >
+              {{ g.joinedByMe ? '已报名（取消）' : g.currentPlayers >= g.maxPlayers ? '已满员' : '立即加入' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 发布约球弹窗 -->
+    <div v-if="showPublishModal" class="modal-backdrop" @click.self="showPublishModal = false">
+      <div class="modal-box" style="width: 580px">
+        <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff">
+          <strong style="font-size: 16px">＋ 发布同城约球局</strong>
+          <button class="btn-ghost" @click="showPublishModal = false">✕ 关闭</button>
+        </div>
+        <div class="card-pad" style="display: flex; flex-direction: column; gap: 10px">
+          <div>
+            <label class="f-label">约球标题 *</label>
+            <input v-model="publishForm.title" class="f-input" placeholder="如：今晚文峰灯光场3.5双打拉球（缺2人）" />
+          </div>
+          <div class="grid-2" style="gap: 10px">
+            <div>
+              <label class="f-label">预约场馆</label>
+              <select v-model="publishForm.venueId" class="f-input">
+                <option v-for="c in state.courts" :key="c.id" :value="c.id">{{ c.name.split('（')[0] }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">约球日期</label>
+              <select v-model="publishForm.date" class="f-input">
+                <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.fullTitle }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-3" style="gap: 10px">
+            <div>
+              <label class="f-label">开始时间</label>
+              <select v-model="publishForm.startTime" class="f-input">
+                <option v-for="h in COURT_HOURS" :key="h" :value="h">{{ h }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">结束时间</label>
+              <select v-model="publishForm.endTime" class="f-input">
+                <option v-for="h in COURT_HOURS" :key="h" :value="h">{{ h }}</option>
+                <option value="22:00">22:00</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">CUTR 水平</label>
+              <select v-model="publishForm.cutrBand" class="f-input">
+                <option v-for="b in CUTR_BANDS" :key="b.value" :value="b.value">CUTR {{ b.value }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-4" style="gap: 8px">
+            <div>
+              <label class="f-label">环境</label>
+              <select v-model="publishForm.venueType" class="f-input">
+                <option value="室外">室外</option>
+                <option value="室内">室内</option>
+                <option value="风雨棚">风雨棚</option>
+                <option value="学练馆">学练馆</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">形式</label>
+              <select v-model="publishForm.activityType" class="f-input">
+                <option value="拉球">拉球</option>
+                <option value="比赛">比赛</option>
+                <option value="发球机">发球机</option>
+                <option value="人工训练">人工训练</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">赛制</label>
+              <select v-model="publishForm.format" class="f-input">
+                <option value="双打">双打</option>
+                <option value="单打">单打</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">AA费用(元)</label>
+              <input v-model.number="publishForm.feePerPerson" type="number" min="0" class="f-input" />
+            </div>
+          </div>
+          <div>
+            <label class="f-label">球局说明</label>
+            <input v-model="publishForm.note" class="f-input" placeholder="例如：自带新球、欢迎周边自驾球友一起玩" />
+          </div>
+          <div class="flex-between" style="padding-top: 8px; border-top: 1px solid var(--line)">
+            <span style="font-size: 11.5px; color: var(--primary)">发布成功立即获赠 +40 金网积分</span>
+            <div class="flex-row">
+              <button class="btn-ghost" @click="showPublishModal = false">取消</button>
+              <button class="btn-orange" @click="submitNewGame">立即发布约球</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

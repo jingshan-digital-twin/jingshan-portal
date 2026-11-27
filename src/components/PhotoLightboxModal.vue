@@ -94,7 +94,7 @@ function jumpNav() {
         <!-- 实用信息条（开放时间 / 消费参考 / 地址坐标） -->
         <div
           v-if="state.lightbox.openHours || state.lightbox.priceInfo || state.lightbox.address"
-          style="background: #f5faf8; border: 1px solid #d9ebe3; border-radius: 12px; padding: 10px 13px; display: flex; flex-direction: column; gap: 6px; font-size: 12px"
+          style="background: #f5faf8; border: 1px solid #d9ebe3; border-radius: 0; padding: 10px 13px; display: flex; flex-direction: column; gap: 6px; font-size: 12px"
         >
           <div class="flex-row" style="gap: 16px">
             <span v-if="state.lightbox.openHours"><strong>🕒 开放/营业：</strong>{{ state.lightbox.openHours }}</span>
@@ -111,7 +111,7 @@ function jumpNav() {
         <!-- 详细介绍（景区介绍 / 餐馆故事 / 场馆简介） -->
         <div v-if="state.lightbox.intro">
           <strong style="font-size: 14px; display: block; margin-bottom: 5px">📖 详细介绍</strong>
-          <div style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #fbfdfd; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px">
+          <div style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #fbfdfd; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px">
             {{ state.lightbox.intro }}
           </div>
         </div>
@@ -125,7 +125,7 @@ function jumpNav() {
             <div
               v-for="item in state.lightbox.hotItems"
               :key="item.name"
-              style="background: #fffaf3; border: 1px solid #f4deb8; border-radius: 10px; padding: 9px 11px"
+              style="background: #fffaf3; border: 1px solid #f4deb8; border-radius: 0; padding: 9px 11px"
             >
               <div class="flex-between" style="margin-bottom: 3px">
                 <strong style="font-size: 12.5px; color: var(--ink)">{{ item.name }}</strong>
@@ -156,7 +156,7 @@ function jumpNav() {
             <template v-for="(rev, idx) in state.lightbox.reviews" :key="idx">
               <div
                 v-if="isStructuredReview(rev)"
-                style="background: #f6faf8; border-left: 3px solid var(--primary); border-radius: 0 10px 10px 0; padding: 9px 12px"
+                style="background: #f6faf8; border-left: 3px solid var(--primary); border-radius: 0; padding: 9px 12px"
               >
                 <div class="flex-between" style="margin-bottom: 4px; font-size: 11.5px">
                   <div class="flex-row">

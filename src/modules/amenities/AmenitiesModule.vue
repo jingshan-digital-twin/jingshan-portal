@@ -64,9 +64,9 @@ const visibleAmenities = computed(() =>
           <span class="tag orange" style="cursor: pointer" @click="switchModule(6)">查看完整限行地图 →</span>
         </div>
         <div class="grid-3" style="gap: 8px; font-size: 11.5px">
-          <div style="background: #ffecee; color: #b01c26; padding: 8px; border-radius: 9px"><strong>🔴 温泉大道赛场段</strong><br />07:30-19:00 临时封闭</div>
-          <div style="background: #fff5e8; color: #a65608; padding: 8px; border-radius: 9px"><strong>🟠 京山大道东段</strong><br />赛事缓冲限行/禁停</div>
-          <div style="background: #eaf8f1; color: #0a6b46; padding: 8px; border-radius: 9px"><strong>🟢 高铁站/城区主路</strong><br />全线畅通 · P1剩84位</div>
+          <div style="background: #ffecee; color: #b01c26; padding: 8px; border-radius: 0"><strong>🔴 温泉大道赛场段</strong><br />07:30-19:00 临时封闭</div>
+          <div style="background: #fff5e8; color: #a65608; padding: 8px; border-radius: 0"><strong>🟠 京山大道东段</strong><br />赛事缓冲限行/禁停</div>
+          <div style="background: #eaf8f1; color: #0a6b46; padding: 8px; border-radius: 0"><strong>🟢 高铁站/城区主路</strong><br />全线畅通 · P1剩84位</div>
         </div>
       </div>
     </div>
@@ -81,7 +81,7 @@ const visibleAmenities = computed(() =>
         >
           <div
             class="photo-box"
-            style="height: 68px; border-radius: 9px"
+            style="height: 68px; border-radius: 0"
             @click="
               openPhoto({
                 title: a.name,

@@ -48,7 +48,7 @@ const filteredOrders = computed(() =>
             <div>
               <div style="font-size: 17px; font-weight: 900">
                 林先生
-                <span style="font-size: 11px; background: #f5ca69; color: #2f1c00; padding: 2px 8px; border-radius: 99px; margin-left: 5px">
+                <span style="font-size: 11px; background: #f5ca69; color: #2f1c00; padding: 2px 8px; border-radius: 0; margin-left: 5px">
                   👑 {{ memberTier.code }} {{ memberTier.name }}
                 </span>
               </div>
@@ -61,21 +61,21 @@ const filteredOrders = computed(() =>
         </div>
 
         <div class="grid-4" style="gap: 7px; margin-bottom: 11px">
-          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 9px; padding: 7px; font-size: 10.5px">
+          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 7px; font-size: 10.5px">
             <strong>Lv.1 新星</strong><br />注册即享 · 订场98折
           </div>
-          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 9px; padding: 7px; font-size: 10.5px">
+          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 7px; font-size: 10.5px">
             <strong>Lv.2 球友</strong><br />500分 · 订场92折
           </div>
-          <div :style="memberTier.code === 'Lv.3' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius:9px;padding:7px;font-size:10.5px;' : 'background:rgba(255,255,255,0.1);border-radius:9px;padding:7px;font-size:10.5px;'">
+          <div :style="memberTier.code === 'Lv.3' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:7px;font-size:10.5px;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:7px;font-size:10.5px;'">
             <strong :style="{ color: memberTier.code === 'Lv.3' ? 'var(--lime)' : '#fff' }">Lv.3 精英</strong><br />1000分 · 85折+免费退
           </div>
-          <div :style="memberTier.code === 'Lv.4' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius:9px;padding:7px;font-size:10.5px;' : 'background:rgba(255,255,255,0.1);border-radius:9px;padding:7px;font-size:10.5px;'">
+          <div :style="memberTier.code === 'Lv.4' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:7px;font-size:10.5px;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:7px;font-size:10.5px;'">
             <strong :style="{ color: memberTier.code === 'Lv.4' ? 'var(--lime)' : '#fff' }">Lv.4 冠军黑金</strong><br />1500分 · 8折+VIP室
           </div>
         </div>
 
-        <div style="background: rgba(0, 0, 0, 0.24); border-radius: 11px; padding: 10px 12px; font-size: 11.5px; line-height: 1.75; margin-bottom: 10px">
+        <div style="background: rgba(0, 0, 0, 0.24); border-radius: 0; padding: 10px 12px; font-size: 11.5px; line-height: 1.75; margin-bottom: 10px">
           <div><strong style="color: var(--lime)">💰 怎么积累积分：</strong>在线订场 +50分 ｜ 完赛 +120分 ｜ 约陪练/购课 +80分 ｜ 联盟消费 +60分 ｜ 打卡点评 +20分</div>
           <div><strong style="color: #f5ca69">🎁 积分快捷兑换：</strong>点击下方按钮即可实时用积分兑换权益券！</div>
         </div>
@@ -167,7 +167,7 @@ const filteredOrders = computed(() =>
             <span class="tag orange">79家联盟通用</span>
           </div>
           <div style="display: flex; flex-direction: column; gap: 6px; font-size: 11.5px">
-            <div v-for="cp in state.coupons" :key="cp.id" class="flex-between" style="background: #fff6f2; padding: 7px 10px; border-radius: 8px">
+            <div v-for="cp in state.coupons" :key="cp.id" class="flex-between" style="background: #fff6f2; padding: 7px 10px; border-radius: 0">
               <div>
                 <strong>{{ cp.title }}</strong> <span class="tag green">{{ cp.badge }}</span>
                 <div style="font-size: 10.5px; color: var(--ink-3)">{{ cp.desc }}</div>

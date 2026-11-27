@@ -237,14 +237,14 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               <div class="flex-row">
                 <button
                   class="btn-orange"
-                  style="border-radius: 99px"
+                  style="border-radius: 0"
                   @click.stop="openActionModal({ type: 'video', title: '《中国网球之城 · 生态京山》官方城市宣传片', duration: '02:15' })"
                 >
                   ▶ 播放城市宣传片
                 </button>
                 <button
                   class="btn-ghost"
-                  style="border-radius: 99px"
+                  style="border-radius: 0"
                   @click.stop="openActionModal({ type: 'audio', spotName: '京山网球城市全景导览', duration: '全城2日游推荐', photo: '/images/hero.jpg', script: '欢迎来到中国网球之城——湖北京山。全市拥有356片标准网球场，每万人拥有5.67片，您可以以京山国际网球中心为起点，串联天沐温泉、绿林山、空山洞、文峰夜市与桥米美食，开启挥拍山水间的惬意旅程。' })"
                 >
                   🗺️ 城市导览
@@ -302,14 +302,14 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             </div>
           </div>
           <div style="display: flex; flex-direction: column; gap: 8px">
-            <div class="flex-between" style="background: #f5faf8; padding: 9px 11px; border-radius: 10px">
+            <div class="flex-between" style="background: #f5faf8; padding: 9px 11px; border-radius: 0">
               <div>
                 <div style="font-size: 13px; font-weight: 800">2026中国青少年网球巡回赛总决赛 <span class="tag red">进行中</span></div>
                 <div style="font-size: 11px; color: var(--ink-3)">11/24–12/3 · 国际网球中心 · 观赛116.3万 · 实时比分同步</div>
               </div>
               <button class="btn-primary" @click="openNewPage(2)">查赛况 ↗</button>
             </div>
-            <div class="flex-between" style="background: #fff8f4; padding: 9px 11px; border-radius: 10px">
+            <div class="flex-between" style="background: #fff8f4; padding: 9px 11px; border-radius: 0">
               <div>
                 <div style="font-size: 13px; font-weight: 800">京山网球周末分级赛（匹配 {{ state.abilityLevel }} 组） <span class="tag orange">余12位</span></div>
                 <div style="font-size: 11px; color: var(--ink-3)">11/29 文峰公园 · 完赛积+120分 · 赠联盟商家票根折扣券</div>

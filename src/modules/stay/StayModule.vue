@@ -1,15 +1,50 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { HOTEL_PROFILES } from '../../mock/details'
+import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
 const stayTab = ref<'全部' | '公寓' | '赛事优惠' | '民宿'>('全部')
+const checkInDate = ref(BOOKING_DATES[0]!.iso)
+const checkOutDate = ref(BOOKING_DATES[2]!.iso)
+const stayPriceFilter = ref<'全部' | '200以下' | '200-400' | '400以上'>('全部')
+const staySort = ref<'default' | 'price' | 'rating'>('default')
+const stayFacilities = ref<string[]>([])
+const facilityOptions = ['免费停车', '快充充电桩', '免费赛场摆渡车', '天然私汤入户', '独立厨房/洗衣机']
 
-const visibleCards = computed(() => {
-  if (stayTab.value === '全部') return HOTEL_PROFILES.slice(0, 3)
-  return HOTEL_PROFILES.filter((h) => h.category === stayTab.value)
+function toggleFacility(f: string) {
+  const idx = stayFacilities.value.indexOf(f)
+  if (idx >= 0) stayFacilities.value.splice(idx, 1)
+  else stayFacilities.value.push(f)
+}
+
+const nightsCount = computed(() => {
+  const s = new Date(checkInDate.value).getTime()
+  const e = new Date(checkOutDate.value).getTime()
+  return Math.max(1, Math.round((e - s) / 86400000))
 })
+
+const filteredHotels = computed(() => {
+  const list = HOTEL_PROFILES.filter((h) => {
+    const okTab = stayTab.value === '全部' || h.category === stayTab.value
+    const minP = h.rooms[0]?.eventPrice ?? 0
+    const okPrice =
+      stayPriceFilter.value === '全部' ||
+      (stayPriceFilter.value === '200以下' && minP < 200) ||
+      (stayPriceFilter.value === '200-400' && minP >= 200 && minP <= 400) ||
+      (stayPriceFilter.value === '400以上' && minP > 400)
+    const okFac = stayFacilities.value.every((f) => h.facilities.some((hf) => hf.includes(f.slice(0, 4))))
+    return okTab && okPrice && okFac
+  })
+  return [...list].sort((a, b) => {
+    if (staySort.value === 'price') return (a.rooms[0]?.eventPrice ?? 0) - (b.rooms[0]?.eventPrice ?? 0)
+    if (staySort.value === 'rating') return b.rating - a.rating
+    return 0
+  })
+})
+
+const visibleCards = computed(() => filteredHotels.value)
 
 function openHotelDetail(id: string) {
   state.activeHotelId = id
@@ -40,7 +75,7 @@ function openHotelDetail(id: string) {
     <div class="promo-banner mb-16">
       <div class="flex-row" style="gap: 12px">
         <div
-          style="width: 44px; height: 44px; border-radius: 12px; background: #ff5d2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0"
+          style="width: 44px; height: 44px; border-radius: 0; background: #ff5d2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0"
         >
           🏠
         </div>
@@ -63,6 +98,54 @@ function openHotelDetail(id: string) {
         <button class="btn-orange" @click="claimHomeSubsidy">
           {{ state.claimedHomeSubsidy ? '✅ 已领取5万元补贴凭证' : '领取5万元购房补贴券 →' }}
         </button>
+      </div>
+    </div>
+
+    <!-- 入住日期、价格区间与配套筛选 -->
+    <div class="card card-pad mb-16 filter-workbench">
+      <div class="filter-rows">
+        <div class="filter-row">
+          <span class="filter-label">入住日期：</span>
+          <select v-model="checkInDate" class="f-input" style="width: 145px; padding: 5px 9px">
+            <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`in-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
+          </select>
+          <span class="filter-label">离店日期：</span>
+          <select v-model="checkOutDate" class="f-input" style="width: 145px; padding: 5px 9px">
+            <option v-for="d in BOOKING_DATES.slice(1)" :key="`out-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
+          </select>
+          <span class="tag green">共住 {{ nightsCount }} 晚</span>
+          <span class="filter-divider" />
+          <span class="filter-label">价格：</span>
+          <button
+            v-for="p in (['全部', '200以下', '200-400', '400以上'] as const)"
+            :key="p"
+            class="filter-pill"
+            :class="{ active: stayPriceFilter === p }"
+            @click="stayPriceFilter = p"
+          >
+            {{ p === '全部' ? '不限' : `¥${p}` }}
+          </button>
+          <select v-model="staySort" class="f-input" style="width: auto; padding: 5px 10px; margin-left: auto">
+            <option value="default">综合推荐</option>
+            <option value="price">价格最低</option>
+            <option value="rating">评分最高</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">设施筛选：</span>
+          <button
+            v-for="f in facilityOptions"
+            :key="f"
+            class="filter-pill"
+            :class="{ active: stayFacilities.includes(f) }"
+            @click="toggleFacility(f)"
+          >
+            {{ f }}
+          </button>
+          <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
+            符合条件：{{ visibleCards.length }} 家精选住宿
+          </span>
+        </div>
       </div>
     </div>
 
@@ -100,7 +183,7 @@ function openHotelDetail(id: string) {
           </div>
 
           <!-- 房型与透明价格预览（前2种房型 + 点击展开全部） -->
-          <div style="background: #f5f9f7; border: 1px solid #dfece6; border-radius: 10px; padding: 8px 10px; margin: 7px 0">
+          <div style="background: #f5f9f7; border: 1px solid #dfece6; border-radius: 0; padding: 8px 10px; margin: 7px 0">
             <div
               v-for="rm in hotel.rooms.slice(0, 2)"
               :key="rm.id"

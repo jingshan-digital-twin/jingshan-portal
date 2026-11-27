@@ -83,7 +83,7 @@ function redeemStubAtMerchant() {
           "
         >
           <strong style="font-size: 18px; margin-bottom: 10px">{{ state.actionModal.title }}</strong>
-          <div style="height: 5px; background: rgba(255, 255, 255, 0.25); border-radius: 99px; overflow: hidden; margin-bottom: 10px">
+          <div style="height: 5px; background: rgba(255, 255, 255, 0.25); border-radius: 0; overflow: hidden; margin-bottom: 10px">
             <div :style="{ width: progress + '%', height: '100%', background: 'var(--lime)', transition: 'width 0.4s linear' }" />
           </div>
           <div class="flex-between">
@@ -187,13 +187,13 @@ function redeemStubAtMerchant() {
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
       <div class="card-pad" style="display: flex; flex-direction: column; gap: 11px">
-        <div style="background: #f5f9f7; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--ink-2)">
+        <div style="background: #f5f9f7; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; font-size: 12px; color: var(--ink-2)">
           <div><strong>📍 详细地址：</strong>{{ state.actionModal.address }}</div>
           <div style="margin-top: 4px">
             <strong>🌐 经纬度坐标：</strong>{{ state.actionModal.lng.toFixed(4) }}°E, {{ state.actionModal.lat.toFixed(4) }}°N
           </div>
         </div>
-        <div style="background: #fff5f5; border: 1px solid #f7c5c8; color: #a81c26; padding: 10px 12px; border-radius: 10px; font-size: 12px; font-weight: 700">
+        <div style="background: #fff5f5; border: 1px solid #f7c5c8; color: #a81c26; padding: 10px 12px; border-radius: 0; font-size: 12px; font-weight: 700">
           🚦 实时避堵与到达提示：{{ state.actionModal.tip }}
         </div>
         <div class="grid-2" style="gap: 10px">
@@ -229,7 +229,7 @@ function redeemStubAtMerchant() {
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
       <div class="card-pad" style="text-align: center">
-        <div style="width: 156px; height: 156px; margin: 4px auto 12px; padding: 10px; border: 2px solid #d5e6df; border-radius: 14px; background: #fff">
+        <div style="width: 156px; height: 156px; margin: 4px auto 12px; padding: 10px; border: 2px solid #d5e6df; border-radius: 0; background: #fff">
           <svg viewBox="0 0 60 60" width="132" height="132">
             <rect width="60" height="60" fill="#fff" />
             <rect x="4" y="4" width="16" height="16" fill="none" stroke="#0B251D" stroke-width="3.2" />
@@ -269,10 +269,10 @@ function redeemStubAtMerchant() {
           <strong style="font-size: 16px">{{ state.actionModal.spotName }}</strong>
           <button class="btn-ghost" @click="close">✕ 关闭</button>
         </div>
-        <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #f5faf8; padding: 11px 13px; border-radius: 10px; margin-bottom: 12px">
+        <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #f5faf8; padding: 11px 13px; border-radius: 0; margin-bottom: 12px">
           “{{ state.actionModal.script }}”
         </p>
-        <div style="height: 6px; background: #e3ece8; border-radius: 99px; overflow: hidden; margin-bottom: 12px">
+        <div style="height: 6px; background: #e3ece8; border-radius: 0; overflow: hidden; margin-bottom: 12px">
           <div :style="{ width: progress + '%', height: '100%', background: 'var(--primary)', transition: 'width 0.4s linear' }" />
         </div>
         <div class="flex-between">
@@ -328,7 +328,7 @@ function redeemStubAtMerchant() {
       <div class="card-pad" style="text-align: center">
         <div style="font-size: 16px; font-weight: 900; margin-bottom: 6px">{{ state.actionModal.appName }}</div>
         <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 14px">{{ state.actionModal.desc }}</div>
-        <div style="background: #f3faf6; border: 1px dashed #0d7a58; border-radius: 12px; padding: 14px; font-size: 12px; color: #0b5c42; margin-bottom: 14px">
+        <div style="background: #f3faf6; border: 1px dashed #0d7a58; border-radius: 0; padding: 14px; font-size: 12px; color: #0b5c42; margin-bottom: 14px">
           ✅ 已自动携带您的「京山网球」实名账号与当前定位，免重复登录
         </div>
         <button class="btn-primary" style="width: 100%; padding: 10px" @click="showToast(`已成功授权并拉起「${state.actionModal.appName}」`); close()">

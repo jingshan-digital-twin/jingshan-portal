@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { RESTAURANT_MENUS } from '../../mock/data'
+import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, openPhoto, openActionModal, openNavigation } = usePortalStore()
+const { state, openPhoto, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
 const foodTab = ref<'全部' | '联盟85折' | '农家菜' | '夜市' | '团餐'>('全部')
+const dineDate = ref(BOOKING_DATES[0]!.iso)
+const dinePeriod = ref<'午市 11:30-13:30' | '晚市 17:30-20:00' | '夜宵 20:30-23:30'>('晚市 17:30-20:00')
+const dineGuests = ref('4人桌')
+const foodSort = ref<'default' | 'price' | 'rating'>('default')
 
 const restaurants = [
   {
@@ -148,11 +153,28 @@ const groupVenues = [
   },
 ]
 
-const visibleShops = computed(() =>
-  foodTab.value === '全部' || foodTab.value === '团餐'
-    ? restaurants
-    : restaurants.filter((r) => r.cat === foodTab.value),
-)
+const visibleShops = computed(() => {
+  const list =
+    foodTab.value === '全部' || foodTab.value === '团餐'
+      ? restaurants
+      : restaurants.filter((r) => r.cat === foodTab.value)
+  return [...list].sort((a, b) => {
+    if (foodSort.value === 'price') return a.avg - b.avg
+    if (foodSort.value === 'rating') return b.rating - a.rating
+    return 0
+  })
+})
+
+function reserveTable(shop: (typeof restaurants)[number]) {
+  const dLabel = BOOKING_DATES.find((d) => d.iso === dineDate.value)?.shortDate ?? dineDate.value
+  createQuickOrder(
+    '门票',
+    `美食订座：${shop.name}`,
+    `${dLabel} ${dinePeriod.value} · ${dineGuests.value} · 凭票根 ${state.ticketStubCode} 享优惠`,
+    0,
+    30,
+  )
+}
 </script>
 
 <template>
@@ -191,6 +213,37 @@ const visibleShops = computed(() =>
       <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">
         出示我的电子票根码
       </button>
+    </div>
+
+    <!-- 用餐日期、时段与排序筛选条 -->
+    <div class="card card-pad mb-16 filter-workbench">
+      <div class="filter-row">
+        <span class="filter-label">📅 订座日期：</span>
+        <select v-model="dineDate" class="f-input" style="width: 140px; padding: 5px 9px">
+          <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
+        </select>
+        <span class="filter-label">🕒 用餐时段：</span>
+        <button
+          v-for="p in (['午市 11:30-13:30', '晚市 17:30-20:00', '夜宵 20:30-23:30'] as const)"
+          :key="p"
+          class="filter-pill"
+          :class="{ active: dinePeriod === p }"
+          @click="dinePeriod = p"
+        >
+          {{ p }}
+        </button>
+        <select v-model="dineGuests" class="f-input" style="width: 118px; padding: 5px 9px">
+          <option>2人桌</option>
+          <option>4人桌</option>
+          <option>6-8人包厢</option>
+          <option>10人+球队桌</option>
+        </select>
+        <select v-model="foodSort" class="f-input" style="width: auto; padding: 5px 9px; margin-left: auto">
+          <option value="default">综合口碑</option>
+          <option value="price">人均最低</option>
+          <option value="rating">评分最高</option>
+        </select>
+      </div>
     </div>
 
     <div v-if="foodTab !== '团餐'" class="grid-3 mb-16">
@@ -233,7 +286,7 @@ const visibleShops = computed(() =>
             <span>📍 {{ shop.address }}</span>
             <span class="coord-mono">{{ shop.lng.toFixed(4) }}°E, {{ shop.lat.toFixed(4) }}°N</span>
           </div>
-          <div style="font-size: 11.5px; color: var(--ink-2); background: #f4faf7; padding: 7px 9px; border-radius: 8px; margin: 6px 0">
+          <div style="font-size: 11.5px; color: var(--ink-2); background: #f4faf7; padding: 7px 9px; border-radius: 0; margin: 6px 0">
             <strong>📖 招牌菜单：</strong>{{ shop.menu }}
           </div>
           <div class="review-quote">💬 评：“{{ shop.quote }}”</div>
@@ -255,6 +308,9 @@ const visibleShops = computed(() =>
                 "
               >
                 📖 完整菜单
+              </button>
+              <button class="btn-orange" @click="reserveTable(shop)">
+                预约 {{ dinePeriod.split(' ')[0] }}桌位
               </button>
               <button
                 class="btn-primary"
@@ -297,7 +353,7 @@ const visibleShops = computed(() =>
         <div
           v-for="gv in groupVenues"
           :key="gv.name"
-          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 11px; padding: 10px 12px; font-size: 12px"
+          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 0; padding: 10px 12px; font-size: 12px"
         >
           <div class="flex-between" style="margin-bottom: 4px">
             <strong>{{ gv.name }}</strong>

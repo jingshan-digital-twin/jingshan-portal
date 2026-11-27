@@ -12,7 +12,6 @@ import PhotoLightboxModal from './components/PhotoLightboxModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
 import ProductDetailModal from './components/ProductDetailModal.vue'
 import SubPageNavBar from './components/SubPageNavBar.vue'
-import TopUtilityBar from './components/TopUtilityBar.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
 import FeedbackModule from './modules/feedback/FeedbackModule.vue'
@@ -55,7 +54,6 @@ onMounted(() => {
 
 <template>
   <div>
-    <TopUtilityBar />
     <PortalHeader />
 
     <!-- 首页模式：顶部焦点轮播 + 金刚区 + 下方固定热门概览容器 -->
