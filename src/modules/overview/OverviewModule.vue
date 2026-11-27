@@ -637,7 +637,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <div class="flex-between mb-10">
             <span class="tag gold">🛍️ 购 · 好物</span>
           </div>
-          <strong style="font-size: 16.5px; display: block; margin-bottom: 10px">京山农特与运动装备</strong>
+          <strong style="font-size: 16.5px; display: block; margin-bottom: 10px">京山农特与网球文创</strong>
           <div class="home-quad-products">
             <div
               v-for="prod in hotProducts"

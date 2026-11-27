@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePortalStore } from '../store/usePortalStore'
 
-const { state, memberTier, switchModule, handleSearch } = usePortalStore()
+const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = usePortalStore()
 </script>
 
 <template>
@@ -47,13 +47,25 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
         >
           🏆 赛事福利
         </span>
-        <span class="hdr-pill" :class="{ active: state.activeModule === 11 }" @click="switchModule(11)">
+        <span
+          class="hdr-pill"
+          :class="{ active: state.isStandalonePage && state.activeModule === 11 }"
+          @click="navigateToModulePage(11)"
+        >
           💬 互动反馈
         </span>
-        <span class="hdr-pill" :class="{ active: state.activeModule === 12 }" @click="switchModule(12)">
+        <span
+          class="hdr-pill"
+          :class="{ active: state.isStandalonePage && state.activeModule === 12 }"
+          @click="navigateToModulePage(12)"
+        >
           🔗 小程序
         </span>
-        <div class="member-chip" :class="{ active: state.activeModule === 13 }" @click="switchModule(13)">
+        <div
+          class="member-chip"
+          :class="{ active: state.isStandalonePage && state.activeModule === 13 }"
+          @click="navigateToModulePage(13)"
+        >
           <div class="avatar-sm">林</div>
           <span>林先生 · {{ memberTier.code }}</span>
         </div>

@@ -436,6 +436,21 @@ export function usePortalStore() {
     openModulePage(id, { newWindow: false, params })
   }
 
+  function navigateToModulePage(id: ModuleId) {
+    state.activeDetail = null
+    state.isStandalonePage = id !== 1
+    state.activeModule = id
+    persistStateNow()
+    try {
+      const nextUrl = buildModuleUrl(id)
+      window.history.pushState({ moduleId: id }, '', nextUrl)
+    } catch {
+      // ignore history errors
+    }
+    updateDocumentTitle(id, id !== 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   function openActionModal(payload: ActionModalPayload) {
     state.actionModal = payload
   }
@@ -994,6 +1009,7 @@ export function usePortalStore() {
     activeOrdersCount,
     showToast,
     switchModule,
+    navigateToModulePage,
     openModulePage,
     openModuleInNewWindow,
     openDetailPage,
