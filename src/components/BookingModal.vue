@@ -123,24 +123,24 @@ function submitBooking() {
       <!-- 顶栏 -->
       <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff; flex-shrink: 0">
         <div>
-          <strong style="font-size: 16.5px">🎾 选择具体日期、场地编号与时间段</strong>
-          <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82); margin-top: 2px">
-            {{ currentVenue.name }} ｜ 📍 {{ currentVenue.address }} ｜ 🕒 {{ currentVenue.openHours }}
+          <strong style="font-size: 18.5px">🎾 选择预约日期、场地编号与时段</strong>
+          <div style="font-size: 13.5px; color: rgba(255, 255, 255, 0.86); margin-top: 3px">
+            {{ currentVenue.name }} ｜ {{ currentVenue.openHours }}
           </div>
         </div>
         <button class="btn-ghost" @click="state.bookingDraft = null">✕ 关闭</button>
       </div>
 
       <!-- 主体 -->
-      <div class="card-pad" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 13px">
+      <div class="card-pad" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px">
         <!-- 7日日期选择条 -->
         <div>
-          <div class="flex-between" style="margin-bottom: 7px">
-            <strong style="font-size: 13px">📅 第一步：选择预约日期</strong>
-            <div class="flex-row" style="font-size: 11px; color: var(--ink-3)">
+          <div class="flex-between" style="margin-bottom: 8px">
+            <strong style="font-size: 15.5px">📅 第一步：选择预约日期</strong>
+            <div class="flex-row" style="font-size: 13px; color: var(--ink-2)">
               <span class="slot-legend-dot free" /> 可预订
-              <span class="slot-legend-dot picked" /> 已选时段
-              <span class="slot-legend-dot busy" /> 已被订
+              <span class="slot-legend-dot picked" /> 已选
+              <span class="slot-legend-dot busy" /> 已订
             </div>
           </div>
           <div class="date-strip-7">
@@ -159,8 +159,8 @@ function submitBooking() {
 
         <!-- 场地 × 小时 实时选场矩阵 -->
         <div>
-          <div class="flex-between" style="margin-bottom: 7px">
-            <strong style="font-size: 13px">🏟️ 第二步：点击选择具体场地与小时时段（支持连续/多时段复选）</strong>
+          <div class="flex-between" style="margin-bottom: 8px">
+            <strong style="font-size: 15.5px">🏟️ 第二步：点击选择场地与小时时段</strong>
             <span class="tag green">{{ memberTier.code }} {{ memberTier.name }}享 {{ Math.round(memberTier.discount * 100) / 10 }} 折</span>
           </div>
 
@@ -168,7 +168,7 @@ function submitBooking() {
             <table class="court-matrix">
               <thead>
                 <tr>
-                  <th style="width: 148px; text-align: left">场地 / 时段</th>
+                  <th style="width: 156px; text-align: left">场地 / 时段</th>
                   <th v-for="h in COURT_HOURS" :key="h">{{ h }}</th>
                 </tr>
               </thead>
@@ -204,18 +204,18 @@ function submitBooking() {
 
         <!-- 已选明细 -->
         <div class="selected-slots-bar">
-          <div style="font-size: 12px; font-weight: 800; color: var(--ink); margin-bottom: 5px">
+          <div style="font-size: 14px; font-weight: 800; color: var(--ink); margin-bottom: 6px">
             ✅ 已选时段（{{ selectedSlotDetails.length }} 小时）：
           </div>
-          <div v-if="selectedSlotDetails.length === 0" style="font-size: 12px; color: var(--ink-3)">
-            请在上方网格点击至少一个空闲时段（例如 16:00、17:00）
+          <div v-if="selectedSlotDetails.length === 0" style="font-size: 13.5px; color: var(--ink-3)">
+            请在上方网格点击至少一个空闲时段
           </div>
-          <div v-else class="flex-row" style="gap: 6px">
+          <div v-else class="flex-row" style="gap: 8px">
             <span
               v-for="s in selectedSlotDetails"
               :key="`${s.courtId}-${s.hour}`"
               class="tag green"
-              style="padding: 4px 9px; font-size: 11.5px; cursor: pointer"
+              style="padding: 5px 11px; cursor: pointer"
               title="点击移除该时段"
               @click="selectedCells = selectedCells.filter((k) => k !== `${s.courtId}|${s.hour}`)"
             >
@@ -225,18 +225,18 @@ function submitBooking() {
         </div>
 
         <!-- 车位/充电桩/积分联动 -->
-        <div class="grid-3" style="gap: 9px">
-          <label class="flex-between" style="background: #eef6ff; padding: 9px 11px; border-radius: 0; cursor: pointer">
-            <span style="font-size: 11.5px; font-weight: 700; color: #164c96">
-              <input v-model="bookParking" type="checkbox" style="margin-right: 5px" />
+        <div class="grid-3" style="gap: 10px">
+          <label class="flex-between" style="background: #eef6ff; padding: 11px 13px; border-radius: 0; cursor: pointer">
+            <span style="font-size: 13.5px; font-weight: 700; color: #164c96">
+              <input v-model="bookParking" type="checkbox" style="margin-right: 6px" />
               🅿️ {{ currentVenue.parkingName }}
             </span>
             <span class="tag blue">免费</span>
           </label>
 
-          <label class="flex-between" style="background: #eef6ff; padding: 9px 11px; border-radius: 0; cursor: pointer">
-            <span style="font-size: 11.5px; font-weight: 700; color: #164c96">
-              <input v-model="bookCharger" type="checkbox" style="margin-right: 5px" />
+          <label class="flex-between" style="background: #eef6ff; padding: 11px 13px; border-radius: 0; cursor: pointer">
+            <span style="font-size: 13.5px; font-weight: 700; color: #164c96">
+              <input v-model="bookCharger" type="checkbox" style="margin-right: 6px" />
               ⚡ {{ currentVenue.chargerName }}
             </span>
             <span class="tag green">联动</span>
@@ -245,24 +245,24 @@ function submitBooking() {
           <label
             v-if="state.points >= 200"
             class="flex-between"
-            style="background: #fff8eb; padding: 9px 11px; border-radius: 0; cursor: pointer"
+            style="background: #fff8eb; padding: 11px 13px; border-radius: 0; cursor: pointer"
           >
-            <span style="font-size: 11.5px; font-weight: 700; color: #7a4d04">
-              <input v-model="usePoints" type="checkbox" style="margin-right: 5px" />
-              👑 200积分抵¥20（余{{ state.points }}）
+            <span style="font-size: 13.5px; font-weight: 700; color: #7a4d04">
+              <input v-model="usePoints" type="checkbox" style="margin-right: 6px" />
+              👑 200积分抵¥20
             </span>
             <span class="tag gold">-¥20</span>
           </label>
         </div>
 
         <!-- 底部确认栏 -->
-        <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
-          <div>
+        <div class="flex-between" style="padding-top: 12px; border-top: 1px solid var(--line)">
+          <div style="font-size: 15px">
             实付金额：
             <strong class="price">¥{{ finalPay }}</strong>
-            <s v-if="totalOriginal > totalMember" style="font-size: 11.5px; color: var(--ink-3); margin-left: 6px">原价 ¥{{ totalOriginal }}</s>
-            <span style="font-size: 11px; color: var(--primary); margin-left: 8px">
-              支持开场前2h免费取消 · 完场赠 +{{ 50 * Math.max(1, selectedSlotDetails.length) }} 积分
+            <s v-if="totalOriginal > totalMember" style="font-size: 13.5px; color: var(--ink-3); margin-left: 8px">原价 ¥{{ totalOriginal }}</s>
+            <span style="font-size: 13px; color: var(--primary); margin-left: 10px">
+              开场前2h免费取消
             </span>
           </div>
           <div class="flex-row">
@@ -273,7 +273,7 @@ function submitBooking() {
               :style="selectedSlotDetails.length === 0 ? 'opacity: 0.5; cursor: not-allowed' : ''"
               @click="submitBooking"
             >
-              确认预约所选 {{ selectedSlotDetails.length }} 个时段
+              确认预约（{{ selectedSlotDetails.length }} 时段）
             </button>
           </div>
         </div>

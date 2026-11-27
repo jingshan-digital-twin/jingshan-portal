@@ -10,9 +10,8 @@ const {
   state,
   memberTier,
   switchModule,
-  openPhoto,
+  openVenueDetail,
   openBookingModal,
-  openActionModal,
   openNavigation,
   refreshLiveScores,
   joinMatchmakingGame,
@@ -21,7 +20,7 @@ const {
   showToast,
 } = usePortalStore()
 
-const subView = ref<'courts' | 'matchmaking' | 'scores'>('courts')
+const subView = ref<'all' | 'courts' | 'matchmaking' | 'scores'>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
@@ -275,6 +274,7 @@ function submitNewGame() {
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
+        <button class="m-tab" :class="{ active: subView === 'all' }" @click="subView = 'all'">全部功能</button>
         <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>
         <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">同城约球（CUTR分级）</button>
         <button class="m-tab" :class="{ active: subView === 'scores' }" @click="subView = 'scores'">网球记实时赛况</button>
@@ -287,25 +287,25 @@ function submitNewGame() {
       class="card card-pad mb-16"
       style="background: linear-gradient(135deg, #092d22, #0e4936); color: #fff"
     >
-      <div class="flex-between" style="margin-bottom: 10px">
+      <div class="flex-between" style="margin-bottom: 14px">
         <div class="flex-row">
-          <strong style="font-size: 15px">📊 正在进行的赛事实时比分与场次占用</strong>
-          <span class="tag" style="background: var(--lime); color: #0b251d">实时对接「网球记」小程序数据</span>
+          <strong style="font-size: 18px">📊 赛事实时比分</strong>
+          <span class="tag" style="background: var(--lime); color: #0b251d">网球记实时同步</span>
         </div>
         <div class="flex-row">
           <button
             class="btn-ghost"
-            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.28)"
+            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.3)"
             @click="refreshLiveScores"
           >
-            🔄 刷新实时比分
+            🔄 刷新比分
           </button>
           <button
             class="btn-ghost"
-            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.28)"
+            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.3)"
             @click="switchModule(6)"
           >
-            🚦 查赛期封闭限行
+            🚦 赛期限行
           </button>
           <button
             class="btn-orange"
@@ -318,12 +318,12 @@ function submitNewGame() {
       <div class="score-grid">
         <div v-for="m in state.liveMatches" :key="m.id" class="score-card">
           <div class="sc-head">
-            <span>📍 {{ m.venue }} · <strong>{{ m.courtNo }}</strong></span>
+            <span>{{ m.venue }} · <strong>{{ m.courtNo }}</strong></span>
             <span :style="{ color: m.status === '已完赛' ? 'var(--lime)' : '#FF7B6B' }">
-              {{ m.status === '已完赛' ? '✅' : '🔴' }} {{ m.status }}
+              {{ m.status }}
             </span>
           </div>
-          <div style="font-size: 10.5px; color: rgba(255, 255, 255, 0.62); margin-bottom: 6px">
+          <div style="font-size: 12.5px; color: rgba(255, 255, 255, 0.72); margin-bottom: 8px">
             {{ m.round }} · 耗时 {{ m.duration }}
           </div>
           <div class="sc-row">
@@ -343,38 +343,38 @@ function submitNewGame() {
     </div>
 
     <!-- 场地预约多维检索区 + 左侧场馆列表 + 右侧服务圈地图 -->
-    <div v-if="subView === 'courts'" class="mb-18">
-      <!-- 顶部多维筛选面板（参照图2） -->
+    <div v-if="subView === 'all' || subView === 'courts'" class="mb-18">
+      <!-- 顶部多维筛选面板 -->
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between" style="gap: 12px; margin-bottom: 12px">
-          <div class="search-bar" style="max-width: 440px; height: 38px">
+        <div class="flex-between" style="gap: 12px; margin-bottom: 14px">
+          <div class="search-bar" style="max-width: 440px; height: 42px">
             <span style="color: var(--ink-3)">🔍</span>
-            <input v-model="venueKeyword" type="text" placeholder="搜索场馆名称、片区、街道或球场特色…" />
-            <button v-if="venueKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 11px" @click="venueKeyword = ''">清空</button>
+            <input v-model="venueKeyword" type="text" placeholder="搜索场馆名称、片区或街道…" />
+            <button v-if="venueKeyword" class="btn-ghost" style="padding: 3px 9px; font-size: 12.5px" @click="venueKeyword = ''">清空</button>
           </div>
           <div class="flex-row">
-            <select v-model="state.courtRegionFilter" class="f-input" style="width: auto; padding: 6px 12px">
+            <select v-model="state.courtRegionFilter" class="f-input" style="width: auto; padding: 8px 12px">
               <option value="全部">全部区域</option>
               <option value="温泉街道">温泉街道</option>
               <option value="新市街道">新市街道</option>
               <option value="永兴街道">永兴街道</option>
             </select>
-            <select v-model="venueSort" class="f-input" style="width: auto; padding: 6px 12px">
+            <select v-model="venueSort" class="f-input" style="width: auto; padding: 8px 12px">
               <option value="distance">按距离最近</option>
               <option value="price">按最低价格</option>
-              <option value="rating">按球友评分最高</option>
-              <option value="slots">按可约时段最多</option>
+              <option value="rating">按评分最高</option>
+              <option value="slots">按空场最多</option>
             </select>
             <label class="m-tab" :class="{ active: onlyBookable }" style="cursor: pointer">
               <input v-model="onlyBookable" type="checkbox" style="display: none" />
-              {{ onlyBookable ? '✔ 仅看可预订' : '全部场馆' }}
+              {{ onlyBookable ? '✔ 仅看可约' : '全部场馆' }}
             </label>
-            <button class="btn-ghost" @click="resetCourtFilters">重置筛选</button>
+            <button class="btn-ghost" @click="resetCourtFilters">重置</button>
           </div>
         </div>
 
         <!-- 7日日期条 + 时段区间 -->
-        <div style="display: grid; grid-template-columns: 1fr 310px; gap: 14px; align-items: center; margin-bottom: 12px">
+        <div style="display: grid; grid-template-columns: 1fr 330px; gap: 14px; align-items: center; margin-bottom: 14px">
           <div class="date-strip-7">
             <button
               v-for="d in BOOKING_DATES"
@@ -388,7 +388,7 @@ function submitNewGame() {
             </button>
           </div>
           <div class="flex-row" style="justify-content: flex-end">
-            <span style="font-size: 12px; font-weight: 800; color: var(--ink-2)">时段：</span>
+            <span style="font-size: 14px; font-weight: 800; color: var(--ink-2)">时段：</span>
             <button
               v-for="p in (['全天', '上午', '下午', '晚间'] as const)"
               :key="p"
@@ -428,7 +428,7 @@ function submitNewGame() {
           </div>
 
           <div class="filter-row">
-            <span class="filter-label">设施标签：</span>
+            <span class="filter-label">设施：</span>
             <button
               v-for="tag in venueAmenityOptions"
               :key="tag"
@@ -438,8 +438,8 @@ function submitNewGame() {
             >
               {{ tag }}
             </button>
-            <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-              筛选结果：{{ filteredCourts.length }} 家可约场馆
+            <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
+              共 {{ filteredCourts.length }} 家可约场馆
             </span>
           </div>
         </div>
@@ -447,12 +447,12 @@ function submitNewGame() {
 
       <!-- 左侧精简场馆列表 + 右侧高德联动标注地图 -->
       <div class="play-map-split">
-        <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; flex-direction: column; gap: 12px">
           <div v-if="filteredCourts.length === 0" class="card card-pad" style="text-align: center; padding: 48px 20px">
-            <div style="font-size: 32px; margin-bottom: 8px">🎾</div>
-            <strong style="font-size: 15px; display: block; margin-bottom: 6px">当前筛选条件下暂无匹配场馆</strong>
-            <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 12px">可尝试放宽设施标签、环境或切换其他日期</div>
-            <button class="btn-primary" @click="resetCourtFilters">重置全部筛选条件</button>
+            <div style="font-size: 32px; margin-bottom: 10px">🎾</div>
+            <strong style="font-size: 16.5px; display: block; margin-bottom: 8px">当前筛选条件下暂无匹配场馆</strong>
+            <div style="font-size: 13.5px; color: var(--ink-3); margin-bottom: 14px">可尝试放宽筛选条件或切换其他日期</div>
+            <button class="btn-primary" @click="resetCourtFilters">重置全部筛选</button>
           </div>
 
           <div
@@ -464,59 +464,43 @@ function submitNewGame() {
           >
             <div
               class="photo-box"
-              style="height: 124px"
+              style="height: 138px"
               @click.stop="
                 activeVenueId = venue.id;
-                openPhoto({
-                  title: venue.name,
-                  category: '网球场馆实景详情',
-                  photo: venue.photo,
-                  rating: venue.rating,
-                  subtitle: `${venue.region} ｜ 距您 ${venue.distanceKm} km ｜ 📞 ${venue.phone}`,
-                  intro: `${venue.name}支持按日期与具体场地编号精确预约小时时段，开场前2小时免费取消；订场同步联动锁位${venue.parkingName}与${venue.chargerName}。`,
-                  openHours: venue.openHours,
-                  priceInfo: venue.priceDesc,
-                  address: venue.address,
-                  lng: venue.lng,
-                  lat: venue.lat,
-                  tags: venue.tags,
-                  reviews: [venue.quote],
-                })
+                openVenueDetail(venue.id, { date: selectedCourtDate })
               "
             >
               <img :src="venue.photo" :alt="venue.name" />
-              <span class="badge-tl" style="font-size: 10px; padding: 2px 6px"><span class="live-dot" />{{ venue.liveViewers }}人看</span>
-              <span class="badge-bl" style="font-size: 10px; padding: 1.5px 6px">★ {{ venue.rating }} · {{ venue.distanceKm }}km</span>
+              <span class="badge-tl" style="font-size: 12px; padding: 3px 8px">★ {{ venue.rating }} · {{ venue.distanceKm }}km</span>
             </div>
 
             <div class="court-compact-body">
-              <!-- 第1行：名称 + 地图联动标 + 最低价 -->
-              <div class="flex-between" style="gap: 6px">
-                <div class="flex-row" style="gap: 6px; min-width: 0">
-                  <strong style="font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
-                    {{ venue.name.split('（')[0] }}
-                  </strong>
-                  <span v-if="selectedVenue?.id === venue.id" class="tag green" style="font-size: 10px; padding: 1px 6px">
-                    📍 地图已定位
-                  </span>
-                </div>
-                <strong style="font-size: 16px; color: var(--accent); flex-shrink: 0">
-                  {{ venue.minPrice === 0 ? '¥0起' : `¥${venue.minPrice}起` }}
+              <!-- 第1行：名称 + 最低价 -->
+              <div class="flex-between" style="gap: 8px">
+                <strong
+                  style="font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer"
+                  @click.stop="
+                    activeVenueId = venue.id;
+                    openVenueDetail(venue.id, { date: selectedCourtDate })
+                  "
+                >
+                  {{ venue.name.split('（')[0] }}
+                </strong>
+                <strong style="font-size: 18px; color: var(--accent); flex-shrink: 0">
+                  {{ venue.minPrice === 0 ? '免费' : `¥${venue.minPrice}起` }}
                 </strong>
               </div>
 
-              <!-- 第2行：精简元信息（单行） -->
-              <div style="font-size: 11.5px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <!-- 第2行：核心元信息 -->
+              <div style="font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
                 <span>{{ venue.region }}</span>
                 <span>· {{ venue.openHours }}</span>
-                <span>· {{ venue.courts.length }}片场</span>
-                <span style="color: var(--primary); font-weight: 700">
+                <span style="color: var(--primary); font-weight: 800">
                   · 余{{ getVenueAvailableCount(venue.id, selectedCourtDate, courtTimePeriod) }}场
                 </span>
-                <span>· 🅿️剩{{ venue.parkingRemain }} ⚡闲{{ venue.chargerRemain }}</span>
               </div>
 
-              <!-- 第3行：4个紧凑时段 + 直接订场按钮 -->
+              <!-- 第3行：4个时段 + 订场按钮 -->
               <div class="court-compact-bottom">
                 <div class="slots-compact">
                   <button
@@ -548,7 +532,7 @@ function submitNewGame() {
 
                 <button
                   class="btn-primary"
-                  style="padding: 6px 11px; font-size: 11.5px; flex-shrink: 0"
+                  style="padding: 8px 12px; font-size: 13px; flex-shrink: 0"
                   @click.stop="
                     activeVenueId = venue.id;
                     openBookingModal({
@@ -564,7 +548,7 @@ function submitNewGame() {
                     })
                   "
                 >
-                  选场预约 →
+                  预约 →
                 </button>
               </div>
             </div>
@@ -579,25 +563,20 @@ function submitNewGame() {
           />
         </div>
 
-        <!-- 右侧固定悬浮地图（点击左侧球馆自动联动定位并高亮周边标注） -->
+        <!-- 右侧固定地图 -->
         <div class="card play-map-sticky">
-          <div class="card-pad" style="border-bottom: 1px solid var(--line); background: #fafdfc; padding: 11px 14px">
-            <div class="flex-between" style="margin-bottom: 8px">
-              <div>
-                <strong style="font-size: 14.5px; color: var(--ink)">
-                  📍 {{ selectedVenue ? (selectedVenue.name.split('（')[0] ?? selectedVenue.name) : '京山球场周边' }} · 周边实景标注
-                </strong>
-                <div style="font-size: 11px; color: var(--ink-3)">
-                  点击左侧任意球馆实时联动切换地图与周边酒店、餐饮、停车、充电标注
-                </div>
-              </div>
-              <div class="flex-row" style="gap: 4px">
+          <div class="card-pad" style="border-bottom: 1px solid var(--line); background: #fafdfc; padding: 14px 16px">
+            <div class="flex-between" style="margin-bottom: 10px">
+              <strong style="font-size: 16.5px; color: var(--ink)">
+                📍 {{ selectedVenue ? (selectedVenue.name.split('（')[0] ?? selectedVenue.name) : '京山球场周边' }}
+              </strong>
+              <div class="flex-row" style="gap: 5px">
                 <button
                   v-for="r in radii"
                   :key="r"
                   class="m-tab"
                   :class="{ active: state.radius === r }"
-                  style="padding: 3px 9px; font-size: 11px"
+                  style="padding: 4px 10px; font-size: 13px"
                   @click="state.radius = r"
                 >
                   {{ r }}
@@ -611,7 +590,7 @@ function submitNewGame() {
                 :key="cat"
                 class="filter-pill"
                 :class="{ active: mapPoiCategory === cat }"
-                style="padding: 3px 10px; font-size: 11px"
+                style="padding: 4px 11px; font-size: 13px"
                 @click="mapPoiCategory = cat"
               >
                 {{ cat === '全部' ? '全部周边' : cat === '酒店' ? '🏨 酒店' : cat === '美食' ? '🍜 美食' : cat === '停车充电' ? '🅿️ 停车/充电' : '🏥 医疗/景点' }}
@@ -628,20 +607,19 @@ function submitNewGame() {
             @select-venue="activeVenueId = $event"
           />
 
-          <div v-if="selectedVenue" class="card-pad" style="padding: 11px 14px; background: #f8fbfa">
+          <div v-if="selectedVenue" class="card-pad" style="padding: 14px 16px; background: #f8fbfa">
             <div class="flex-between">
               <div style="min-width: 0">
-                <div style="font-size: 12.5px; font-weight: 800; color: var(--ink)">
+                <div style="font-size: 14px; font-weight: 800; color: var(--ink)">
                   {{ selectedVenue.address }}
                 </div>
-                <div style="font-size: 11px; color: var(--ink-3); margin-top: 2px">
-                  📞 {{ selectedVenue.phone }} ｜ 🅿️ {{ selectedVenue.parkingName }}（剩{{ selectedVenue.parkingRemain }}） ｜ ⚡ {{ selectedVenue.chargerName }}（闲{{ selectedVenue.chargerRemain }}）
+                <div style="font-size: 13px; color: var(--ink-2); margin-top: 4px">
+                  🅿️ 剩{{ selectedVenue.parkingRemain }}车位 ｜ ⚡ 闲{{ selectedVenue.chargerRemain }}充电桩
                 </div>
               </div>
               <div class="flex-row" style="flex-shrink: 0">
                 <button
                   class="btn-ghost"
-                  style="padding: 5px 10px; font-size: 11.5px"
                   @click="
                     openNavigation({
                       placeName: selectedVenue.name.split('（')[0] ?? selectedVenue.name,
@@ -654,11 +632,10 @@ function submitNewGame() {
                     })
                   "
                 >
-                  🧭 导航前往
+                  🧭 导航
                 </button>
                 <button
                   class="btn-orange"
-                  style="padding: 5px 11px; font-size: 11.5px"
                   @click="
                     openBookingModal({
                       venueId: selectedVenue.id,
@@ -673,7 +650,7 @@ function submitNewGame() {
                     })
                   "
                 >
-                  立即订该馆
+                  立即订馆
                 </button>
               </div>
             </div>
@@ -682,21 +659,21 @@ function submitNewGame() {
       </div>
     </div>
 
-    <!-- 同城约球完整工作台（参照图1：CUTR分级、日期、精确时间段、室内外、拉球/比赛、性别、单双打、设施标签、发布约球） -->
-    <div v-if="subView === 'matchmaking'" class="card card-pad">
-      <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
+    <!-- 同城约球完整工作台 -->
+    <div v-if="subView === 'all' || subView === 'matchmaking'" class="card card-pad">
+      <div class="flex-between mb-16" style="padding-bottom: 14px; border-bottom: 1px solid var(--line)">
         <div>
-          <strong style="font-size: 17px">🤝 同城约球大厅（CUTR 分级精准匹配）</strong>
+          <strong style="font-size: 19px">🤝 同城约球大厅（CUTR 分级匹配）</strong>
           <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px">
             按日期、CUTR 水平区间、场馆类型、拉球/比赛、男女、单双打与精确起止时间筛选球局，支持一键报名或发起约球
           </div>
         </div>
         <div class="flex-row">
-          <div class="search-bar" style="width: 240px; height: 36px">
+          <div class="search-bar" style="width: 240px; height: 40px">
             <span>🔍</span>
-            <input v-model="mgSearch" type="text" placeholder="搜场馆/球局关键词…" />
+            <input v-model="mgSearch" type="text" placeholder="搜场馆/球局…" />
           </div>
-          <select v-model="mgSort" class="f-input" style="width: auto; padding: 6px 10px">
+          <select v-model="mgSort" class="f-input" style="width: auto; padding: 7px 10px">
             <option value="distance">距离最近</option>
             <option value="time">开球最早</option>
             <option value="spots">空位最多</option>
@@ -757,7 +734,7 @@ function submitNewGame() {
 
         <div class="filter-rows">
           <div class="filter-row">
-            <span class="filter-label">场馆环境：</span>
+            <span class="filter-label">环境：</span>
             <button
               v-for="vt in (['全部', '室内', '室外', '风雨棚', '学练馆'] as const)"
               :key="vt"
@@ -768,7 +745,7 @@ function submitNewGame() {
               {{ vt }}
             </button>
             <span class="filter-divider" />
-            <span class="filter-label">活动形式：</span>
+            <span class="filter-label">形式：</span>
             <button
               v-for="at in (['全部', '拉球', '比赛', '发球机', '人工训练'] as const)"
               :key="at"
@@ -781,7 +758,7 @@ function submitNewGame() {
           </div>
 
           <div class="filter-row">
-            <span class="filter-label">性别要求：</span>
+            <span class="filter-label">性别：</span>
             <div class="seg-group">
               <button
                 v-for="g in (['不限', '男', '女'] as const)"
@@ -803,18 +780,18 @@ function submitNewGame() {
                 {{ fm }}
               </button>
             </div>
-            <span class="filter-label" style="margin-left: 10px">约球时间：</span>
-            <select v-model="mgTimeStart" class="f-input" style="width: 96px; padding: 4px 8px">
+            <span class="filter-label" style="margin-left: 10px">时间：</span>
+            <select v-model="mgTimeStart" class="f-input" style="width: 108px; padding: 6px 8px">
               <option v-for="t in timePickOptions" :key="`s-${t}`" :value="t">🕒 {{ t }}</option>
             </select>
-            <span style="font-size: 12px; color: var(--ink-3)">至</span>
-            <select v-model="mgTimeEnd" class="f-input" style="width: 96px; padding: 4px 8px">
+            <span style="font-size: 13.5px; color: var(--ink-3)">至</span>
+            <select v-model="mgTimeEnd" class="f-input" style="width: 108px; padding: 6px 8px">
               <option v-for="t in timePickOptions" :key="`e-${t}`" :value="t">🕒 {{ t }}</option>
             </select>
           </div>
 
           <div class="filter-row">
-            <span class="filter-label">配套设施：</span>
+            <span class="filter-label">配套：</span>
             <button
               v-for="am in mgAmenityOptions"
               :key="am"
@@ -825,15 +802,15 @@ function submitNewGame() {
               {{ am }}
             </button>
             <div style="margin-left: auto" class="flex-row">
-              <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="resetMgFilters">重置筛选</button>
-              <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="showMgAdvanced = false">收起筛选 ▲</button>
+              <button class="btn-ghost" @click="resetMgFilters">重置</button>
+              <button class="btn-ghost" @click="showMgAdvanced = false">收起筛选 ▲</button>
             </div>
           </div>
         </div>
       </div>
-      <div v-else class="flex-between mb-12" style="background: #f5faf8; padding: 8px 12px; border-radius: 0">
-        <span style="font-size: 12px; color: var(--ink-2)">已收起高级筛选条件（当前命中 {{ filteredGames.length }} 场球局）</span>
-        <button class="btn-ghost" style="padding: 4px 10px; font-size: 11.5px" @click="showMgAdvanced = true">展开全部筛选 ▼</button>
+      <div v-else class="flex-between mb-12" style="background: #f5faf8; padding: 10px 14px; border-radius: 0">
+        <span style="font-size: 14px; color: var(--ink-2)">已收起筛选条件（当前命中 {{ filteredGames.length }} 场球局）</span>
+        <button class="btn-ghost" @click="showMgAdvanced = true">展开筛选 ▼</button>
       </div>
 
       <!-- 范围切换 + 约球卡片结果 -->
@@ -849,16 +826,15 @@ function submitNewGame() {
             {{ tab }}
           </button>
         </div>
-        <span style="font-size: 12px; color: var(--ink-3)">共匹配 <strong style="color: var(--primary)">{{ filteredGames.length }}</strong> 场可参与球局</span>
+        <span style="font-size: 14px; color: var(--ink-2)">共 <strong style="color: var(--primary)">{{ filteredGames.length }}</strong> 场球局</span>
       </div>
 
       <div v-if="filteredGames.length === 0" style="text-align: center; padding: 36px 20px; background: #fafdfc; border-radius: 0; border: 1px dashed var(--line)">
-        <div style="font-size: 28px; margin-bottom: 6px">🎾</div>
-        <strong style="font-size: 14px; display: block; margin-bottom: 5px">当前筛选条件下暂无约球局</strong>
-        <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 12px">您可以重置筛选条件，或立即发起一场属于您的新球局</div>
-        <div class="flex-row" style="justify-content: center">
+        <div style="font-size: 28px; margin-bottom: 8px">🎾</div>
+        <strong style="font-size: 16px; display: block; margin-bottom: 8px">当前筛选条件下暂无约球局</strong>
+        <div class="flex-row" style="justify-content: center; margin-top: 12px">
           <button class="btn-ghost" @click="resetMgFilters">重置筛选</button>
-          <button class="btn-orange" @click="showPublishModal = true">＋ 立即发布约球</button>
+          <button class="btn-orange" @click="showPublishModal = true">＋ 发布约球</button>
         </div>
       </div>
 
@@ -866,26 +842,22 @@ function submitNewGame() {
         <div class="grid-2">
           <div v-for="g in pagedGames" :key="g.id" class="card card-pad" style="display: flex; flex-direction: column; justify-content: space-between; background: #fcfefd">
           <div>
-            <div class="flex-between" style="margin-bottom: 6px">
+            <div class="flex-between" style="margin-bottom: 8px">
               <span class="tag green">CUTR {{ g.cutrBand }}</span>
               <span class="tag blue">{{ g.venueType }} · {{ g.activityType }} · {{ g.format }}</span>
             </div>
-            <strong style="font-size: 14.5px; display: block; margin-bottom: 6px">{{ g.title }}</strong>
-            <div style="font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-bottom: 8px">
+            <strong style="font-size: 17px; display: block; margin-bottom: 8px">{{ g.title }}</strong>
+            <div style="font-size: 14px; color: var(--ink-2); line-height: 1.75; margin-bottom: 12px">
               📅 <strong>{{ BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date }} {{ g.startTime }}-{{ g.endTime }}</strong><br />
               📍 {{ g.venueName }}（距您 {{ g.distanceKm }} km）<br />
-              👤 发起人：{{ g.hostName }}（{{ g.hostOrigin }}） · 性别：{{ g.gender }}
+              👤 发起人：{{ g.hostName }} · 性别：{{ g.gender }}
             </div>
-            <div class="flex-row" style="gap: 5px; margin-bottom: 8px">
-              <span v-for="am in g.amenities" :key="am" class="tag">{{ am }}</span>
-            </div>
-            <div class="review-quote" style="margin-top: 0; margin-bottom: 10px">“{{ g.note }}”</div>
           </div>
 
-          <div class="flex-between" style="padding-top: 9px; border-top: 1px dashed var(--line)">
+          <div class="flex-between" style="padding-top: 11px; border-top: 1px dashed var(--line)">
             <div>
-              <strong style="color: var(--accent); font-size: 16px">¥{{ g.feePerPerson }}</strong>
-              <span style="font-size: 11px; color: var(--ink-3)">/人 · 已报 {{ g.currentPlayers }}/{{ g.maxPlayers }}人</span>
+              <strong style="color: var(--accent); font-size: 19px">¥{{ g.feePerPerson }}</strong>
+              <span style="font-size: 13px; color: var(--ink-2)">/人 · 已报 {{ g.currentPlayers }}/{{ g.maxPlayers }}人</span>
             </div>
             <button
               :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-primary'"
@@ -909,17 +881,17 @@ function submitNewGame() {
 
     <!-- 发布约球弹窗 -->
     <div v-if="showPublishModal" class="modal-backdrop" @click.self="showPublishModal = false">
-      <div class="modal-box" style="width: 580px">
+      <div class="modal-box" style="width: 600px">
         <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff">
-          <strong style="font-size: 16px">＋ 发布同城约球局</strong>
+          <strong style="font-size: 18px">＋ 发布同城约球局</strong>
           <button class="btn-ghost" @click="showPublishModal = false">✕ 关闭</button>
         </div>
-        <div class="card-pad" style="display: flex; flex-direction: column; gap: 10px">
+        <div class="card-pad" style="display: flex; flex-direction: column; gap: 12px">
           <div>
             <label class="f-label">约球标题 *</label>
             <input v-model="publishForm.title" class="f-input" placeholder="如：今晚文峰灯光场3.5双打拉球（缺2人）" />
           </div>
-          <div class="grid-2" style="gap: 10px">
+          <div class="grid-2" style="gap: 12px">
             <div>
               <label class="f-label">预约场馆</label>
               <select v-model="publishForm.venueId" class="f-input">
@@ -933,7 +905,7 @@ function submitNewGame() {
               </select>
             </div>
           </div>
-          <div class="grid-3" style="gap: 10px">
+          <div class="grid-3" style="gap: 12px">
             <div>
               <label class="f-label">开始时间</label>
               <select v-model="publishForm.startTime" class="f-input">
@@ -954,7 +926,7 @@ function submitNewGame() {
               </select>
             </div>
           </div>
-          <div class="grid-4" style="gap: 8px">
+          <div class="grid-4" style="gap: 10px">
             <div>
               <label class="f-label">环境</label>
               <select v-model="publishForm.venueType" class="f-input">
@@ -987,13 +959,13 @@ function submitNewGame() {
           </div>
           <div>
             <label class="f-label">球局说明</label>
-            <input v-model="publishForm.note" class="f-input" placeholder="例如：自带新球、欢迎周边自驾球友一起玩" />
+            <input v-model="publishForm.note" class="f-input" placeholder="例如：自带新球、欢迎球友一起玩" />
           </div>
-          <div class="flex-between" style="padding-top: 8px; border-top: 1px solid var(--line)">
-            <span style="font-size: 11.5px; color: var(--primary)">发布成功立即获赠 +40 金网积分</span>
+          <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
+            <span style="font-size: 13.5px; color: var(--primary); font-weight: 700">发布成功获赠 +40 积分</span>
             <div class="flex-row">
               <button class="btn-ghost" @click="showPublishModal = false">取消</button>
-              <button class="btn-orange" @click="submitNewGame">立即发布约球</button>
+              <button class="btn-orange" @click="submitNewGame">立即发布</button>
             </div>
           </div>
         </div>

@@ -33,19 +33,19 @@ const visibleGroups = computed(() => groups.filter((g) => g.key === mpTab.value)
 
     <div class="mb-16">
       <div v-for="g in visibleGroups" :key="g.cat" class="card card-pad">
-        <div class="flex-between" style="margin-bottom: 10px">
+        <div class="flex-between" style="margin-bottom: 14px">
           <div class="flex-row">
-            <span style="font-size: 24px">{{ g.icon }}</span>
-            <strong style="font-size: 16px">{{ g.cat }}</strong>
+            <span style="font-size: 26px">{{ g.icon }}</span>
+            <strong style="font-size: 18px">{{ g.cat }}</strong>
           </div>
           <span class="tag green">● 已连通</span>
         </div>
-        <div class="grid-2" style="gap: 8px; margin-bottom: 12px">
+        <div class="grid-2" style="gap: 10px; margin-bottom: 16px">
           <button
             v-for="a in g.apps"
             :key="a"
             class="btn-ghost"
-            style="padding: 8px 10px; font-size: 11.5px; text-align: left"
+            style="padding: 10px 12px; font-size: 13.5px; text-align: left; white-space: normal; line-height: 1.4"
             @click="openActionModal({ type: 'miniprogram', appName: a, desc: g.desc })"
           >
             {{ a }}

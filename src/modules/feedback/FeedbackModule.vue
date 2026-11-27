@@ -32,21 +32,21 @@ async function onSubmit() {
     </div>
 
     <div class="grid-split">
-      <div style="display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 18px">
         <div class="card card-pad">
-          <div class="flex-between" style="margin-bottom: 12px">
-            <strong style="font-size: 15.5px">📸 游客打卡分享 & 服务后真实评价（共 {{ state.posts.length }} 条）</strong>
-            <button class="btn-primary" @click="formMode = 'review'">+ 发布打卡与星级点评</button>
+          <div class="flex-between" style="margin-bottom: 14px">
+            <strong style="font-size: 18px">📸 游客打卡分享 & 服务评价（共 {{ state.posts.length }} 条）</strong>
+            <button class="btn-primary" @click="formMode = 'review'">+ 发布点评</button>
           </div>
-          <div class="grid-3" style="gap: 12px">
-            <div v-for="p in state.posts.slice(0, 6)" :key="p.id" style="border: 1px solid var(--line); border-radius: 0; overflow: hidden">
-              <div class="photo-box" style="height: 105px"><img :src="p.photo" :alt="p.title" /></div>
-              <div style="padding: 9px 10px">
-                <div style="font-size: 12.5px; font-weight: 800; margin-bottom: 5px">{{ p.title }}</div>
-                <div class="flex-between" style="font-size: 11px; color: var(--ink-3)">
+          <div class="grid-2" style="gap: 14px">
+            <div v-for="p in state.posts.slice(0, 4)" :key="p.id" style="border: 1px solid var(--line); border-radius: 0; overflow: hidden">
+              <div class="photo-box" style="height: 130px"><img :src="p.photo" :alt="p.title" /></div>
+              <div style="padding: 12px 14px">
+                <div style="font-size: 15px; font-weight: 800; margin-bottom: 6px">{{ p.title }}</div>
+                <div class="flex-between" style="font-size: 13px; color: var(--ink-2)">
                   <span>👤 {{ p.origin }}·{{ p.author }} · ★{{ p.rating.toFixed(1) }}</span>
                   <button
-                    style="border: none; background: transparent; font-size: 11.5px; font-weight: 700"
+                    style="border: none; background: transparent; font-size: 13.5px; font-weight: 700"
                     :style="{ color: p.liked ? '#DF2E38' : '#748982' }"
                     @click="likePost(p.id)"
                   >
@@ -59,25 +59,25 @@ async function onSubmit() {
         </div>
 
         <div class="card card-pad">
-          <div class="flex-between" style="margin-bottom: 10px">
-            <strong style="font-size: 15.5px">🚨 各类服务动态评级、信用预警与红黑榜公示</strong>
-            <span class="tag red">投诉查实自动降星预警</span>
+          <div class="flex-between" style="margin-bottom: 12px">
+            <strong style="font-size: 18px">🚨 服务信用红黑榜公示</strong>
+            <span class="tag red">查实自动降星预警</span>
           </div>
-          <div class="grid-2" style="gap: 12px">
-            <div style="background: #effaf4; border: 1px solid #c2e8d5; border-radius: 0; padding: 11px 13px">
-              <strong style="font-size: 13px; color: #0a6947; display: block; margin-bottom: 6px">🏅 本月五星诚信红榜（优先推荐）</strong>
-              <div style="font-size: 11.5px; line-height: 1.85; color: var(--ink-2)">
+          <div class="grid-2" style="gap: 14px">
+            <div style="background: #effaf4; border: 1px solid #c2e8d5; border-radius: 0; padding: 14px 16px">
+              <strong style="font-size: 15px; color: #0a6947; display: block; margin-bottom: 8px">🏅 本月五星诚信红榜</strong>
+              <div style="font-size: 13.5px; line-height: 1.9; color: var(--ink-2)">
                 • 京山国际网球中心（★4.9 · 零投诉）<br />
-                • 文峰花园酒店（★4.9 · 票根核销履约100%）<br />
-                • 桥米公馆 / 陈浩陪练团队（★5.0 · 好评率100%）
+                • 文峰花园酒店（★4.9 · 履约100%）<br />
+                • 桥米公馆 / 陈浩陪练团队（★5.0）
               </div>
             </div>
-            <div style="background: #fff3f3; border: 1px solid #f7c6c9; border-radius: 0; padding: 11px 13px">
-              <strong style="font-size: 13px; color: #b81d27; display: block; margin-bottom: 6px">⚠️ 消费预警与整改督办提示</strong>
-              <div style="font-size: 11.5px; line-height: 1.85; color: #73272c">
-                • <strong>黄牌预警：</strong>XX路社会停车点（价格公示不清，已转城管/市监整改）<br />
-                • <strong>降星公示：</strong>某未认证陪练因爽约被核实扣星，平台已暂停推荐<br />
-                • <strong>消费提示：</strong>请认准「京山网球联盟」标识与平台担保结算
+            <div style="background: #fff3f3; border: 1px solid #f7c6c9; border-radius: 0; padding: 14px 16px">
+              <strong style="font-size: 15px; color: #b81d27; display: block; margin-bottom: 8px">⚠️ 消费预警与整改提示</strong>
+              <div style="font-size: 13.5px; line-height: 1.9; color: #73272c">
+                • <strong>黄牌预警：</strong>XX路社会停车点（价格公示不清，整改中）<br />
+                • <strong>降星公示：</strong>未认证陪练爽约扣星，已暂停推荐<br />
+                • <strong>提示：</strong>请认准「京山网球联盟」标识
               </div>
             </div>
           </div>
@@ -85,9 +85,9 @@ async function onSubmit() {
       </div>
 
       <div class="card card-pad">
-        <div class="flex-between" style="margin-bottom: 12px">
-          <strong style="font-size: 16px">{{ formMode === 'complaint' ? '📢 意见反馈与 12345 投诉上报' : '📸 发布我的服务星级点评' }}</strong>
-          <span class="tag blue">{{ formMode === 'complaint' ? '系统按标签自动分办' : '发布赠 +20 积分' }}</span>
+        <div class="flex-between" style="margin-bottom: 14px">
+          <strong style="font-size: 18px">{{ formMode === 'complaint' ? '📢 意见反馈与 12345 上报' : '📸 发布服务星级点评' }}</strong>
+          <span class="tag blue">{{ formMode === 'complaint' ? '自动分办' : '+20 积分' }}</span>
         </div>
 
         <div class="f-group">
@@ -108,11 +108,11 @@ async function onSubmit() {
 
         <div class="f-group">
           <label class="f-label">服务星级打分（当前 {{ rating }} 星）</label>
-          <div style="display: flex; gap: 6px">
+          <div style="display: flex; gap: 8px">
             <button
               v-for="s in 5"
               :key="s"
-              style="border: none; background: transparent; font-size: 20px"
+              style="border: none; background: transparent; font-size: 24px"
               :style="{ color: s <= rating ? '#E2A227' : '#D2DCD8' }"
               @click="rating = s"
             >
@@ -127,17 +127,17 @@ async function onSubmit() {
             v-model="content"
             class="f-input"
             rows="3"
-            :placeholder="formMode === 'complaint' ? '请输入您的建议或投诉详情，提交后直联 12345 / 城运中心自动分办…' : '分享您的京山打球、住宿或美食体验，审核通过即获 +20 金网积分…'"
+            :placeholder="formMode === 'complaint' ? '请输入您的建议或投诉详情，提交后直联 12345 自动分办…' : '分享您的打球、住宿或美食体验…'"
           />
         </div>
 
-        <button class="btn-orange" style="width: 100%; padding: 10px; font-size: 13.5px; margin-bottom: 12px" @click="onSubmit">
+        <button class="btn-orange" style="width: 100%; padding: 11px; font-size: 15px; margin-bottom: 14px" @click="onSubmit">
           {{ formMode === 'complaint' ? '提交反馈 / 直联 12345 上报' : '发布打卡评价 (+20分)' }}
         </button>
 
-        <div style="background: #f5f9f7; border-radius: 0; padding: 9px 11px; font-size: 11.5px; color: var(--ink-2)">
-          <strong>📌 我的反馈处置闭环记录（共 {{ state.complaints.length }} 条）：</strong>
-          <div v-for="c in state.complaints.slice(0, 4)" :key="c.id" style="margin-top: 5px">
+        <div style="background: #f5f9f7; border-radius: 0; padding: 12px 14px; font-size: 13.5px; color: var(--ink-2)">
+          <strong>📌 我的反馈处置记录（共 {{ state.complaints.length }} 条）：</strong>
+          <div v-for="c in state.complaints.slice(0, 3)" :key="c.id" style="margin-top: 7px">
             #{{ c.id }} [{{ c.target }}] {{ c.content }} →
             <strong style="color: var(--primary)">{{ c.status }}（{{ c.dept }}）</strong>
           </div>

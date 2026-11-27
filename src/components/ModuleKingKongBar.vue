@@ -13,15 +13,16 @@ interface MainTile {
 }
 
 const mainTiles: MainTile[] = [
-  { id: 1, title: '首页总览', bg: 'linear-gradient(135deg,#0E8F67,#085F44)', badge: '总览', badgeBg: '#0D7A58' },
-  { id: 2, title: '打 · 场地服务', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)', badge: '实时余量', badgeBg: '#FF5D2A' },
-  { id: 3, title: '游 · 旅游游览', bg: 'linear-gradient(135deg,#2EB36A,#168249)', badge: '全域游', badgeBg: '#168249' },
-  { id: 4, title: '吃 · 美食服务', bg: 'linear-gradient(135deg,#F25C43,#C93722)', badge: '票根85折', badgeBg: '#E44717' },
-  { id: 5, title: '住 · 住宿服务', bg: 'linear-gradient(135deg,#3385F0,#195CC2)', badge: '公寓/减5万', badgeBg: '#D9381E' },
-  { id: 6, title: '行 · 出行服务', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)', badge: '限行指引', badgeBg: '#DF2E38' },
+  { id: 1, title: '首页总览', bg: 'linear-gradient(135deg,#0E8F67,#085F44)' },
+  { id: 2, title: '打 · 场地服务', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)' },
+  { id: 3, title: '游 · 旅游游览', bg: 'linear-gradient(135deg,#2EB36A,#168249)' },
+  { id: 4, title: '吃 · 美食服务', bg: 'linear-gradient(135deg,#F25C43,#C93722)' },
+  { id: 5, title: '住 · 住宿服务', bg: 'linear-gradient(135deg,#3385F0,#195CC2)' },
+  { id: 6, title: '行 · 出行服务', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)' },
   { id: 7, title: '购 · 特色商品', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
   { id: 8, title: '娱 · 休闲娱乐', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
   { id: 9, title: '训 · 培训研学', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
+  { id: 10, title: '便民配套', bg: 'linear-gradient(135deg,#0EA5A4,#0A6F72)' },
 ]
 </script>
 

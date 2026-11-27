@@ -320,21 +320,49 @@ export interface LightboxPayload {
   title: string
   category?: string
   photo: string
+  gallery?: string[]
   rating: number
+  reviewCount?: number
   subtitle: string
   intro?: string
   openHours?: string
   priceInfo?: string
+  priceNum?: number
+  priceUnit?: string
   address?: string
   lng?: number
   lat?: number
+  distance?: string
+  driveMin?: string
+  phone?: string
   tags?: string[]
   highlights?: string[]
   hotItemsTitle?: string
   hotItems?: LightboxHotItem[]
   navTip?: string
+  audioScript?: string
+  audioDuration?: string
+  actionKind?:
+    | 'spot'
+    | 'package'
+    | 'restaurant'
+    | 'entertainment'
+    | 'camp'
+    | 'club'
+    | 'rehab'
+    | 'amenity'
+    | 'store'
+    | 'theme'
+  orderCategory?: PortalOrder['category']
   reviews: (string | LightboxReview)[]
 }
+
+export type DetailPagePayload =
+  | { kind: 'hotel'; hotelId: string }
+  | { kind: 'product'; productId: string }
+  | { kind: 'venue'; venueId: string; date?: string; courtId?: string; slotTime?: string }
+  | { kind: 'cinema' }
+  | { kind: 'place'; data: LightboxPayload }
 
 export interface BookingDraft {
   venueId: string
