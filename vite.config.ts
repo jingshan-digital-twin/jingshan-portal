@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-// 后端由 jingshan-one-map 仓库提供，开发时通过代理转发，生产环境由反向代理或同域部署解决。
-const apiTarget = process.env.API_TARGET ?? 'http://127.0.0.1:3001'
+// 前后端分离：开发时将 /api 代理到 Spring Boot 后端（默认 127.0.0.1:8080，可通过 API_TARGET 覆盖）
+const apiTarget = process.env.API_TARGET ?? 'http://127.0.0.1:8080'
 
 export default defineConfig({
   plugins: [vue()],
@@ -10,7 +10,12 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5174,
     strictPort: true,
-    proxy: { '/api': { target: apiTarget, changeOrigin: false } },
+    proxy: {
+      '/api': {
+        target: apiTarget,
+        changeOrigin: true,
+      },
+    },
     fs: {
       deny: ['.env', '.env.*', '*.{crt,pem,key,p12,pfx,cer,der}'],
     },
