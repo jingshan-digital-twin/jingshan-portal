@@ -58,7 +58,7 @@ const eventChoice = ref('京山周末分级赛（匹配当前等级）')
 const eventGroup = ref('单打/双打积分组')
 
 const pkgChoice = ref('京山网旅四天三晚尊享套餐 · ¥2,999/人')
-const pkgPeople = ref('2人同行')
+const pkgPeople = ref(2)
 
 function submitCourtQuery() {
   state.courtSurfaceFilter = courtSurface.value
@@ -84,8 +84,13 @@ function submitQuickEvent() {
 }
 
 function submitQuickPackage() {
-  const price = pkgChoice.value.includes('2,999') ? 2999 : pkgChoice.value.includes('688') ? 688 : 498
-  createQuickOrder('门票', pkgChoice.value, `${pkgPeople.value} · 持证旅行社保障 · 含电子票根`, price, 180)
+  const unitPrice = pkgChoice.value.includes('2,999') ? 2999 : pkgChoice.value.includes('688') ? 688 : 498
+  createQuickOrder('门票', pkgChoice.value, `${pkgPeople.value} 人 · 持证旅行社保障 · 含电子票根`, unitPrice * pkgPeople.value, 180, 0, {
+    fields: [
+      { label: '出行人数', value: `${pkgPeople.value} 人` },
+      { label: '游客来源地', value: state.origin },
+    ],
+  })
 }
 </script>
 
@@ -245,9 +250,9 @@ function submitQuickPackage() {
             <div class="hw-field">
               <label>出行人数</label>
               <select v-model="pkgPeople">
-                <option>1人独享</option>
-                <option>2人同行</option>
-                <option>家庭3人团</option>
+                <option :value="1">1人独享</option>
+                <option :value="2">2人同行</option>
+                <option :value="3">家庭3人团</option>
               </select>
             </div>
           </div>

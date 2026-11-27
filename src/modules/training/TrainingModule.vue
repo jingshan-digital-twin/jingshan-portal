@@ -12,6 +12,7 @@ import {
   type YouthTournament,
 } from '../../mock/trainingData'
 import { usePortalStore } from '../../store/usePortalStore'
+import { requestReservation } from '../../store/reservationFlow'
 
 const {
   state,
@@ -102,14 +103,13 @@ function selectCoachSlot(coachId: string, hour: string) {
   pickedCoachHours[coachId] = hour
 }
 
-function submitCoachSlot(coachId: string) {
+async function submitCoachSlot(coachId: string) {
   const chosen = pickedCoachHours[coachId]
   if (!chosen) {
     showToast('请先点击选择该教练的一个具体空闲时间段')
     return
   }
-  bookPrivateCoachSlot(coachId, selectedDate.value, chosen)
-  delete pickedCoachHours[coachId]
+  if (await bookPrivateCoachSlot(coachId, selectedDate.value, chosen)) delete pickedCoachHours[coachId]
 }
 
 // ===== 2. 训练营 / 研学课程 / 团建活动 =====
@@ -193,16 +193,30 @@ function submitSchoolInquiry() {
     showToast('请填写学员姓名和家长联系电话，方便省网校招生老师联系您')
     return
   }
-  const code = `HBTW-${Date.now().toString().slice(-4)}`
-  schoolInquiryHistory.value.unshift({
-    id: code,
-    track: schoolForm.track,
-    studentName: schoolForm.studentName.trim(),
-    visitDate: schoolForm.visitDate,
+  const application = { ...schoolForm, studentName: schoolForm.studentName.trim(), phone: schoolForm.phone.trim() }
+  return requestReservation({
+    title: '湖北省网球学校招生咨询',
+    fields: [
+      { label: '咨询项目', value: application.track },
+      { label: '学员姓名', value: application.studentName },
+      { label: '年龄', value: application.age },
+      { label: '网球基础', value: application.level },
+      { label: '到访日期', value: application.visitDate },
+      { label: '联系电话', value: application.phone },
+    ],
+    successTitle: '咨询申请已提交',
+    successMessage: '请留意联系电话，等候招生办确认探校与试训安排。',
+  }, () => {
+    const code = `HBTW-${Date.now().toString().slice(-4)}`
+    schoolInquiryHistory.value.unshift({
+      id: code,
+      track: application.track,
+      studentName: application.studentName,
+      visitDate: application.visitDate,
+    })
+    schoolForm.studentName = ''
+    schoolForm.phone = ''
   })
-  showToast(`湖北省网球学校招生咨询单（${code}）提交成功！招生办将在 2 小时内致电确认探校与试训`)
-  schoolForm.studentName = ''
-  schoolForm.phone = ''
 }
 
 // ===== 5. 青少年网球比赛 =====
@@ -216,21 +230,25 @@ const visibleYouthTournaments = computed(() =>
     : youthTournaments.filter((t) => t.groupTag === youthGroupFilter.value),
 )
 
-function registerYouthMatch(t: YouthTournament) {
+async function registerYouthMatch(t: YouthTournament) {
   if (t.registered) {
     showToast(`您已报名「${t.name}」，可在个人中心查看参赛凭证`)
     return
   }
   const mode = youthMatchMode[t.id] ?? '单打'
-  t.registered = true
-  t.quotaRemain = Math.max(0, t.quotaRemain - 1)
-  createQuickOrder(
+  const booked = await createQuickOrder(
     '门票',
     `青少年赛：${t.name}（${t.groupTag} ${mode}）`,
     `${t.dateRange} · ${t.venue} · 完赛积+${t.pointsReward}分`,
     t.fee,
     t.pointsReward,
+    0,
+    { successTitle: '报名成功' },
   )
+  if (booked) {
+    t.registered = true
+    t.quotaRemain = Math.max(0, t.quotaRemain - 1)
+  }
 }
 
 // ===== 6. 运动康复机构 =====

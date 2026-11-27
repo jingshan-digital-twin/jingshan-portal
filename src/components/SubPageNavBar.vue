@@ -2,19 +2,11 @@
 import { computed } from 'vue'
 import { getModuleMeta, MODULE_META_LIST, usePortalStore } from '../store/usePortalStore'
 
-const { state, switchModule } = usePortalStore()
+const { state, switchModule, returnFromModulePage } = usePortalStore()
 
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
 const subModules = MODULE_META_LIST.filter((m) => m.id >= 2 && m.id <= 9)
 const isUtilityPage = computed(() => state.activeModule === 11 || state.activeModule === 12 || state.activeModule === 13)
-
-function goBack() {
-  if (window.history.length > 1) {
-    window.history.back()
-  } else {
-    switchModule(1)
-  }
-}
 </script>
 
 <template>
@@ -22,7 +14,7 @@ function goBack() {
     <div class="container">
       <div class="subpage-nav-top" :style="isUtilityPage ? 'margin-bottom: 0' : ''">
         <div class="subpage-breadcrumb">
-          <button v-if="isUtilityPage" class="subpage-back-btn" @click="goBack">
+          <button v-if="isUtilityPage" class="subpage-back-btn" @click="returnFromModulePage">
             ← 返回
           </button>
           <button v-else class="subpage-back-btn" @click="switchModule(1)">

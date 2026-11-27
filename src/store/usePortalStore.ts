@@ -1,5 +1,6 @@
 import { computed, reactive, watch } from 'vue'
-import { apiRequest } from '../api/client'
+import { apiRequest, USE_MOCK } from '../api/client'
+import { requestReservation, ReservationUnavailable, type ReservationSummary } from './reservationFlow'
 import {
   INITIAL_ABILITY,
   INITIAL_COMPLAINTS,
@@ -69,17 +70,13 @@ export function getModuleMeta(id: ModuleId): ModuleMeta {
 }
 
 function parseModuleFromUrl(): ModuleId | null {
-  try {
-    const params = new URLSearchParams(window.location.search)
-    const raw = params.get('module')
-    if (raw) {
-      const id = Number(raw)
-      if (id >= 2 && id <= 9) return id as ModuleId
-    }
-  } catch {
-    // ignore URL parse errors
-  }
-  return null
+  const params = new URLSearchParams(window.location.search)
+  const queryId = Number(params.get('module'))
+  if (Number.isInteger(queryId) && queryId >= 2 && queryId <= 13 && queryId !== 10) return queryId as ModuleId
+
+  const legacyMatch = window.location.hash.match(/^#m(\d+)$/)
+  const legacyId = Number(legacyMatch?.[1])
+  return legacyId >= 2 && legacyId <= 13 ? legacyId as ModuleId : null
 }
 
 function parseSurfaceFromUrl(): '全部' | '硬地' | '红土' | '室内风雨' | '匹克球' {
@@ -450,18 +447,26 @@ export function usePortalStore() {
   }
 
   function navigateToModulePage(id: ModuleId) {
+    if (state.isStandalonePage && state.activeModule === id && !state.activeDetail) return
+    const previousModule = state.activeModule
     state.activeDetail = null
     state.isStandalonePage = id !== 1
     state.activeModule = id
     persistStateNow()
     try {
       const nextUrl = buildModuleUrl(id)
-      window.history.pushState({ moduleId: id }, '', nextUrl)
+      window.history.replaceState({ ...window.history.state, moduleId: previousModule }, '')
+      window.history.pushState({ moduleId: id, returnToPortalPage: true }, '', nextUrl)
     } catch {
       // ignore history errors
     }
     updateDocumentTitle(id, id !== 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function returnFromModulePage() {
+    if (window.history.state?.returnToPortalPage) window.history.back()
+    else switchModule(1)
   }
 
   function openActionModal(payload: ActionModalPayload) {
@@ -600,12 +605,22 @@ export function usePortalStore() {
       showToast(`您已预约「${lot.name}」（${slotText}），无需重复锁位`)
       return
     }
-    if (!lot.reserved) {
-      lot.remain = Math.max(0, lot.remain - 1)
-    }
-    lot.reserved = true
-    lot.reservedSlot = slotText
-    showToast(`预约成功！已为您锁定「${lot.name}」· ${slotText}（凭订场码核销）`)
+    return requestReservation({
+      title: lot.name,
+      fields: [
+        { label: '服务', value: lot.isCharger ? '预约充电' : '预约停车' },
+        { label: '预约时段', value: slotText },
+        { label: '地址', value: lot.address },
+      ],
+      successMessage: '到场后可凭订场码核销。',
+    }, () => {
+      if (!lot.reserved) {
+        if (lot.remain <= 0) throw new ReservationUnavailable('该点位当前没有空余名额，请选择其他点位。')
+        lot.remain -= 1
+      }
+      lot.reserved = true
+      lot.reservedSlot = slotText
+    })
   }
 
   async function confirmCourtBooking(opts: {
@@ -631,11 +646,11 @@ export function usePortalStore() {
             chargerName: venueFromId.chargerName,
           }
         : null)
-    if (!draft) return
+    if (!draft) return false
     const dateIso = opts.date ?? draft.date ?? BOOKING_DATES[0]!.iso
     const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
     const picked = opts.selectedSlots && opts.selectedSlots.length > 0
-      ? opts.selectedSlots
+      ? opts.selectedSlots.map((slot) => ({ ...slot }))
       : [{
           courtId: draft.courtId ?? 'default',
           courtName: '标准场地',
@@ -669,27 +684,38 @@ export function usePortalStore() {
       cancellable: true,
     }
 
-    await apiRequest('/orders', { method: 'POST', body: JSON.stringify(newOrder) }, () => newOrder)
-
-    state.orders.unshift(newOrder)
-    if (discountFromPoints > 0) state.points -= 200
-    state.points += 50 * picked.length
-
-    for (const s of picked) {
-      const key = `${draft.venueId}|${dateIso}|${s.courtId}|${s.hour}`
-      if (!state.bookedCourtKeys.includes(key)) {
-        state.bookedCourtKeys.push(key)
+    const slotKeys = picked.map((slot) => `${draft.venueId}|${dateIso}|${slot.courtId}|${slot.hour}`)
+    return requestReservation({
+      title: draft.venueName,
+      fields: [
+        { label: '预约日期', value: dateLabel },
+        { label: '场地与时段', value: picked.map((slot) => `${slot.courtName} ${formatHourRange(slot.hour)}`).join('\n') },
+        ...(linked ? [{ label: '联动预约', value: linked }] : []),
+        ...(discountFromPoints > 0 ? [{ label: '积分抵扣', value: '200 积分抵扣 ¥20' }] : []),
+      ],
+      amount: finalPrice,
+      successMessage: `已同步至个人中心，获赠 ${50 * picked.length} 积分。`,
+    }, async () => {
+      if (slotKeys.some((key) => state.bookedCourtKeys.includes(key))) {
+        throw new ReservationUnavailable('所选时段已被预订，请返回重选。')
       }
-    }
+      if (discountFromPoints > 0 && state.points < 200) {
+        throw new ReservationUnavailable('可用积分已变更，请返回重新核对金额。')
+      }
+      await saveReservationOrder(newOrder)
+      if (discountFromPoints > 0) state.points -= 200
+      state.points += 50 * picked.length
+      state.bookedCourtKeys.push(...slotKeys)
 
-    const v = state.courts.find((c) => c.id === draft.venueId)
-    const slot = v?.slots.find((s) => s.time === draft.slotTime)
-    if (slot) {
-      slot.booked = true
-      slot.remaining = Math.max(0, slot.remaining - 1)
-    }
-    state.bookingDraft = null
-    showToast(`订场成功！${dateLabel} ${slotSummary}，实付 ¥${finalPrice}，获赠 +${50 * picked.length} 积分`)
+      const v = state.courts.find((c) => c.id === draft.venueId)
+      const slot = v?.slots.find((s) => s.time === draft.slotTime)
+      if (slot) {
+        slot.booked = true
+        slot.remaining = Math.max(0, slot.remaining - 1)
+      }
+      state.bookingDraft = null
+      return newOrder.id
+    })
   }
 
   function joinMatchmakingGame(gameId: string) {
@@ -705,11 +731,8 @@ export function usePortalStore() {
       showToast('该球局人数已满，请选择其他可加入球局')
       return
     }
-    g.joinedByMe = true
-    g.currentPlayers += 1
-    state.points += 30
     const dateLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date
-    state.orders.unshift({
+    const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '场地',
       title: `约球：${g.title}`,
@@ -718,8 +741,26 @@ export function usePortalStore() {
       amount: g.feePerPerson,
       status: '待核销',
       cancellable: true,
+    }
+    return requestReservation({
+      title: order.title,
+      fields: [
+        { label: '日期与时段', value: order.time },
+        { label: '场馆与球局', value: order.subtitle },
+      ],
+      amount: order.amount,
+      successTitle: '报名成功',
+      successMessage: '已同步至个人中心，获赠 30 积分。',
+    }, () => {
+      if (g.joinedByMe || g.currentPlayers >= g.maxPlayers) {
+        throw new ReservationUnavailable('球局名额已变更，请返回查看最新状态。')
+      }
+      g.joinedByMe = true
+      g.currentPlayers += 1
+      state.points += 30
+      state.orders.unshift(order)
+      return order.id
     })
-    showToast(`成功加入「${g.title}」（${dateLabel} ${g.startTime}-${g.endTime}），获赠 +30 积分！`)
   }
 
   function publishMatchmakingGame(payload: Omit<MatchmakingGame, 'id' | 'hostName' | 'hostOrigin' | 'currentPlayers' | 'joinedByMe'>) {
@@ -747,10 +788,8 @@ export function usePortalStore() {
       showToast('本节团体课名额已满，请选择其他日期或时段')
       return
     }
-    cls.bookedByMe = true
-    cls.enrolled += 1
     const dateLabel = BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate ?? cls.date
-    state.orders.unshift({
+    const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '课程',
       title: `团体课：${cls.title}`,
@@ -759,9 +798,25 @@ export function usePortalStore() {
       amount: cls.memberPrice,
       status: '待上课',
       cancellable: true,
+    }
+    return requestReservation({
+      title: order.title,
+      fields: [
+        { label: '日期与时段', value: order.time },
+        { label: '教练与场馆', value: order.subtitle },
+      ],
+      amount: order.amount,
+      successMessage: '已同步至个人中心，获赠 60 积分。',
+    }, () => {
+      if (cls.bookedByMe || cls.enrolled >= cls.capacity) {
+        throw new ReservationUnavailable('课程名额已变更，请返回查看最新状态。')
+      }
+      cls.bookedByMe = true
+      cls.enrolled += 1
+      state.orders.unshift(order)
+      state.points += 60
+      return order.id
     })
-    state.points += 60
-    showToast(`预约成功！${dateLabel} ${cls.startTime}-${cls.endTime}「${cls.title}」（¥${cls.memberPrice}，+60分）`)
   }
 
   function bookPrivateCoachSlot(coachId: string, dateIso: string, hour: string) {
@@ -772,10 +827,9 @@ export function usePortalStore() {
       showToast('该时段已被预约，请选择教练其他空闲时段')
       return
     }
-    state.bookedCoachKeys.push(key)
     const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
     const range = formatHourRange(hour)
-    state.orders.unshift({
+    const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '课程',
       title: `私教课：${coach.name}（${coach.specialty}）`,
@@ -784,9 +838,29 @@ export function usePortalStore() {
       amount: coach.memberPrice,
       status: '待上课',
       cancellable: true,
+    }
+    return requestReservation({
+      title: order.title,
+      fields: [
+        { label: '日期与时段', value: order.time },
+        { label: '场馆与课程', value: order.subtitle },
+      ],
+      amount: order.amount,
+      successMessage: '已同步至个人中心，获赠 80 积分。',
+    }, () => {
+      if (state.bookedCoachKeys.includes(key)) throw new ReservationUnavailable('该时段已被预约，请返回重选。')
+      state.bookedCoachKeys.push(key)
+      state.orders.unshift(order)
+      state.points += 80
+      return order.id
     })
-    state.points += 80
-    showToast(`私教课预约成功！${coach.name} · ${dateLabel} ${range}（实付 ¥${coach.memberPrice}，+80分）`)
+  }
+
+  async function saveReservationOrder(order: PortalOrder) {
+    if (!USE_MOCK) {
+      await apiRequest<PortalOrder>('/orders', { method: 'POST', body: JSON.stringify(order) })
+    }
+    state.orders.unshift(order)
   }
 
   async function createQuickOrder(
@@ -796,6 +870,7 @@ export function usePortalStore() {
     amount: number,
     pointsGain = 60,
     pointsSpent = 0,
+    reservation?: Partial<Pick<ReservationSummary, 'fields' | 'successTitle' | 'successMessage'>>,
   ) {
     const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
@@ -807,11 +882,28 @@ export function usePortalStore() {
       status: category === '住宿' ? '已确认' : '待使用',
       cancellable: true,
     }
-    await apiRequest('/orders', { method: 'POST', body: JSON.stringify(order) }, () => order)
-    state.orders.unshift(order)
-    if (pointsSpent > 0 && state.points >= pointsSpent) state.points -= pointsSpent
-    state.points += pointsGain
-    showToast(`支付成功：「${title}」（¥${amount}）已同步至个人中心，获赠 +${pointsGain} 金网积分！`)
+    if (category === '商品') {
+      await apiRequest('/orders', { method: 'POST', body: JSON.stringify(order) }, () => order)
+      state.orders.unshift(order)
+      if (pointsSpent > 0 && state.points >= pointsSpent) state.points -= pointsSpent
+      state.points += pointsGain
+      showToast(`支付成功：「${title}」（¥${amount}）已同步至个人中心，获赠 +${pointsGain} 金网积分！`)
+      return true
+    }
+
+    return requestReservation({
+      title,
+      fields: reservation?.fields ?? [{ label: '预约信息', value: subtitle }],
+      amount,
+      successTitle: reservation?.successTitle,
+      successMessage: reservation?.successMessage ?? `已同步至个人中心，获赠 ${pointsGain} 积分。`,
+    }, async () => {
+      if (pointsSpent > state.points) throw new ReservationUnavailable('可用积分已变更，请返回重新核对金额。')
+      await saveReservationOrder(order)
+      state.points -= pointsSpent
+      state.points += pointsGain
+      return order.id
+    })
   }
 
   async function cancelOrder(orderId: string) {
@@ -974,22 +1066,11 @@ export function usePortalStore() {
         state.courtSurfaceFilter = parseSurfaceFromUrl()
         state.courtRegionFilter = parseRegionFromUrl()
       } else {
-        const hashMatch = window.location.hash.match(/^#m(\d+)$/)
-        if (hashMatch) {
-          const id = Number(hashMatch[1])
-          if (id >= 2 && id <= 13) {
-            state.isStandalonePage = true
-            state.activeModule = id as ModuleId
-          }
-        } else {
-          state.isStandalonePage = false
-          const histMod = (window.history.state as { moduleId?: ModuleId } | null)?.moduleId
-          if (histMod && histMod >= 1 && histMod <= 13) {
-            state.activeModule = histMod
-          } else if (!state.activeModule) {
-            state.activeModule = 1
-          }
-        }
+        state.isStandalonePage = false
+        const previousModule = (window.history.state as { moduleId?: ModuleId } | null)?.moduleId
+        state.activeModule = previousModule && Number.isInteger(previousModule) && previousModule >= 1 && previousModule <= 13
+          ? previousModule
+          : 1
       }
 
       if (urlDetail) {
@@ -1023,6 +1104,7 @@ export function usePortalStore() {
     showToast,
     switchModule,
     navigateToModulePage,
+    returnFromModulePage,
     openModulePage,
     openModuleInNewWindow,
     openDetailPage,

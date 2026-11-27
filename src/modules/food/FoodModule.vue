@@ -5,7 +5,8 @@ import { usePortalStore } from '../../store/usePortalStore'
 
 const { openPhoto } = usePortalStore()
 const PAGE_SIZE = 4
-const foodTab = ref<'联盟85折' | '农家菜' | '夜市'>('联盟85折')
+const FOOD_CATEGORIES = ['联盟85折', '农家菜', '夜市'] as const
+const foodCategory = ref<(typeof FOOD_CATEGORIES)[number] | ''>('')
 const foodKeyword = ref('')
 const foodPage = ref(1)
 const foodSort = ref<'default' | 'price' | 'rating'>('default')
@@ -281,9 +282,9 @@ const restaurants = [
 const visibleShops = computed(() => {
   const q = foodKeyword.value.trim().toLowerCase()
   const list = restaurants.filter((r) => {
-    const okTab = r.cat === foodTab.value
+    const matchesCategory = !foodCategory.value || r.cat === foodCategory.value
     const okQ = !q || [r.name, r.address, ...r.dishes].some((text) => text.toLowerCase().includes(q))
-    return okTab && okQ
+    return matchesCategory && okQ
   })
   return [...list].sort((a, b) => {
     if (foodSort.value === 'price') return a.avg - b.avg
@@ -332,20 +333,6 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button
-          v-for="t in (['联盟85折', '农家菜', '夜市'] as const)"
-          :key="t"
-          class="m-tab"
-          :class="{ active: foodTab === t }"
-          @click="foodTab = t"
-        >
-          {{ t }}
-        </button>
-      </div>
-    </div>
-
     <div class="card card-pad mb-16 filter-workbench">
       <div class="dd-filter-grid food-filters">
         <label class="dd-field">
@@ -357,8 +344,16 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
         </label>
 
         <label class="dd-field">
+          <span class="dd-field-label">餐厅分类</span>
+          <select v-model="foodCategory" class="dd-select" :class="{ active: foodCategory !== '' }">
+            <option value="">全部餐厅</option>
+            <option v-for="category in FOOD_CATEGORIES" :key="category" :value="category">{{ category }}</option>
+          </select>
+        </label>
+
+        <label class="dd-field">
           <span class="dd-field-label">排序方式</span>
-          <select v-model="foodSort" class="dd-select">
+          <select v-model="foodSort" class="dd-select" :class="{ active: foodSort !== 'default' }">
             <option value="default">综合口碑</option>
             <option value="price">人均最低</option>
             <option value="rating">评分最高</option>
@@ -368,7 +363,8 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
     </div>
 
     <div class="mb-16">
-      <div class="grid-2 food-grid">
+      <p v-if="!visibleShops.length" class="card card-pad food-empty" role="status">没有符合条件的餐厅</p>
+      <div v-else class="grid-2 food-grid">
         <article v-for="shop in pagedShops" :key="shop.name" class="card food-card">
           <img class="food-card-photo" :src="shop.photo" alt="" />
           <div class="food-card-content">
@@ -400,17 +396,24 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 
 <style scoped>
 .food-filters {
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) repeat(2, 220px);
 }
 
 .food-search {
+  flex: none;
   width: 100%;
+  max-width: none;
   height: 42px;
   border-radius: 6px;
 }
 
 .food-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.food-empty {
+  color: var(--ink-2);
+  text-align: center;
 }
 
 .food-card {

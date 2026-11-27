@@ -7,6 +7,7 @@ import HomeSummaryStage from './components/HomeSummaryStage.vue'
 import ListingDetailPage from './components/ListingDetailPage.vue'
 import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
 import PortalHeader from './components/PortalHeader.vue'
+import ReservationDialog from './components/ReservationDialog.vue'
 import SubPageNavBar from './components/SubPageNavBar.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
@@ -88,6 +89,7 @@ onMounted(() => {
 
     <ActionDetailModal />
     <EventPopupModal />
+    <ReservationDialog />
 
     <div v-if="state.toastMessage" class="toast-banner">
       <span style="color: var(--lime)">✔</span>

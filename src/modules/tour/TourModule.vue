@@ -15,7 +15,16 @@ import { usePortalStore } from '../../store/usePortalStore'
 const { openPhoto, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
 
 // 模块顶部主视图切换
-const activeSection = ref<'all' | 'scenic' | 'rural' | 'trendy' | 'spots' | 'packages' | 'audio' | 'lines'>('scenic')
+const tourTabs = [
+  { id: 'scenic', label: '景区门票' },
+  { id: 'rural', label: '乡村景点' },
+  { id: 'trendy', label: '热门打卡' },
+  { id: 'spots', label: '全部景点' },
+  { id: 'packages', label: '文旅套餐' },
+  { id: 'audio', label: '语音导览' },
+  { id: 'lines', label: '文旅线路' },
+] as const
+const activeSection = ref<(typeof tourTabs)[number]['id'] | 'all'>('scenic')
 
 // 1. 景区 / 乡村 / 网红 / 夜市 筛选、搜索与分页（每页4项）
 const PAGE_SIZE = 4
@@ -24,7 +33,6 @@ const spotKeyword = ref('')
 const spotPage = ref(1)
 const visitDate = ref(BOOKING_DATES[0]!.iso)
 const visitSlot = ref<'上午 08:30-12:00' | '下午 13:00-17:00' | '夜游 17:30-22:00'>('下午 13:00-17:00')
-const ticketCount = ref(2)
 
 const activeCategory = computed<TourSpotCategory | '全部'>(() => {
   if (activeSection.value === 'scenic') return '景区'
@@ -68,14 +76,12 @@ const visitDateLabel = computed(
 )
 
 function bookSpotTicket(spot: (typeof TOUR_SPOTS)[number]) {
-  const unitPrice = spot.stubPrice
-  const total = unitPrice * ticketCount.value
   createQuickOrder(
     '门票',
-    `${spot.name}（${ticketCount.value}份）`,
+    `${spot.name}（1份）`,
     `${visitDateLabel.value} ${visitSlot.value} · ${spot.duration} · 票根专享价`,
-    total,
-    total > 0 ? 60 : 20,
+    spot.stubPrice,
+    spot.stubPrice > 0 ? 60 : 20,
   )
 }
 
@@ -187,14 +193,17 @@ const visibleTrails = computed(() =>
 <template>
   <section>
     <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: activeSection === 'scenic' }" @click="activeSection = 'scenic'">景区</button>
-        <button class="m-tab" :class="{ active: activeSection === 'rural' }" @click="activeSection = 'rural'">乡村</button>
-        <button class="m-tab" :class="{ active: activeSection === 'trendy' }" @click="activeSection = 'trendy'">网红</button>
-        <button class="m-tab" :class="{ active: activeSection === 'spots' }" @click="activeSection = 'spots'">全部景点</button>
-        <button class="m-tab" :class="{ active: activeSection === 'packages' }" @click="activeSection = 'packages'">网旅产品</button>
-        <button class="m-tab" :class="{ active: activeSection === 'audio' }" @click="activeSection = 'audio'">语音导览</button>
-        <button class="m-tab" :class="{ active: activeSection === 'lines' }" @click="activeSection = 'lines'">文旅专线与骑行徒步</button>
+      <div class="tour-tabs" role="group" aria-label="旅游分类">
+        <button
+          v-for="tab in tourTabs"
+          :key="tab.id"
+          type="button"
+          class="tour-tab"
+          :aria-pressed="activeSection === tab.id"
+          @click="activeSection = tab.id"
+        >
+          {{ tab.label }}
+        </button>
       </div>
     </div>
 
@@ -206,7 +215,7 @@ const visibleTrails = computed(() =>
           <span class="dd-count-pill">共 {{ visibleSpots.length }} 处景点</span>
         </div>
 
-        <div class="dd-filter-grid" :class="activeSection === 'spots' || activeSection === 'all' ? 'cols-5' : 'cols-4'">
+        <div class="dd-filter-grid">
           <div class="dd-field">
             <span class="dd-field-label">关键词搜索</span>
             <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
@@ -216,9 +225,9 @@ const visibleTrails = computed(() =>
           </div>
 
           <label v-if="activeSection === 'spots' || activeSection === 'all'" class="dd-field">
-            <span class="dd-field-label">场景分类</span>
+            <span class="dd-field-label">景点类型</span>
             <select v-model="spotCategory" class="dd-select" :class="{ active: spotCategory !== '全部' }">
-              <option value="全部">全部场景（{{ TOUR_SPOTS.length }}）</option>
+              <option value="全部">全部类型（{{ TOUR_SPOTS.length }}）</option>
               <option value="景区">景区</option>
               <option value="乡村景点">乡村景点</option>
               <option value="网红打卡点">网红打卡点</option>
@@ -241,16 +250,6 @@ const visibleTrails = computed(() =>
               <option value="上午 08:30-12:00">上午 08:30-12:00</option>
               <option value="下午 13:00-17:00">下午 13:00-17:00</option>
               <option value="夜游 17:30-22:00">夜游 17:30-22:00</option>
-            </select>
-          </label>
-
-          <label class="dd-field">
-            <span class="dd-field-label">预约份数</span>
-            <select v-model.number="ticketCount" class="dd-select">
-              <option :value="1">1 份</option>
-              <option :value="2">2 份</option>
-              <option :value="3">3 份</option>
-              <option :value="4">4 份</option>
             </select>
           </label>
         </div>
@@ -632,3 +631,35 @@ const visibleTrails = computed(() =>
     </div>
   </section>
 </template>
+
+<style scoped>
+.tour-tabs {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+  gap: 8px;
+}
+
+.tour-tab {
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tour-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+.tour-tab[aria-pressed='true'] {
+  border-color: var(--primary-dark);
+  background: var(--primary-dark);
+  color: white;
+}
+</style>
