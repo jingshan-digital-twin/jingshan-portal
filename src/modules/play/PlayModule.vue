@@ -273,13 +273,7 @@ function submitNewGame() {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">02</div>
-        <div>
-          <h1 class="mh-title">“打”：网球场地预约与同城约球</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: subView === 'all' }" @click="subView = 'all'">全部功能</button>
         <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>

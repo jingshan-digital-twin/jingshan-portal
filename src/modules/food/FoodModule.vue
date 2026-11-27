@@ -194,13 +194,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">04</div>
-        <div>
-          <h1 class="mh-title">“吃”：美食服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="t in (['全部', '联盟85折', '农家菜', '夜市', '团餐'] as const)"
@@ -362,9 +356,6 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       <div class="flex-between" style="margin-bottom: 10px">
         <div>
           <strong style="font-size: 16px; color: #6e4300">🍱 团餐及赛事接待定点餐饮推荐（市场监管A级食安保障）</strong>
-          <div style="font-size: 12px; color: #8d6524">
-            面向参赛代表队、网球研学团、企业团建 · 支持定制运动员低脂高蛋白营养餐与大巴停靠
-          </div>
         </div>
         <button
           class="btn-orange"
@@ -385,7 +376,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
           </div>
           <div style="color: var(--ink-2); margin-bottom: 5px">{{ gv.desc }}</div>
           <div class="flex-between" style="font-size: 11px; color: var(--ink-3)">
-            <span>📍 {{ gv.address }} ({{ gv.lng.toFixed(4) }}, {{ gv.lat.toFixed(4) }})</span>
+            <span>📍 {{ gv.address }}</span>
             <button
               class="btn-ghost"
               style="padding: 3px 8px; font-size: 11px; flex-shrink: 0"

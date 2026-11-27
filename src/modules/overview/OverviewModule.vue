@@ -176,13 +176,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
 <template>
   <section class="home-fixed-overview">
     <!-- 01 首页总览与网球主题专区 -->
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">01</div>
-        <div>
-          <h1 class="mh-title">首页总览与全城热门精选</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="tab in (['全部', '网球+文旅', '网球+研学', '网球+康养'] as const)"

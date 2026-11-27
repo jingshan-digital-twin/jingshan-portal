@@ -18,13 +18,7 @@ const filteredOrders = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">13</div>
-        <div>
-          <h1 class="mh-title">个人中心（会员积分 · 五维网球能力 · 订单票根）</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: profileTab === '全部' }" @click="profileTab = '全部'">个人总览</button>
         <button class="m-tab" :class="{ active: profileTab === '订单' }" @click="profileTab = '订单'">我的订单({{ state.orders.length }})</button>

@@ -254,16 +254,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">09</div>
-        <div>
-          <h1 class="mh-title">“训”：培训研学、俱乐部与运动康复服务</h1>
-          <div class="mh-desc">
-            一站涵盖团体/私教约课、网球训练营/研学/团建报名、认证俱乐部课程销售与评价、湖北省网球学校招生咨询、青少年赛事及运动康复机构
-          </div>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: trainSection === 'all' }" @click="trainSection = 'all'">全部总览</button>
         <button class="m-tab" :class="{ active: trainSection === 'booking' }" @click="trainSection = 'booking'">团体/私教约课</button>
