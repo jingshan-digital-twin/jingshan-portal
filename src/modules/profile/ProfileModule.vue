@@ -1,18 +1,50 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AbilityRadarChart from '../../components/AbilityRadarChart.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, memberTier, switchModule, cancelOrder, redeemPoints, openActionModal } =
   usePortalStore()
 
+const ORDER_PAGE_SIZE = 10
 const profileTab = ref<'全部' | '订单' | '票根' | '收藏'>('全部')
 const orderCat = ref<'全部' | '场地' | '住宿' | '门票' | '课程' | '商品'>('全部')
+const orderKeyword = ref('')
+const orderPage = ref(1)
 
-const filteredOrders = computed(() =>
-  orderCat.value === '全部'
-    ? state.orders
-    : state.orders.filter((o) => o.category === orderCat.value),
+const filteredOrders = computed(() => {
+  const q = orderKeyword.value.trim().toLowerCase()
+  return state.orders.filter((o) => {
+    const okCat = orderCat.value === '全部' || o.category === orderCat.value
+    const okQ =
+      !q ||
+      o.title.toLowerCase().includes(q) ||
+      o.subtitle.toLowerCase().includes(q) ||
+      o.time.toLowerCase().includes(q) ||
+      o.status.toLowerCase().includes(q) ||
+      o.category.toLowerCase().includes(q)
+    return okCat && okQ
+  })
+})
+
+const pagedOrders = computed(() => {
+  const start = (orderPage.value - 1) * ORDER_PAGE_SIZE
+  return filteredOrders.value.slice(start, start + ORDER_PAGE_SIZE)
+})
+
+watch([orderCat, orderKeyword], () => {
+  orderPage.value = 1
+})
+
+watch(
+  () => filteredOrders.value.length,
+  (len) => {
+    const maxPage = Math.max(1, Math.ceil(len / ORDER_PAGE_SIZE))
+    if (orderPage.value > maxPage) {
+      orderPage.value = maxPage
+    }
+  },
 )
 </script>
 
@@ -108,7 +140,7 @@ const filteredOrders = computed(() =>
 
     <div class="grid-split">
       <div v-if="profileTab === '全部' || profileTab === '订单'" class="card card-pad">
-        <div class="flex-between" style="margin-bottom: 10px">
+        <div class="flex-between" style="margin-bottom: 10px; gap: 10px; flex-wrap: wrap">
           <strong style="font-size: 15.5px">📦 我的订单（场地 / 住宿 / 门票 / 课程 / 商品）</strong>
           <div class="flex-row">
             <button
@@ -123,13 +155,36 @@ const filteredOrders = computed(() =>
             </button>
           </div>
         </div>
+        <div class="flex-between" style="margin-bottom: 10px; gap: 10px; flex-wrap: wrap">
+          <div class="search-bar" style="width: 280px; height: 34px">
+            <span>🔍</span>
+            <input v-model="orderKeyword" type="text" placeholder="搜索订单名称、场馆、状态…" />
+            <button
+              v-if="orderKeyword"
+              class="btn-ghost"
+              style="padding: 1px 6px; font-size: 11px"
+              @click="orderKeyword = ''"
+            >
+              ✕
+            </button>
+          </div>
+          <span style="font-size: 12px; color: var(--ink-3)">
+            共 <strong style="color: var(--primary)">{{ filteredOrders.length }}</strong> 条订单（每页 {{ ORDER_PAGE_SIZE }} 条）
+          </span>
+        </div>
         <table class="clean-table">
           <thead>
-            <tr><th>类型</th><th>订单内容（含联动预约）</th><th>时间</th><th>状态</th><th>操作</th></tr>
+            <tr>
+              <th style="white-space: nowrap">类型</th>
+              <th>订单内容（含联动预约）</th>
+              <th style="white-space: nowrap">时间</th>
+              <th style="white-space: nowrap">状态</th>
+              <th style="white-space: nowrap">操作</th>
+            </tr>
           </thead>
           <tbody>
-            <tr v-for="o in filteredOrders" :key="o.id">
-              <td>
+            <tr v-for="o in pagedOrders" :key="o.id">
+              <td style="white-space: nowrap">
                 <span class="tag" :class="{ green: o.category === '场地', blue: o.category === '住宿', gold: o.category === '门票' || o.category === '商品', purple: o.category === '课程' }">
                   {{ o.category }}
                 </span>
@@ -138,17 +193,31 @@ const filteredOrders = computed(() =>
                 <strong>{{ o.title }}</strong><br />
                 <span style="font-size: 10.5px; color: var(--ink-3)">{{ o.subtitle }}（¥{{ o.amount }}）</span>
               </td>
-              <td>{{ o.time }}</td>
-              <td><strong :style="{ color: o.status === '已取消' ? '#999' : 'var(--primary)' }">{{ o.status }}</strong></td>
-              <td>
+              <td style="white-space: nowrap">{{ o.time }}</td>
+              <td style="white-space: nowrap">
+                <strong :style="{ color: o.status === '已取消' ? '#999' : 'var(--primary)' }">{{ o.status }}</strong>
+              </td>
+              <td style="white-space: nowrap">
                 <button v-if="o.cancellable && o.status !== '已取消'" class="btn-ghost" style="padding: 3px 8px; font-size: 11px" @click="cancelOrder(o.id)">
                   取消订单
                 </button>
                 <span v-else style="font-size: 11px; color: var(--ink-3)">已退款</span>
               </td>
             </tr>
+            <tr v-if="pagedOrders.length === 0">
+              <td colspan="5" style="text-align: center; padding: 24px 0; color: var(--ink-3)">
+                未找到符合条件的订单记录
+              </td>
+            </tr>
           </tbody>
         </table>
+        <PaginationBar
+          :total="filteredOrders.length"
+          :page="orderPage"
+          :page-size="ORDER_PAGE_SIZE"
+          unit="条"
+          @update:page="orderPage = $event"
+        />
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 12px">
