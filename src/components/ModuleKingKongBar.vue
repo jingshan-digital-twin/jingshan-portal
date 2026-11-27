@@ -2,28 +2,27 @@
 import { usePortalStore } from '../store/usePortalStore'
 import type { ModuleId } from '../types/portal'
 
-const { state, activeOrdersCount, switchModule } = usePortalStore()
+const { state, switchModule } = usePortalStore()
 
 interface MainTile {
   id: ModuleId
   title: string
-  sub: string
   bg: string
   badge?: string
   badgeBg?: string
 }
 
 const mainTiles: MainTile[] = [
-  { id: 1, title: '首页总览', sub: '名片/主题/热点', bg: 'linear-gradient(135deg,#0E8F67,#085F44)', badge: '总览', badgeBg: '#0D7A58' },
-  { id: 2, title: '打 · 场地服务', sub: '订场/比分/陪练', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)', badge: '实时余量', badgeBg: '#FF5D2A' },
-  { id: 3, title: '游 · 旅游游览', sub: '延伸线/语音导览', bg: 'linear-gradient(135deg,#2EB36A,#168249)', badge: '全域游', badgeBg: '#168249' },
-  { id: 4, title: '吃 · 美食服务', sub: '菜单/团餐/票根券', bg: 'linear-gradient(135deg,#F25C43,#C93722)', badge: '票根85折', badgeBg: '#E44717' },
-  { id: 5, title: '住 · 住宿服务', sub: '酒店/公寓/购房减5万', bg: 'linear-gradient(135deg,#3385F0,#195CC2)', badge: '公寓/减5万', badgeBg: '#D9381E' },
-  { id: 6, title: '行 · 出行服务', sub: '限行图/车位/充电', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)', badge: '限行指引', badgeBg: '#DF2E38' },
-  { id: 7, title: '购 · 特色商品', sub: '农特/文创/商城', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
-  { id: 8, title: '娱 · 休闲娱乐', sub: '农庄/采摘/康养', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
-  { id: 9, title: '训 · 培训研学', sub: '省网校/评测/康复', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
-  { id: 10, title: '便民配套服务', sub: '公厕/医疗/充电/路况', bg: 'linear-gradient(135deg,#0EA5A4,#0A6F72)' },
+  { id: 1, title: '首页总览', bg: 'linear-gradient(135deg,#0E8F67,#085F44)', badge: '总览', badgeBg: '#0D7A58' },
+  { id: 2, title: '打 · 场地服务', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)', badge: '实时余量', badgeBg: '#FF5D2A' },
+  { id: 3, title: '游 · 旅游游览', bg: 'linear-gradient(135deg,#2EB36A,#168249)', badge: '全域游', badgeBg: '#168249' },
+  { id: 4, title: '吃 · 美食服务', bg: 'linear-gradient(135deg,#F25C43,#C93722)', badge: '票根85折', badgeBg: '#E44717' },
+  { id: 5, title: '住 · 住宿服务', bg: 'linear-gradient(135deg,#3385F0,#195CC2)', badge: '公寓/减5万', badgeBg: '#D9381E' },
+  { id: 6, title: '行 · 出行服务', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)', badge: '限行指引', badgeBg: '#DF2E38' },
+  { id: 7, title: '购 · 特色商品', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
+  { id: 8, title: '娱 · 休闲娱乐', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
+  { id: 9, title: '训 · 培训研学', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
+  { id: 10, title: '便民配套服务', bg: 'linear-gradient(135deg,#0EA5A4,#0A6F72)' },
 ]
 </script>
 
@@ -81,38 +80,9 @@ const mainTiles: MainTile[] = [
               </svg>
             </div>
             <div class="kk-label">{{ m.title }}</div>
-            <div class="kk-sub">{{ m.sub }}</div>
           </button>
         </div>
 
-        <div class="kk-row-sub">
-          <div class="kk-sub-pills">
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 11 }"
-              @click="switchModule(11)"
-            >
-              <span class="kk-pill-ico">💬</span>
-              <span>互动反馈 · 评价投诉</span>
-            </button>
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 12 }"
-              @click="switchModule(12)"
-            >
-              <span class="kk-pill-ico">🔗</span>
-              <span>小程序互联互通</span>
-            </button>
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 13 }"
-              @click="switchModule(13)"
-            >
-              <span class="kk-pill-ico">👤</span>
-              <span>个人中心 · {{ activeOrdersCount }} 笔订单</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>

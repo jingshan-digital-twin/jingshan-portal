@@ -18,9 +18,6 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
         <div class="mh-num">06</div>
         <div>
           <h1 class="mh-title">“行”：出行服务</h1>
-          <div class="mh-desc">
-            赛期限行、车位余量、充电桩与专车接驳，出发前先看一眼再上路
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

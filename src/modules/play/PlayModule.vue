@@ -237,9 +237,6 @@ function submitNewGame() {
         <div class="mh-num">02</div>
         <div>
           <h1 class="mh-title">“打”：网球场地预约与同城约球</h1>
-          <div class="mh-desc">
-            356 片球场实时可约，在线订场、赛事实时比分、陪练约球与车位充电一站搞定
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

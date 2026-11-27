@@ -24,9 +24,6 @@ function openProduct(id: string) {
         <div class="mh-num">07</div>
         <div>
           <h1 class="mh-title">“购”：特色商品服务</h1>
-          <div class="mh-desc">
-            京山农特产品、李宁网球装备与非遗文创，产地直发 · 支持积分抵现与票根满减
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

@@ -24,9 +24,6 @@ const visibleGroups = computed(() =>
         <div class="mh-num">12</div>
         <div>
           <h1 class="mh-title">小程序互联互通</h1>
-          <div class="mh-desc">
-            政务、文旅、支付、打车等常用小程序，一次授权即可直达
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

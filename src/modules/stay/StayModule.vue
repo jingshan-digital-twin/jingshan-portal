@@ -58,9 +58,6 @@ function openHotelDetail(id: string) {
         <div class="mh-num">05</div>
         <div>
           <h1 class="mh-title">“住”：住宿服务</h1>
-          <div class="mh-desc">
-            从球场步行可达的酒店与网球公寓，房型与赛期价一目了然，购房再减 5 万
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
@@ -179,7 +176,6 @@ function openHotelDetail(id: string) {
 
           <div class="coord-bar">
             <span>📍 {{ hotel.address }}</span>
-            <span class="coord-mono">{{ hotel.lng.toFixed(4) }}°E, {{ hotel.lat.toFixed(4) }}°N</span>
           </div>
 
           <!-- 房型与透明价格预览（前2种房型 + 点击展开全部） -->

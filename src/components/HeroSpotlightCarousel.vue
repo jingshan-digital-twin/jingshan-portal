@@ -269,19 +269,13 @@ function submitQuickPackage() {
             <span style="width: 34px; height: 34px; border-radius: 0; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
               🏆
             </span>
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: var(--ink)">青少年巡回赛总决赛</div>
-              <div style="font-size: 10.5px; color: var(--ink-3)">网球记实时比分 · 签表联动</div>
-            </div>
+            <div style="font-size: 12.5px; font-weight: 800; color: var(--ink)">青少年巡回赛总决赛</div>
           </button>
           <button class="hw-mini" @click="switchModule(5)">
             <span style="width: 34px; height: 34px; border-radius: 0; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0">
               🏠
             </span>
-            <div>
-              <div style="font-size: 12px; font-weight: 800; color: var(--ink)">购房减5万 & 网球公寓</div>
-              <div style="font-size: 10.5px; color: var(--ink-3)">房管局补贴 · 短/长租拎包住</div>
-            </div>
+            <div style="font-size: 12.5px; font-weight: 800; color: var(--ink)">购房减5万 & 网球公寓</div>
           </button>
         </div>
       </div>

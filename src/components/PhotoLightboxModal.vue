@@ -102,9 +102,6 @@ function jumpNav() {
           </div>
           <div v-if="state.lightbox.address" class="flex-between">
             <span><strong>📍 精确地址：</strong>{{ state.lightbox.address }}</span>
-            <span v-if="state.lightbox.lng !== undefined && state.lightbox.lat !== undefined" class="coord-mono">
-              {{ state.lightbox.lng.toFixed(4) }}°E, {{ state.lightbox.lat.toFixed(4) }}°N
-            </span>
           </div>
         </div>
 

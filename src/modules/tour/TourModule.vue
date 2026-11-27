@@ -20,9 +20,6 @@ const visibleRoutes = computed(() =>
         <div class="mh-num">03</div>
         <div>
           <h1 class="mh-title">“游”：旅游游览服务</h1>
-          <div class="mh-desc">
-            打完球顺路游：温泉、山林与世界遗产串成一条路，配语音导览与行程时长参考
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
@@ -93,7 +90,6 @@ const visibleRoutes = computed(() =>
           <div style="font-size: 11.5px; color: var(--ink-3); margin: 4px 0">{{ route.desc }}</div>
           <div class="coord-bar">
             <span>📍 {{ route.address }}</span>
-            <span class="coord-mono">{{ route.lng.toFixed(4) }}°E, {{ route.lat.toFixed(4) }}°N</span>
           </div>
           <div class="review-quote">💬 游客评：“{{ route.quote }}”</div>
           <div class="flex-between" style="margin-top: 10px">
