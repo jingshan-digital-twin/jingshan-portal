@@ -8,7 +8,6 @@ const { state, memberTier, switchModule, cancelOrder, redeemPoints, openActionMo
   usePortalStore()
 
 const ORDER_PAGE_SIZE = 10
-const profileTab = ref<'全部' | '订单' | '票根' | '收藏'>('订单')
 const orderCat = ref<'全部' | '场地' | '住宿' | '门票' | '课程' | '商品'>('全部')
 const orderKeyword = ref('')
 const orderPage = ref(1)
@@ -50,16 +49,7 @@ watch(
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: profileTab === '全部' }" @click="profileTab = '全部'">全部</button>
-        <button class="m-tab" :class="{ active: profileTab === '订单' }" @click="profileTab = '订单'">我的订单({{ state.orders.length }})</button>
-        <button class="m-tab" :class="{ active: profileTab === '票根' }" @click="profileTab = '票根'">票根与积分兑换</button>
-        <button class="m-tab" :class="{ active: profileTab === '收藏' }" @click="profileTab = '收藏'">收藏({{ state.favorites.length }})</button>
-      </div>
-    </div>
-
-    <div v-if="profileTab === '票根'" class="grid-2 mb-16">
+    <div class="grid-2 mb-16">
       <div class="card card-pad" style="background: linear-gradient(145deg, #0b3125, #11553f); color: #fff">
         <div class="flex-between" style="margin-bottom: 14px">
           <div class="flex-row">
@@ -133,7 +123,7 @@ watch(
     </div>
 
     <div class="grid-split">
-      <div v-if="profileTab === '全部' || profileTab === '订单'" class="card card-pad">
+      <div class="card card-pad">
         <div class="flex-between" style="margin-bottom: 12px; gap: 10px; flex-wrap: wrap">
           <strong style="font-size: 18px">📦 我的订单（场地 / 住宿 / 门票 / 课程 / 商品）</strong>
           <div class="flex-row">
@@ -215,7 +205,7 @@ watch(
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 14px">
-        <div v-if="profileTab === '全部' || profileTab === '票根'" class="card card-pad">
+        <div class="card card-pad">
           <div class="flex-between" style="margin-bottom: 12px">
             <strong style="font-size: 17px">🎫 我的电子票根 & 优惠券 ({{ state.coupons.length }}张)</strong>
             <span class="tag orange">79家联盟通用</span>
@@ -237,7 +227,7 @@ watch(
           </div>
         </div>
 
-        <div v-if="profileTab === '全部' || profileTab === '收藏'" class="card card-pad">
+        <div class="card card-pad">
           <div class="flex-between" style="margin-bottom: 10px">
             <strong style="font-size: 17px">🔔 消息通知 & ❤️ 我的收藏 ({{ state.favorites.length }})</strong>
           </div>

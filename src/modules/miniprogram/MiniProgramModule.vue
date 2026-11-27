@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { openActionModal } = usePortalStore()
-const mpTab = ref<'政务' | '文旅' | '支付' | '打车'>('政务')
 
 const groups = [
   { key: '政务', icon: '🏛️', cat: '本地政务服务小程序', color: '#1C73E8', apps: ['鄂汇办 · 京山专区（实名政务服务）', '12345 政务服务便民热线小程序', '京山气象灾害与应急避难预警', '体育赛事属地备案查询'], desc: '统一身份免密互认，投诉直联城运中心与12345流转体系。' },
@@ -11,28 +9,12 @@ const groups = [
   { key: '支付', icon: '💳', cat: '支付与统一分账小程序', color: '#E28B12', apps: ['微信支付（免密/极速原路退款）', '支付宝生活号与信用免押租拍', '持牌金融机构多商户分账电子凭证', '消费券与房管局补贴核销平台'], desc: '保障订场取消秒退与社会俱乐部T+0安全分账，合规透明。' },
   { key: '打车', icon: '🚕', cat: '打车与公共交通小程序', color: '#6F42C1', apps: ['滴滴出行 / 高德打车（带入球场定位）', '京山实时公交乘车码', '神州租车 / 一嗨租车小程序', '特来电/星星充电跨平台扫码'], desc: '球场中心无缝外链成熟出行工具，不重复造轮子。' },
 ]
-
-const visibleGroups = computed(() => groups.filter((g) => g.key === mpTab.value))
 </script>
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button
-          v-for="t in (['政务', '文旅', '支付', '打车'] as const)"
-          :key="t"
-          class="m-tab"
-          :class="{ active: mpTab === t }"
-          @click="mpTab = t"
-        >
-          {{ '本地' + t }}
-        </button>
-      </div>
-    </div>
-
-    <div class="mb-16">
-      <div v-for="g in visibleGroups" :key="g.cat" class="card card-pad">
+    <div class="grid-2 mb-16">
+      <div v-for="g in groups" :key="g.cat" class="card card-pad">
         <div class="flex-between" style="margin-bottom: 14px">
           <div class="flex-row">
             <span style="font-size: 26px">{{ g.icon }}</span>

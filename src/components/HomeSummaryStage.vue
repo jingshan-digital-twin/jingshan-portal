@@ -595,7 +595,7 @@ function openEntDetail(ent: (typeof ENTERTAINMENT_ITEMS)[number]) {
       <div v-else-if="state.activeModule === 7" class="summary-view-col">
         <div class="ticket-stub-banner" style="flex-shrink: 0">
           <strong style="font-size: 16.5px">🛍️ 京山好物官方商城 · 原产地直发全国包邮</strong>
-          <span class="tag" style="background: var(--lime); color: #0b251d">农特 / 装备 / 文创</span>
+          <span class="tag" style="background: var(--lime); color: #0b251d">农特 / 文创</span>
         </div>
 
         <div class="grid-4 summary-stretch-grid">
