@@ -82,35 +82,6 @@ const mainTiles: MainTile[] = [
             <div class="kk-label">{{ m.title }}</div>
           </button>
         </div>
-
-        <div class="kk-row-sub">
-          <div class="kk-sub-pills">
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 11 }"
-              @click="switchModule(11)"
-            >
-              <span class="kk-pill-ico">💬</span>
-              <span>互动反馈 · 评价投诉</span>
-            </button>
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 12 }"
-              @click="switchModule(12)"
-            >
-              <span class="kk-pill-ico">🔗</span>
-              <span>小程序互联互通</span>
-            </button>
-            <button
-              class="kk-pill"
-              :class="{ active: state.activeModule === 13 }"
-              @click="switchModule(13)"
-            >
-              <span class="kk-pill-ico">👤</span>
-              <span>个人中心 · {{ activeOrdersCount }} 笔订单</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   </div>
