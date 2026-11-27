@@ -64,13 +64,13 @@ function jumpNav() {
         </button>
       </div>
 
-      <div class="card-pad" style="display: flex; flex-direction: column; gap: 13px">
+      <div class="card-pad" style="display: flex; flex-direction: column; gap: 15px">
         <!-- 标题与基础信息 -->
         <div>
-          <div class="flex-between" style="align-items: flex-start; gap: 10px">
+          <div class="flex-between" style="align-items: flex-start; gap: 12px">
             <div>
-              <strong style="font-size: 19px; color: var(--ink)">{{ state.lightbox.title }}</strong>
-              <div style="font-size: 12px; color: var(--ink-3); margin-top: 3px">{{ state.lightbox.subtitle }}</div>
+              <strong style="font-size: 21px; color: var(--ink)">{{ state.lightbox.title }}</strong>
+              <div style="font-size: 14px; color: var(--ink-2); margin-top: 4px">{{ state.lightbox.subtitle }}</div>
             </div>
             <div class="flex-row" style="flex-shrink: 0">
               <button
@@ -86,84 +86,81 @@ function jumpNav() {
           </div>
 
           <!-- 亮点标签 -->
-          <div v-if="state.lightbox.tags?.length" class="flex-row" style="margin-top: 9px">
+          <div v-if="state.lightbox.tags?.length" class="flex-row" style="margin-top: 10px">
             <span v-for="t in state.lightbox.tags" :key="t" class="tag green">{{ t }}</span>
           </div>
         </div>
 
-        <!-- 实用信息条（开放时间 / 消费参考 / 地址坐标） -->
+        <!-- 实用信息条 -->
         <div
           v-if="state.lightbox.openHours || state.lightbox.priceInfo || state.lightbox.address"
-          style="background: #f5faf8; border: 1px solid #d9ebe3; border-radius: 0; padding: 10px 13px; display: flex; flex-direction: column; gap: 6px; font-size: 12px"
+          style="background: #f5faf8; border: 1px solid #d9ebe3; border-radius: 0; padding: 12px 15px; display: flex; flex-direction: column; gap: 8px; font-size: 14px"
         >
-          <div class="flex-row" style="gap: 16px">
-            <span v-if="state.lightbox.openHours"><strong>🕒 开放/营业：</strong>{{ state.lightbox.openHours }}</span>
-            <span v-if="state.lightbox.priceInfo"><strong>💰 费用/优惠：</strong><span style="color: var(--accent); font-weight: 800">{{ state.lightbox.priceInfo }}</span></span>
+          <div class="flex-row" style="gap: 18px">
+            <span v-if="state.lightbox.openHours"><strong>🕒 开放时间：</strong>{{ state.lightbox.openHours }}</span>
+            <span v-if="state.lightbox.priceInfo"><strong>💰 费用参考：</strong><span style="color: var(--accent); font-weight: 800">{{ state.lightbox.priceInfo }}</span></span>
           </div>
           <div v-if="state.lightbox.address" class="flex-between">
-            <span><strong>📍 精确地址：</strong>{{ state.lightbox.address }}</span>
+            <span><strong>📍 地址：</strong>{{ state.lightbox.address }}</span>
           </div>
         </div>
 
-        <!-- 详细介绍（景区介绍 / 餐馆故事 / 场馆简介） -->
+        <!-- 详细介绍 -->
         <div v-if="state.lightbox.intro">
-          <strong style="font-size: 14px; display: block; margin-bottom: 5px">📖 详细介绍</strong>
-          <div style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #fbfdfd; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px">
+          <strong style="font-size: 16px; display: block; margin-bottom: 6px">📖 详细介绍</strong>
+          <div style="font-size: 14.5px; color: var(--ink-2); line-height: 1.8; background: #fbfdfd; border: 1px solid var(--line); border-radius: 0; padding: 12px 14px">
             {{ state.lightbox.intro }}
           </div>
         </div>
 
-        <!-- 核心推荐 / 热门必吃 / 核心打卡点 -->
+        <!-- 核心推荐 -->
         <div v-if="state.lightbox.hotItems?.length">
-          <strong style="font-size: 14px; display: block; margin-bottom: 7px">
-            {{ state.lightbox.hotItemsTitle ?? '🔥 热门必体验推荐' }}
+          <strong style="font-size: 16px; display: block; margin-bottom: 8px">
+            {{ state.lightbox.hotItemsTitle ?? '🔥 热门体验推荐' }}
           </strong>
-          <div class="grid-2" style="gap: 9px">
+          <div class="grid-2" style="gap: 10px">
             <div
               v-for="item in state.lightbox.hotItems"
               :key="item.name"
-              style="background: #fffaf3; border: 1px solid #f4deb8; border-radius: 0; padding: 9px 11px"
+              style="background: #fffaf3; border: 1px solid #f4deb8; border-radius: 0; padding: 11px 13px"
             >
-              <div class="flex-between" style="margin-bottom: 3px">
-                <strong style="font-size: 12.5px; color: var(--ink)">{{ item.name }}</strong>
-                <span v-if="item.price" style="font-size: 12px; font-weight: 900; color: var(--accent)">{{ item.price }}</span>
+              <div class="flex-between" style="margin-bottom: 4px">
+                <strong style="font-size: 14.5px; color: var(--ink)">{{ item.name }}</strong>
+                <span v-if="item.price" style="font-size: 14px; font-weight: 900; color: var(--accent)">{{ item.price }}</span>
               </div>
-              <div v-if="item.tag" style="margin-bottom: 3px">
-                <span class="tag orange" style="font-size: 10px">{{ item.tag }}</span>
-              </div>
-              <div v-if="item.desc" style="font-size: 11.5px; color: var(--ink-3); line-height: 1.5">{{ item.desc }}</div>
+              <div v-if="item.desc" style="font-size: 13.5px; color: var(--ink-2); line-height: 1.55">{{ item.desc }}</div>
             </div>
           </div>
         </div>
 
-        <!-- 游玩贴士 / 服务亮点 -->
+        <!-- 游玩贴士 -->
         <div v-if="state.lightbox.highlights?.length">
-          <strong style="font-size: 14px; display: block; margin-bottom: 5px">✨ 亮点与游玩贴士</strong>
-          <div style="display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2)">
+          <strong style="font-size: 16px; display: block; margin-bottom: 6px">✨ 亮点与贴士</strong>
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2)">
             <div v-for="(hl, idx) in state.lightbox.highlights" :key="idx">• {{ hl }}</div>
           </div>
         </div>
 
         <!-- 热门真实评价 -->
         <div v-if="state.lightbox.reviews.length">
-          <strong style="font-size: 14px; display: block; margin-bottom: 7px">
-            💬 游客与球友热门评价（{{ state.lightbox.reviews.length }} 条精选）
+          <strong style="font-size: 16px; display: block; margin-bottom: 8px">
+            💬 游客评价（{{ state.lightbox.reviews.length }} 条）
           </strong>
-          <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; flex-direction: column; gap: 10px">
             <template v-for="(rev, idx) in state.lightbox.reviews" :key="idx">
               <div
                 v-if="isStructuredReview(rev)"
-                style="background: #f6faf8; border-left: 3px solid var(--primary); border-radius: 0; padding: 9px 12px"
+                style="background: #f6faf8; border-left: 3px solid var(--primary); border-radius: 0; padding: 11px 14px"
               >
-                <div class="flex-between" style="margin-bottom: 4px; font-size: 11.5px">
+                <div class="flex-between" style="margin-bottom: 5px; font-size: 13.5px">
                   <div class="flex-row">
                     <strong>{{ rev.user }}</strong>
-                    <span v-if="rev.origin" class="tag green" style="font-size: 10px">{{ rev.origin }}</span>
+                    <span v-if="rev.origin" class="tag green">{{ rev.origin }}</span>
                     <span v-if="rev.score" style="color: #d6961f; font-weight: 800">★ {{ rev.score.toFixed(1) }}</span>
                   </div>
-                  <span v-if="rev.date" style="color: var(--ink-3); font-size: 10.5px">{{ rev.date }}</span>
+                  <span v-if="rev.date" style="color: var(--ink-3); font-size: 13px">{{ rev.date }}</span>
                 </div>
-                <div style="font-size: 12px; color: var(--ink-2); line-height: 1.6">{{ rev.content }}</div>
+                <div style="font-size: 14px; color: var(--ink-2); line-height: 1.65">{{ rev.content }}</div>
               </div>
               <div v-else class="review-quote" style="margin-top: 0">💬 {{ rev }}</div>
             </template>

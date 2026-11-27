@@ -33,7 +33,7 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
         <input
           v-model="state.searchQuery"
           type="text"
-          placeholder="搜球场、实时比分、网球公寓、购房减5万、充电桩预约、桥米美食…"
+          placeholder="搜索球场、赛事、酒店、美食或文旅线路…"
           @keyup.enter="handleSearch"
         />
         <button class="search-btn" @click="handleSearch">搜索</button>
@@ -51,11 +51,11 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
           💬 互动反馈
         </span>
         <span class="hdr-pill" :class="{ active: state.activeModule === 12 }" @click="switchModule(12)">
-          🔗 小程序互通
+          🔗 小程序
         </span>
         <div class="member-chip" :class="{ active: state.activeModule === 13 }" @click="switchModule(13)">
           <div class="avatar-sm">林</div>
-          <span>林先生 · {{ memberTier.code }} · {{ state.abilityLevel }} · {{ state.points }}分</span>
+          <span>林先生 · {{ memberTier.code }}</span>
         </div>
       </div>
     </div>

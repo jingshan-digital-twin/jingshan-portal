@@ -90,6 +90,28 @@ const pagedAmenities = computed(() => {
 watch([visibleAmenities, selectedVenueId], () => {
   amPage.value = 1
 })
+
+function openAmenityDetail(a: AmenityCardItem) {
+  openPhoto({
+    title: a.name,
+    category: `便民设施详情 · ${a.key}`,
+    photo: a.photo,
+    rating: a.rating,
+    subtitle: `距${selectedVenue.value?.name.split('（')[0] ?? '球场'} ${a.dist} ｜ ${a.info}`,
+    intro: `${a.name}位于${a.address}，纳入京山市城运中心智慧网格巡检体系，实时保障洁净度、设备可用率与无障碍通行。`,
+    openHours: a.key === '医疗点' ? '赛事日 07:00–22:00 / 急诊 24小时' : '全天 24 小时开放',
+    priceInfo: a.key === '充电桩' ? '电费+服务费约 ¥0.98/度' : '公益便民免费开放',
+    distance: `距球场 ${a.dist}`,
+    driveMin: '步行约 3 分钟',
+    address: a.address,
+    lng: a.lng,
+    lat: a.lat,
+    tags: ['官方网格认证', '实景核验', '一键精准导航', '支持故障上报'],
+    reviews: [
+      { user: '武汉球友小吴', origin: '武汉', score: 5.0, date: '2026-11-24', content: '标识非常清晰、环境维护得很整洁，点一下导航两三分钟就找到了！' },
+    ],
+  })
+}
 </script>
 
 <template>
@@ -110,40 +132,37 @@ watch([visibleAmenities, selectedVenueId], () => {
 
     <div class="grid-2 mb-16">
       <div class="card card-pad" style="background: linear-gradient(135deg, #0d4c39, #127355); color: #fff">
-        <div class="flex-between" style="margin-bottom: 8px">
-          <strong style="font-size: 16px">☀️ 京山实时天气与网球气象指数</strong>
-          <span class="tag" style="background: var(--lime); color: #0b251d">极适宜户外打球</span>
+        <div class="flex-between" style="margin-bottom: 10px">
+          <strong style="font-size: 18px">☀️ 实时天气与网球气象</strong>
+          <span class="tag" style="background: var(--lime); color: #0b251d">适宜户外打球</span>
         </div>
         <div class="flex-between">
-          <div style="font-size: 32px; font-weight: 900">19°C <span style="font-size: 14px; font-weight: 500">晴 · 东南风2级 · 湿度48%</span></div>
-          <div style="font-size: 11.5px; text-align: right; color: rgba(255, 255, 255, 0.86)">
-            明日：多云 12–21°C（适宜）<br />后日：小雨（推荐室内风雨场）
+          <div style="font-size: 36px; font-weight: 900">19°C <span style="font-size: 15px; font-weight: 500">晴 · 东南风2级</span></div>
+          <div style="font-size: 13.5px; text-align: right; color: rgba(255, 255, 255, 0.88)">
+            明日：多云 12–21°C<br />后日：小雨（推荐室内场）
           </div>
         </div>
       </div>
 
       <div class="card card-pad">
-        <div class="flex-between" style="margin-bottom: 8px">
-          <strong style="font-size: 16px">🚦 全城实时路况与赛场通行状态</strong>
-          <span class="tag orange" style="cursor: pointer" @click="switchModule(6)">查看完整限行地图 →</span>
+        <div class="flex-between" style="margin-bottom: 10px">
+          <strong style="font-size: 18px">🚦 赛场实时路况状态</strong>
+          <span class="tag orange" style="cursor: pointer" @click="switchModule(6)">查看限行地图 →</span>
         </div>
-        <div class="grid-3" style="gap: 8px; font-size: 11.5px">
-          <div style="background: #ffecee; color: #b01c26; padding: 8px; border-radius: 0"><strong>🔴 温泉大道赛场段</strong><br />07:30-19:00 临时封闭</div>
-          <div style="background: #fff5e8; color: #a65608; padding: 8px; border-radius: 0"><strong>🟠 京山大道东段</strong><br />赛事缓冲限行/禁停</div>
-          <div style="background: #eaf8f1; color: #0a6b46; padding: 8px; border-radius: 0"><strong>🟢 高铁站/城区主路</strong><br />全线畅通 · P1剩84位</div>
+        <div class="grid-3" style="gap: 10px; font-size: 13.5px">
+          <div style="background: #ffecee; color: #b01c26; padding: 10px; border-radius: 0"><strong>🔴 温泉大道赛场段</strong><br />07:30-19:00 封闭</div>
+          <div style="background: #fff5e8; color: #a65608; padding: 10px; border-radius: 0"><strong>🟠 京山大道东段</strong><br />缓冲限行禁停</div>
+          <div style="background: #eaf8f1; color: #0a6b46; padding: 10px; border-radius: 0"><strong>🟢 城区主干道</strong><br />畅通 · P1剩84位</div>
         </div>
       </div>
     </div>
 
     <!-- 选择最近的几个网球场（实时联动下方设施列表与右侧地图） -->
     <div class="card card-pad mb-16 filter-workbench">
-      <div class="flex-between mb-10">
-        <div class="flex-row">
-          <strong style="font-size: 14px">🎾 选择离你最近的网球场（按距离由近到远）</strong>
-          <span class="tag green">点击切换后，下方设施列表与右侧地图同步定位</span>
-        </div>
-        <div class="flex-row" style="gap: 5px">
-          <span style="font-size: 11.5px; color: var(--ink-3); font-weight: 700">周边半径：</span>
+      <div class="flex-between mb-12">
+        <strong style="font-size: 16.5px">🎾 选择周边网球场（由近到远）</strong>
+        <div class="flex-row" style="gap: 6px">
+          <span style="font-size: 13.5px; color: var(--ink-2); font-weight: 700">周边半径：</span>
           <button
             v-for="r in (['500m', '1公里', '2公里'] as const)"
             :key="r"
@@ -164,13 +183,13 @@ watch([visibleAmenities, selectedVenueId], () => {
           :class="{ active: selectedVenue?.id === v.id }"
           @click="selectedVenueId = v.id"
         >
-          <div class="flex-between" style="width: 100%; margin-bottom: 3px">
-            <span class="tag" :class="selectedVenue?.id === v.id ? 'green' : ''" style="font-size: 10px; padding: 1px 6px">
-              {{ idx === 0 ? '离你最近' : `第${idx + 1}近` }} · {{ v.distanceKm }}km
+          <div class="flex-between" style="width: 100%; margin-bottom: 5px">
+            <span class="tag" :class="selectedVenue?.id === v.id ? 'green' : ''" style="font-size: 12px; padding: 2px 7px">
+              {{ idx === 0 ? '最近' : `${v.distanceKm}km` }}
             </span>
-            <span style="font-size: 10.5px; opacity: 0.78">{{ v.region }}</span>
+            <span style="font-size: 12.5px; opacity: 0.8">{{ v.region }}</span>
           </div>
-          <strong style="font-size: 13px; text-align: left; display: block">
+          <strong style="font-size: 14.5px; text-align: left; display: block">
             {{ v.name.split('（')[0] }}
           </strong>
         </button>
@@ -178,57 +197,39 @@ watch([visibleAmenities, selectedVenueId], () => {
     </div>
 
     <div class="grid-split-rev">
-      <div style="display: flex; flex-direction: column; gap: 10px">
-        <div class="search-bar" style="max-width: 100%; height: 36px; background: #fff">
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div class="search-bar" style="max-width: 100%; height: 42px; background: #fff">
           <span>🔍</span>
-          <input v-model="amKeyword" type="text" placeholder="搜索公厕、AED医疗、快充桩、ATM、母婴室…" />
-          <button v-if="amKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="amKeyword = ''">✕</button>
+          <input v-model="amKeyword" type="text" placeholder="搜索公厕、医疗点、充电桩、ATM、母婴室…" />
+          <button v-if="amKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 12px" @click="amKeyword = ''">✕</button>
         </div>
 
         <div
           v-for="a in pagedAmenities"
           :key="`${selectedVenue?.id}-${a.name}`"
           class="card"
-          style="display: grid; grid-template-columns: 82px 1fr; gap: 12px; padding: 10px 12px; align-items: center"
+          style="display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 13px 14px; align-items: center"
         >
           <div
             class="photo-box"
-            style="height: 66px; border-radius: 0"
-            @click="
-              openPhoto({
-                title: a.name,
-                category: `便民设施详情 · ${a.key}`,
-                photo: a.photo,
-                rating: a.rating,
-                subtitle: `距${selectedVenue?.name.split('（')[0] ?? '球场'} ${a.dist} ｜ ${a.info}`,
-                intro: `${a.name}位于${a.address}，纳入京山市城运中心智慧网格巡检体系，实时保障洁净度、设备可用率与无障碍通行。`,
-                openHours: a.key === '医疗点' ? '赛事日 07:00–22:00 / 急诊 24小时' : '全天 24 小时开放',
-                priceInfo: a.key === '充电桩' ? '电费+服务费约 ¥0.98/度' : '公益便民免费开放',
-                address: a.address,
-                lng: a.lng,
-                lat: a.lat,
-                tags: ['官方网格认证', '实景核验', '一键精准导航', '支持故障上报'],
-                reviews: [
-                  { user: '武汉球友小吴', origin: '武汉', score: 5.0, date: '2026-11-24', content: '标识非常清晰、环境维护得很整洁，点一下导航两三分钟就找到了！' },
-                ],
-              })
-            "
+            style="height: 76px; border-radius: 0"
+            @click="openAmenityDetail(a)"
           >
             <img :src="a.photo" :alt="a.name" />
           </div>
           <div style="min-width: 0">
             <div class="flex-between">
-              <strong style="font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ a.ico }} {{ a.name }}</strong>
+              <strong style="font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer" @click="openAmenityDetail(a)">{{ a.ico }} {{ a.name }}</strong>
               <span class="rating-pill">★ {{ a.rating }}</span>
             </div>
-            <div style="font-size: 11px; color: var(--ink-3); margin: 3px 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
-              📍 {{ a.address }} ｜ 距该球场 <strong style="color: var(--primary)">{{ a.dist }}</strong>
+            <div style="font-size: 13px; color: var(--ink-2); margin: 5px 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+              📍 {{ a.address }} ｜ 距球场 <strong style="color: var(--primary)">{{ a.dist }}</strong>
             </div>
             <div class="flex-between">
-              <span class="tag green">{{ a.info.slice(0, 16) }}{{ a.info.length > 16 ? '…' : '' }}</span>
+              <span class="tag green">{{ a.key }}</span>
               <button
                 class="btn-primary"
-                style="padding: 4px 10px; font-size: 11px"
+                style="padding: 5px 12px; font-size: 13px"
                 @click="
                   openNavigation({
                     placeName: a.name,
@@ -257,27 +258,11 @@ watch([visibleAmenities, selectedVenueId], () => {
       </div>
 
       <div class="card">
-        <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 12px 14px">
-          <div>
-            <strong style="font-size: 14.5px">
-              🗺️ {{ selectedVenue ? (selectedVenue.name.split('（')[0] ?? selectedVenue.name) : '京山球场' }} · 周边便民设施地图
-            </strong>
-            <div style="font-size: 11px; color: var(--ink-3)">
-              点击上方最近球场或地图其他球场标点，实时切换该球场周边设施
-            </div>
-          </div>
-          <div class="flex-row" style="gap: 5px">
-            <button
-              v-for="t in (['全部', '卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"
-              :key="`map-${t}`"
-              class="filter-pill"
-              :class="{ active: amFilter === t }"
-              style="padding: 3px 8px; font-size: 11px"
-              @click="amFilter = t"
-            >
-              {{ t === '全部' ? '全部' : t }}
-            </button>
-          </div>
+        <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 14px 18px">
+          <strong style="font-size: 16.5px">
+            🗺️ {{ selectedVenue ? (selectedVenue.name.split('（')[0] ?? selectedVenue.name) : '京山球场' }} · 周边便民地图
+          </strong>
+          <span class="tag green">显示 {{ visibleAmenities.length }} 处设施</span>
         </div>
         <ServiceCircleMap
           mode="amenities"
@@ -287,9 +272,9 @@ watch([visibleAmenities, selectedVenueId], () => {
           :custom-amenities="visibleAmenities"
           @select-venue="selectedVenueId = $event"
         />
-        <div class="card-pad flex-between" style="background: #fafdfc; padding: 11px 14px">
-          <span style="font-size: 12px; color: var(--ink-2)">
-            当前定位：<strong>{{ selectedVenue?.name.split('（')[0] }}</strong>（{{ selectedVenue?.address }}） · 显示 {{ visibleAmenities.length }} 处周边便民点
+        <div class="card-pad flex-between" style="background: #fafdfc; padding: 13px 18px">
+          <span style="font-size: 13.5px; color: var(--ink-2)">
+            当前定位：<strong>{{ selectedVenue?.name.split('（')[0] }}</strong>（{{ selectedVenue?.address }}）
           </span>
           <button class="btn-orange" @click="switchModule(11)">设施故障上报</button>
         </div>

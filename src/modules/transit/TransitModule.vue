@@ -26,11 +26,11 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
       <div v-if="transitTab === '全部' || transitTab === '限行与车位'" class="card">
         <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); background: #fff6f6">
           <div>
-            <strong style="font-size: 15px; color: #a81721">
-              🚦 赛期交通管控实时图（封闭路段 / 限行路段 / 推荐停车与充电）
+            <strong style="font-size: 17px; color: #a81721">
+              🚦 赛期交通管控实时图
             </strong>
-            <div style="font-size: 11.5px; color: #7d383d">
-              中青赛总决赛期间（07:30–19:00）：温泉大道国际网球中心段临时封闭，请按绿色推荐点位停泊
+            <div style="font-size: 13.5px; color: #7d383d; margin-top: 3px">
+              07:30–19:00 温泉大道国际网球中心段临时封闭，请按推荐点位停泊
             </div>
           </div>
           <button
@@ -47,16 +47,16 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
               })
             "
           >
-            🗺️ 高德/百度避堵导航
+            🗺️ 避堵导航
           </button>
         </div>
 
         <ServiceCircleMap mode="traffic" />
 
         <div class="card-pad">
-          <div class="filter-row mb-12" style="background: #f5faf8; padding: 8px 11px; border-radius: 0; border: 1px solid #d9ebe2">
-            <span class="filter-label">🕒 选择车位/充电预约时段：</span>
-            <select v-model="parkDate" class="f-input" style="width: 112px; padding: 4px 8px; font-size: 11.5px">
+          <div class="filter-row mb-12" style="background: #f5faf8; padding: 10px 14px; border-radius: 0; border: 1px solid #d9ebe2">
+            <span class="filter-label">🕒 预约时段：</span>
+            <select v-model="parkDate" class="f-input" style="width: 130px; padding: 6px 10px; font-size: 13.5px">
               <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.shortDate">{{ d.shortDate }} {{ d.weekday }}</option>
             </select>
             <button
@@ -70,36 +70,35 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
             </button>
           </div>
 
-          <div class="grid-3" style="gap: 10px">
+          <div class="grid-3" style="gap: 12px">
             <div
               v-for="lot in state.parkingLots"
               :key="lot.id"
-              style="background: #f3faf6; border: 1px solid #c8e7d8; border-radius: 0; padding: 10px"
+              style="background: #f3faf6; border: 1px solid #c8e7d8; border-radius: 0; padding: 13px"
             >
-              <div class="flex-between">
-                <strong style="font-size: 12.5px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>
+              <div class="flex-between" style="margin-bottom: 6px">
+                <strong style="font-size: 14.5px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>
                 <span class="tag" :class="lot.isCharger ? 'blue' : 'green'">
                   {{ lot.isCharger ? '闲' : '剩' }}{{ lot.remain }}/{{ lot.total }}
                 </span>
               </div>
-              <div style="font-size: 11px; color: var(--ink-3); margin: 4px 0">★ {{ lot.rating }} · {{ lot.note }}</div>
-              <div style="font-size: 10.5px; color: var(--ink-2); margin-bottom: 6px">
+              <div style="font-size: 13px; color: var(--ink-2); margin-bottom: 8px">
                 📍 {{ lot.address }}
               </div>
-              <div v-if="lot.reservedSlot" style="font-size: 10.5px; color: var(--primary); font-weight: 800; margin-bottom: 6px">
+              <div v-if="lot.reservedSlot" style="font-size: 13px; color: var(--primary); font-weight: 800; margin-bottom: 8px">
                 ✔ 已锁时段：{{ lot.reservedSlot }}
               </div>
               <div class="flex-between">
                 <button
                   :class="lot.reserved ? 'btn-ghost' : 'btn-primary'"
-                  style="padding: 4px 9px; font-size: 11px"
+                  style="padding: 6px 11px; font-size: 13px"
                   @click="reserveParkingOrCharger(lot.id, parkDate, parkSlot)"
                 >
-                  {{ lot.reserved ? '更新锁位时段' : lot.isCharger ? `约 ${parkSlot} 充电` : `锁 ${parkSlot} 车位` }}
+                  {{ lot.reserved ? '更新时段' : lot.isCharger ? '预约充电' : '免费锁位' }}
                 </button>
                 <button
                   class="btn-ghost"
-                  style="padding: 3px 8px; font-size: 11px"
+                  style="padding: 6px 10px; font-size: 13px"
                   @click="
                     openNavigation({
                       placeName: lot.name,
@@ -120,24 +119,24 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
         </div>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 16px">
         <div v-if="transitTab === '全部' || transitTab === '优质司机'" class="card card-pad">
-          <div class="flex-between" style="margin-bottom: 10px">
-            <strong style="font-size: 15px">👨‍✈️ 京网推荐出行 · 官方优质司机（6位认证）</strong>
-            <span class="tag gold">全程评星监督</span>
+          <div class="flex-between" style="margin-bottom: 12px">
+            <strong style="font-size: 17px">👨‍✈️ 官方认证优质司机</strong>
+            <span class="tag gold">评星监督</span>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px">
-            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 0">
+          <div style="display: flex; flex-direction: column; gap: 10px">
+            <div class="flex-between" style="background: #f6faf8; padding: 12px 14px; border-radius: 0">
               <div>
-                <strong style="font-size: 13px">张师傅 · 7座商务车（京网十佳司机）</strong> <span class="rating-pill">★ 5.0</span>
-                <div style="font-size: 11px; color: var(--ink-3)">高铁接送/全城包车/代搬球包 · 182条零差评</div>
+                <strong style="font-size: 15px">张师傅 · 7座商务车</strong> <span class="rating-pill">★ 5.0</span>
+                <div style="font-size: 13px; color: var(--ink-2); margin-top: 3px">高铁接送 / 全城包车 / 代搬球包</div>
               </div>
               <button class="btn-primary" @click="showToast('已向张师傅发送约车通知，预计5分钟内来电确认上车点')">一键约车</button>
             </div>
-            <div class="flex-between" style="background: #f6faf8; padding: 9px 11px; border-radius: 0">
+            <div class="flex-between" style="background: #f6faf8; padding: 12px 14px; border-radius: 0">
               <div>
-                <strong style="font-size: 13px">李师傅 · 新能源专车（熟悉全城球场）</strong> <span class="rating-pill">★ 4.9</span>
-                <div style="font-size: 11px; color: var(--ink-3)">京山南站→网球中心直达 ¥28一口价 · 票根减¥5</div>
+                <strong style="font-size: 15px">李师傅 · 新能源专车</strong> <span class="rating-pill">★ 4.9</span>
+                <div style="font-size: 13px; color: var(--ink-2); margin-top: 3px">京山南站→网球中心 ¥28 一口价</div>
               </div>
               <button class="btn-primary" @click="showToast('已预约李师傅新能源专车，电子票根已自动立减 ¥5')">一键约车</button>
             </div>
@@ -145,8 +144,8 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
         </div>
 
         <div v-if="transitTab === '全部' || transitTab === '公交与租车'" class="card card-pad">
-          <div class="flex-between" style="margin-bottom: 8px">
-            <strong style="font-size: 15px">🚌 公交 & 赛事旅游专线实时班次</strong>
+          <div class="flex-between" style="margin-bottom: 10px">
+            <strong style="font-size: 17px">🚌 公交 & 赛事专线班次</strong>
             <span class="tag green">实时到站</span>
           </div>
           <table class="clean-table">
@@ -154,22 +153,22 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
               <tr><th>线路名称</th><th>起止点</th><th>下班发车</th><th>票价</th></tr>
             </thead>
             <tbody>
-              <tr><td><strong>赛事免费摆渡1线</strong></td><td>京山南站 ⇄ 国际网球中心</td><td><strong style="color: var(--primary)">14:15 (8分钟)</strong></td><td>免费</td></tr>
-              <tr><td><strong>网旅温泉专线</strong></td><td>网球中心 ⇄ 温泉度假区</td><td>14:30 (23分钟)</td><td>¥2</td></tr>
+              <tr><td><strong>赛事免费摆渡1线</strong></td><td>京山南站 ⇄ 国际网球中心</td><td><strong style="color: var(--primary)">14:15</strong></td><td>免费</td></tr>
+              <tr><td><strong>网旅温泉专线</strong></td><td>网球中心 ⇄ 温泉度假区</td><td>14:30</td><td>¥2</td></tr>
               <tr><td><strong>绿林山旅游直通车</strong></td><td>文峰公园 ⇄ 绿林山景区</td><td>15:00</td><td>¥15</td></tr>
             </tbody>
           </table>
         </div>
 
         <div v-if="transitTab === '全部' || transitTab === '公交与租车'" class="card card-pad">
-          <strong style="font-size: 14.5px; display: block; margin-bottom: 9px">🚕 租车 & 网约车入口（无缝跳转第三方小程序）</strong>
-          <div class="grid-2" style="gap: 9px">
-            <button class="btn-ghost" style="padding: 10px; text-align: left" @click="openActionModal({ type: 'miniprogram', appName: '滴滴出行小程序', desc: '自动带入京山国际网球中心上车定位，支持球友一键快车/专车' })">
-              🚕 <strong>滴滴出行小程序</strong><br /><span style="font-size: 10.5px; color: var(--ink-3)">一键定位当前球场叫车</span>
+          <strong style="font-size: 17px; display: block; margin-bottom: 12px">🚕 租车与网约车直连入口</strong>
+          <div class="grid-2" style="gap: 10px">
+            <button class="btn-ghost" style="padding: 12px; text-align: left; white-space: normal" @click="openActionModal({ type: 'miniprogram', appName: '滴滴出行小程序', desc: '自动带入京山国际网球中心上车定位，支持球友一键快车/专车' })">
+              🚕 <strong style="font-size: 14.5px">滴滴出行</strong><br /><span style="font-size: 13px; color: var(--ink-3)">自动定位球场叫车</span>
             </button>
             <button
               class="btn-ghost"
-              style="padding: 10px; text-align: left"
+              style="padding: 12px; text-align: left; white-space: normal"
               @click="
                 openNavigation({
                   placeName: '京山国际网球中心',
@@ -182,13 +181,13 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
                 })
               "
             >
-              🗺️ <strong>高德打车 / 自驾导航</strong><br /><span style="font-size: 10.5px; color: var(--ink-3)">避开赛事封闭路段导航</span>
+              🗺️ <strong style="font-size: 14.5px">高德避堵导航</strong><br /><span style="font-size: 13px; color: var(--ink-3)">绕行赛事封闭路段</span>
             </button>
-            <button class="btn-ghost" style="padding: 10px; text-align: left" @click="openActionModal({ type: 'miniprogram', appName: '神州租车小程序', desc: '京山南站自助取还，京山网球会员专享9折租车权益' })">
-              🚙 <strong>神州租车小程序</strong><br /><span style="font-size: 10.5px; color: var(--ink-3)">高铁站取还 · 球友专享9折</span>
+            <button class="btn-ghost" style="padding: 12px; text-align: left; white-space: normal" @click="openActionModal({ type: 'miniprogram', appName: '神州租车小程序', desc: '京山南站自助取还，京山网球会员专享9折租车权益' })">
+              🚙 <strong style="font-size: 14.5px">神州租车</strong><br /><span style="font-size: 13px; color: var(--ink-3)">高铁站取还 · 会员9折</span>
             </button>
-            <button class="btn-ghost" style="padding: 10px; text-align: left" @click="openActionModal({ type: 'miniprogram', appName: '一嗨租车小程序', desc: '自驾延伸游绿林山、明显陵、漳河风景区首选' })">
-              🚗 <strong>一嗨租车小程序</strong><br /><span style="font-size: 10.5px; color: var(--ink-3)">自驾游绿林山/明显陵首选</span>
+            <button class="btn-ghost" style="padding: 12px; text-align: left; white-space: normal" @click="openActionModal({ type: 'miniprogram', appName: '一嗨租车小程序', desc: '自驾延伸游绿林山、明显陵、漳河风景区首选' })">
+              🚗 <strong style="font-size: 14.5px">一嗨租车</strong><br /><span style="font-size: 13px; color: var(--ink-3)">景区自驾游首选</span>
             </button>
           </div>
         </div>

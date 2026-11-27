@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import PaginationBar from '../../components/PaginationBar.vue'
-import { RESTAURANT_MENUS } from '../../mock/data'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
@@ -180,6 +179,34 @@ watch(visibleShops, () => {
   foodPage.value = 1
 })
 
+function openShopDetail(shop: (typeof restaurants)[number]) {
+  openPhoto({
+    title: shop.name,
+    category: '京网推荐美食详情',
+    photo: shop.photo,
+    rating: shop.rating,
+    reviewCount: shop.reviews,
+    subtitle: `${shop.badge} ｜ ${shop.dist}`,
+    intro: shop.intro,
+    openHours: shop.openHours,
+    priceInfo: `人均 ¥${shop.avg} · 核销票根立享优惠并积+60分`,
+    priceNum: shop.avg,
+    priceUnit: ' / 人均',
+    distance: shop.dist,
+    driveMin: shop.driveMin,
+    address: shop.address,
+    lng: shop.lng,
+    lat: shop.lat,
+    actionKind: 'restaurant',
+    tags: shop.tags,
+    highlights: shop.highlights,
+    hotItemsTitle: '🔥 进店必吃 · 热门招牌菜推荐',
+    hotItems: shop.hotItems,
+    navTip: '凭订场电子票根进店扫码即可直接享85折/满减优惠',
+    reviews: shop.detailedReviews,
+  })
+}
+
 function reserveTable(shop: (typeof restaurants)[number]) {
   const dLabel = BOOKING_DATES.find((d) => d.iso === dineDate.value)?.shortDate ?? dineDate.value
   createQuickOrder(
@@ -209,13 +236,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     </div>
 
     <div class="ticket-stub-banner mb-16">
-      <div>
-        <div style="font-size: 15px; font-weight: 900">🎫 票根经济 · 打球凭证直享「京山网球联盟商家」餐饮特惠</div>
-        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 2px">
-          您的今日订场票根 <strong style="color: var(--lime)">{{ state.ticketStubCode }}</strong> 已激活：仅限全市
-          <strong>79 家认证网球联盟商家</strong>（含26家餐饮）核销立减与85折！
-        </div>
-      </div>
+      <div style="font-size: 17px; font-weight: 900">打球凭证直享「京山网球联盟商家」餐饮特惠！</div>
       <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">
         出示我的电子票根码
       </button>
@@ -224,15 +245,15 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     <!-- 用餐日期、时段与排序筛选条 -->
     <div class="card card-pad mb-16 filter-workbench">
       <div class="filter-row">
-        <div class="search-bar" style="width: 210px; height: 34px">
+        <div class="search-bar" style="width: 230px; height: 40px">
           <span>🔍</span>
           <input v-model="foodKeyword" type="text" placeholder="搜餐厅、招牌菜、地址…" />
         </div>
         <span class="filter-label">📅 订座日期：</span>
-        <select v-model="dineDate" class="f-input" style="width: 140px; padding: 5px 9px">
+        <select v-model="dineDate" class="f-input" style="width: 150px; padding: 7px 10px">
           <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
         </select>
-        <span class="filter-label">🕒 用餐时段：</span>
+        <span class="filter-label">🕒 时段：</span>
         <button
           v-for="p in (['午市 11:30-13:30', '晚市 17:30-20:00', '夜宵 20:30-23:30'] as const)"
           :key="p"
@@ -242,13 +263,13 @@ function reserveTable(shop: (typeof restaurants)[number]) {
         >
           {{ p }}
         </button>
-        <select v-model="dineGuests" class="f-input" style="width: 118px; padding: 5px 9px">
+        <select v-model="dineGuests" class="f-input" style="width: 126px; padding: 7px 10px">
           <option>2人桌</option>
           <option>4人桌</option>
           <option>6-8人包厢</option>
           <option>10人+球队桌</option>
         </select>
-        <select v-model="foodSort" class="f-input" style="width: auto; padding: 5px 9px; margin-left: auto">
+        <select v-model="foodSort" class="f-input" style="width: auto; padding: 7px 10px; margin-left: auto">
           <option value="default">综合口碑</option>
           <option value="price">人均最低</option>
           <option value="rating">评分最高</option>
@@ -261,66 +282,34 @@ function reserveTable(shop: (typeof restaurants)[number]) {
         <div v-for="shop in pagedShops" :key="shop.name" class="card">
         <div
           class="photo-box"
-          style="height: 165px"
-          @click="
-            openPhoto({
-              title: shop.name,
-              category: '京网推荐美食详情',
-              photo: shop.photo,
-              rating: shop.rating,
-              subtitle: `${shop.badge} ｜ ${shop.dist}`,
-              intro: shop.intro,
-              openHours: shop.openHours,
-              priceInfo: `人均 ¥${shop.avg} · 核销票根立享优惠并积+60分`,
-              address: shop.address,
-              lng: shop.lng,
-              lat: shop.lat,
-              tags: shop.tags,
-              highlights: shop.highlights,
-              hotItemsTitle: '🔥 进店必吃 · 热门招牌菜推荐',
-              hotItems: shop.hotItems,
-              navTip: '凭订场电子票根进店扫码即可直接享85折/满减优惠',
-              reviews: shop.detailedReviews,
-            })
-          "
+          style="height: 180px"
+          @click="openShopDetail(shop)"
         >
           <img :src="shop.photo" :alt="shop.name" />
           <span class="badge-tl">{{ shop.badge }}</span>
-          <span class="badge-bl">{{ shop.dist }} · 点看招牌菜与热评</span>
         </div>
         <div class="card-pad">
-          <div class="flex-between">
-            <strong style="font-size: 15.5px">{{ shop.name }}</strong>
-            <span class="rating-pill">★ {{ shop.rating }} ({{ shop.reviews }}评)</span>
+          <div class="flex-between" style="margin-bottom: 6px">
+            <strong style="font-size: 17px; cursor: pointer" @click="openShopDetail(shop)">{{ shop.name }}</strong>
+            <span class="rating-pill">★ {{ shop.rating }}</span>
           </div>
           <div class="coord-bar">
-            <span>📍 {{ shop.address }}</span>
+            <span>📍 {{ shop.dist }} · {{ shop.address.replace('湖北省荆门市京山市', '') }}</span>
           </div>
-          <div style="font-size: 11.5px; color: var(--ink-2); background: #f4faf7; padding: 7px 9px; border-radius: 0; margin: 6px 0">
-            <strong>📖 招牌菜单：</strong>{{ shop.menu }}
+          <div style="font-size: 13.5px; color: var(--ink-2); background: #f4faf7; padding: 9px 11px; border-radius: 0; margin: 10px 0">
+            <strong>招牌推荐：</strong>{{ shop.menu }}
           </div>
-          <div class="review-quote">💬 评：“{{ shop.quote }}”</div>
-          <div class="flex-between" style="margin-top: 10px">
-            <span class="price" style="font-size: 17px">¥{{ shop.avg }}<small>/人均 · 核销+60分</small></span>
-            <div class="flex-row">
+          <div class="flex-between" style="margin-top: 14px">
+            <span class="price" style="font-size: 20px">¥{{ shop.avg }}<small>/人均</small></span>
+            <div class="flex-row" style="gap: 6px">
               <button
                 class="btn-ghost"
-                @click="
-                  openActionModal({
-                    type: 'menu',
-                    shopName: shop.name,
-                    dist: shop.dist,
-                    address: shop.address,
-                    lng: shop.lng,
-                    lat: shop.lat,
-                    dishes: RESTAURANT_MENUS[shop.name] ?? [],
-                  })
-                "
+                @click="openShopDetail(shop)"
               >
-                📖 完整菜单
+                详情菜单
               </button>
               <button class="btn-orange" @click="reserveTable(shop)">
-                预约 {{ dinePeriod.split(' ')[0] }}桌位
+                预约桌位
               </button>
               <button
                 class="btn-primary"
@@ -336,7 +325,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
                   })
                 "
               >
-                🧭 导航
+                导航
               </button>
             </div>
           </div>
@@ -353,33 +342,31 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     </div>
 
     <div class="card card-pad" style="background: #fffbf2; border-color: #f2d59b">
-      <div class="flex-between" style="margin-bottom: 10px">
-        <div>
-          <strong style="font-size: 16px; color: #6e4300">🍱 团餐及赛事接待定点餐饮推荐（市场监管A级食安保障）</strong>
-        </div>
+      <div class="flex-between" style="margin-bottom: 14px">
+        <strong style="font-size: 18px; color: #6e4300">🍱 赛事团餐定点餐饮推荐（A级食安保障）</strong>
         <button
           class="btn-orange"
           @click="openActionModal({ type: 'inquiry', title: '赛事团餐 / 研学团队用餐预订', subtitle: '支持 10–400 人定制菜单与运动员营养自助餐，食安 A 级保障', submitLabel: '提交团餐预订需求' })"
         >
-          一键提交团餐需求
+          提交团餐需求
         </button>
       </div>
       <div class="grid-3">
         <div
           v-for="gv in groupVenues"
           :key="gv.name"
-          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 0; padding: 10px 12px; font-size: 12px"
+          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 0; padding: 14px 16px; font-size: 14px"
         >
-          <div class="flex-between" style="margin-bottom: 4px">
-            <strong>{{ gv.name }}</strong>
+          <div class="flex-between" style="margin-bottom: 6px">
+            <strong style="font-size: 15.5px">{{ gv.name }}</strong>
             <span class="rating-pill">★ {{ gv.rating }}</span>
           </div>
-          <div style="color: var(--ink-2); margin-bottom: 5px">{{ gv.desc }}</div>
-          <div class="flex-between" style="font-size: 11px; color: var(--ink-3)">
-            <span>📍 {{ gv.address }}</span>
+          <div style="color: var(--ink-2); margin-bottom: 8px; font-size: 13.5px">{{ gv.desc }}</div>
+          <div class="flex-between" style="font-size: 13px; color: var(--ink-3)">
+            <span>📍 {{ gv.dist }}</span>
             <button
               class="btn-ghost"
-              style="padding: 3px 8px; font-size: 11px; flex-shrink: 0"
+              style="padding: 5px 10px; font-size: 13px; flex-shrink: 0"
               @click="
                 openNavigation({
                   placeName: gv.name,

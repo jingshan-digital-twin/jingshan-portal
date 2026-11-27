@@ -239,6 +239,90 @@ const rehabSlot = ref('16:00-17:00')
 const rehabSlots = ['09:00-10:00', '11:00-12:00', '14:00-15:00', '16:00-17:00', '19:00-20:00', '20:30-21:30']
 const pickedRehabService = reactive<Record<string, number>>({})
 
+function openCampDetail(item: (typeof CAMP_PROGRAMS)[number]) {
+  openPhoto({
+    title: item.title,
+    category: item.category,
+    photo: item.photo,
+    rating: item.rating,
+    subtitle: `${item.badge} ｜ ${item.duration}`,
+    intro: item.desc,
+    openHours: item.scheduleDate,
+    priceInfo: `¥${item.price}${item.priceUnit}`,
+    priceNum: item.price,
+    priceUnit: ` ${item.priceUnit}`,
+    orderCategory: '课程',
+    address: item.venue,
+    tags: item.highlights,
+    reviews: [{ user: '往期参营家长', origin: '武汉', score: 5.0, date: '2026-11-20', content: '组织非常专业，教练耐心负责，孩子进步很大！' }],
+  })
+}
+
+function openClubDetail(club: TennisClub) {
+  openPhoto({
+    title: club.name,
+    category: '官方认证网球俱乐部',
+    photo: club.photo,
+    rating: club.rating,
+    reviewCount: club.reviewCount,
+    subtitle: `${club.badge} ｜ ${club.courtsInfo} · ${club.coachCount}位教练`,
+    intro: `${club.name}拥有 ${club.courtsInfo}，配备 ${club.coachCount} 位官方认证专业教练，提供青少年启蒙、成人拉球与赛前技战术特训课程。咨询电话：${club.phone}。`,
+    openHours: '08:00 – 22:00',
+    priceInfo: `课程 ¥${club.courses[0]?.memberPrice ?? 298} 起`,
+    priceNum: club.courses[0]?.memberPrice ?? 298,
+    priceUnit: ' / 期起',
+    orderCategory: '课程',
+    phone: club.phone,
+    address: club.address,
+    lng: club.lng,
+    lat: club.lat,
+    tags: [club.badge, club.courtsInfo, `${club.coachCount}位认证教练`],
+    hotItemsTitle: '🎓 俱乐部在售精品课程',
+    hotItems: club.courses.map((c) => ({
+      name: c.name,
+      price: `会员价 ¥${c.memberPrice}`,
+      tag: c.lessons,
+      desc: `门市价 ¥${c.price}，含场地与基础装备体验`,
+    })),
+    reviews: club.reviews.map((r) => ({
+      user: r.user,
+      score: r.score,
+      date: r.date,
+      content: r.content,
+    })),
+  })
+}
+
+function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
+  openPhoto({
+    title: center.name,
+    category: '运动康复保障机构',
+    photo: center.photo,
+    rating: center.rating,
+    subtitle: `${center.badge} ｜ ${center.doctorInfo}`,
+    intro: `${center.name}由京山市卫健局认证授牌，配备专业运动康复师团队（${center.doctorInfo}），提供赛后筋膜松解、冷敷理疗与运动损伤绿色通道。电话：${center.phone}。`,
+    openHours: center.openHours,
+    priceInfo: `¥${center.services[0]?.price ?? 98} 起`,
+    priceNum: center.services[0]?.price ?? 98,
+    priceUnit: ' / 次起',
+    orderCategory: '课程',
+    distance: center.distance,
+    phone: center.phone,
+    address: center.address,
+    lng: center.lng,
+    lat: center.lat,
+    tags: [center.badge, '市卫健局认证', '赛期绿色通道'],
+    hotItemsTitle: '🩺 运动康复理疗服务项目',
+    hotItems: center.services.map((s) => ({
+      name: s.name,
+      price: `¥${s.price}`,
+      tag: s.duration,
+      desc: '专业康复师一对一评估与赛后放松理疗',
+    })),
+    reviews: [],
+  })
+}
+
 function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
   const idx = pickedRehabService[center.id] ?? 0
   const svc = center.services[idx] ?? center.services[0]!
@@ -270,47 +354,43 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       <div class="grid-2 mb-16">
         <!-- 湖北省网球学校直通咨询通道 -->
         <div class="card" style="border: 2px solid #0d7278">
-          <div class="photo-box" style="height: 154px">
+          <div class="photo-box" style="height: 164px">
             <img src="/images/coach_2.jpg" alt="湖北省网球学校" />
-            <span class="badge-tl" style="background: #0d7278">🎓 全国体教融合金字招牌 · 湖北省网球学校</span>
-            <span class="badge-bl">小学至高中一贯制 · 31片室内风雨/红土场</span>
+            <span class="badge-tl" style="background: #0d7278">🎓 湖北省网球学校 · 官方招生通道</span>
           </div>
           <div class="card-pad">
-            <div class="flex-between mb-10">
-              <div>
-                <strong style="font-size: 16.5px">湖北省网球学校 · 官方招生与探校咨询通道</strong>
-                <div style="font-size: 11.5px; color: var(--ink-3)">支持特长生招生咨询、短期插班试训与寒暑假探校预约（官方直连招生办）</div>
-              </div>
+            <div class="flex-between mb-12">
+              <strong style="font-size: 18px">湖北省网球学校 · 招生与探校咨询</strong>
               <span class="rating-pill">★ 5.0</span>
             </div>
 
-            <div class="grid-2" style="gap: 8px; margin-bottom: 8px">
-              <select v-model="schoolForm.track" class="f-input" style="padding: 6px 9px">
+            <div class="grid-2" style="gap: 10px; margin-bottom: 10px">
+              <select v-model="schoolForm.track" class="f-input">
                 <option>小学/初中网球特长生招生</option>
                 <option>高中体教融合单招冲刺班</option>
                 <option>寒暑假 7 天体验营插班咨询</option>
                 <option>家长实地探校与试训预约</option>
               </select>
-              <select v-model="schoolForm.visitDate" class="f-input" style="padding: 6px 9px">
+              <select v-model="schoolForm.visitDate" class="f-input">
                 <option v-for="d in BOOKING_DATES" :key="`sc-${d.iso}`" :value="d.shortDate">意向探校：{{ d.shortDate }} {{ d.weekday }}</option>
               </select>
             </div>
-            <div class="grid-3" style="gap: 8px; margin-bottom: 10px">
-              <input v-model="schoolForm.studentName" class="f-input" style="padding: 6px 9px" placeholder="学员姓名 *" />
-              <select v-model="schoolForm.level" class="f-input" style="padding: 6px 9px">
+            <div class="grid-3" style="gap: 10px; margin-bottom: 14px">
+              <input v-model="schoolForm.studentName" class="f-input" placeholder="学员姓名 *" />
+              <select v-model="schoolForm.level" class="f-input">
                 <option>零基础启蒙</option>
                 <option>已有1年基础</option>
                 <option>有省级参赛经历</option>
               </select>
-              <input v-model="schoolForm.phone" class="f-input" style="padding: 6px 9px" placeholder="家长联系电话 *" />
+              <input v-model="schoolForm.phone" class="f-input" placeholder="家长电话 *" />
             </div>
 
             <div class="flex-between">
-              <span style="font-size: 11px; color: #0d7278; font-weight: 700">
-                {{ schoolInquiryHistory.length > 0 ? `✅ 最近回执：${schoolInquiryHistory[0]?.id}（${schoolInquiryHistory[0]?.studentName}）` : '📞 招生热线：0724-7228866 · 2小时内回电' }}
+              <span style="font-size: 13px; color: #0d7278; font-weight: 700">
+                {{ schoolInquiryHistory.length > 0 ? `✅ 最近回执：${schoolInquiryHistory[0]?.id}` : '📞 招生热线：0724-7228866' }}
               </span>
               <button class="btn-primary" style="background: #0d7278" @click="submitSchoolInquiry">
-                提交招生/探校咨询单 →
+                提交咨询单 →
               </button>
             </div>
           </div>
@@ -318,21 +398,20 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
 
         <!-- 五维能力评测与晋升 -->
         <div class="card" style="background: linear-gradient(135deg, #f1faf6, #ffffff); border: 2px solid var(--primary)">
-          <div class="card-pad" style="display: grid; grid-template-columns: 1fr 240px; gap: 10px; align-items: center; height: 100%">
+          <div class="card-pad" style="display: grid; grid-template-columns: 1fr 240px; gap: 14px; align-items: center; height: 100%">
             <div>
-              <span class="tag green" style="margin-bottom: 7px">🏅 官方指定评测机构 · 等级晋升闭环</span>
-              <div style="font-size: 16.5px; font-weight: 900; margin-bottom: 6px">网球能力五维评测 & 训练后晋升测试</div>
-              <div style="font-size: 12px; color: var(--ink-2); line-height: 1.65; margin-bottom: 10px">
-                • <strong>如何晋升：</strong>完成课程或训练营后预约指定机构复测，实时刷新五维能力雷达图并升级认证等级。<br />
-                • <strong>全域联动：</strong>等级自动同步至「青少年/周末分级赛」与「同城约球 CUTR 匹配」。
+              <span class="tag green" style="margin-bottom: 8px">🏅 官方五维评测认证</span>
+              <div style="font-size: 18px; font-weight: 900; margin-bottom: 8px">网球能力评测 & 晋升测试</div>
+              <div style="font-size: 13.5px; color: var(--ink-2); line-height: 1.75; margin-bottom: 12px">
+                完成培训后可预约复测，实时刷新五维能力图并自动同步分级赛与约球等级。
               </div>
-              <select v-model="selectedOrg" class="f-input" style="margin-bottom: 10px">
+              <select v-model="selectedOrg" class="f-input" style="margin-bottom: 12px">
                 <option>湖北省网球学校评测中心</option>
                 <option>京山国际网球中心官方认证点</option>
               </select>
               <div class="flex-row">
-                <button class="btn-orange" @click="runUpgradeTest(selectedOrg, true)">完成晋升复测录入（200分抵扣）</button>
-                <button class="btn-ghost" @click="switchModule(13)">我的能力档案</button>
+                <button class="btn-orange" @click="runUpgradeTest(selectedOrg, true)">复测晋升（200分）</button>
+                <button class="btn-ghost" @click="switchModule(13)">能力档案</button>
               </div>
             </div>
             <div>
@@ -344,11 +423,8 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
 
       <!-- 青少年网球比赛专区 -->
       <div class="card card-pad">
-        <div class="flex-between mb-12" style="padding-bottom: 10px; border-bottom: 1px solid var(--line)">
-          <div>
-            <strong style="font-size: 16.5px">🏆 青少年网球比赛 · 官方赛事日历与在线报名</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">对接 CTJ 全国积分与「网球记」实时计分直播，按年龄组别精准报名</div>
-          </div>
+        <div class="flex-between mb-12" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
+          <strong style="font-size: 18px">🏆 青少年网球比赛 · 赛事日历与报名</strong>
           <div class="flex-row" style="gap: 6px">
             <button
               v-for="g in (['全部', 'U8/U10', 'U12/U14', 'U16/U18'] as const)"
@@ -366,38 +442,35 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           <div
             v-for="t in visibleYouthTournaments"
             :key="t.id"
-            style="border: 1px solid var(--line); background: #fafdfc; padding: 13px 15px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px"
+            style="border: 1px solid var(--line); background: #fafdfc; padding: 16px 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px"
           >
             <div>
-              <div class="flex-between" style="margin-bottom: 6px">
+              <div class="flex-between" style="margin-bottom: 8px">
                 <div class="flex-row" style="gap: 6px">
                   <span class="tag green">{{ t.groupTag }}</span>
-                  <span class="tag blue">{{ t.levelBadge }}</span>
                   <span class="tag" :class="t.status === '火热进行中' ? 'red' : 'orange'">{{ t.status }}</span>
                 </div>
-                <span style="font-size: 11.5px; color: var(--primary); font-weight: 800">余 {{ t.quotaRemain }} 席</span>
+                <span style="font-size: 13.5px; color: var(--primary); font-weight: 800">余 {{ t.quotaRemain }} 席</span>
               </div>
-              <strong style="font-size: 15px; display: block; margin-bottom: 4px">{{ t.name }}</strong>
-              <div style="font-size: 11.5px; color: var(--ink-2); margin-bottom: 5px">
-                📅 {{ t.dateRange }} ｜ 📍 {{ t.venue }}（{{ t.surface }}）
+              <strong style="font-size: 17px; display: block; margin-bottom: 6px">{{ t.name }}</strong>
+              <div style="font-size: 13.5px; color: var(--ink-2); margin-bottom: 6px">
+                📅 {{ t.dateRange }} ｜ 📍 {{ t.venue }}
               </div>
-              <div style="font-size: 11.5px; color: var(--ink-3)">{{ t.desc }}</div>
+              <div style="font-size: 13.5px; color: var(--ink-3)">{{ t.desc }}</div>
             </div>
 
-            <div class="flex-between" style="padding-top: 9px; border-top: 1px dashed var(--line)">
-              <div class="flex-row" style="gap: 8px">
-                <strong style="font-size: 17px; color: var(--accent)">{{ t.fee === 0 ? '免费观摩/预登记' : `¥${t.fee}` }}</strong>
+            <div class="flex-between" style="padding-top: 11px; border-top: 1px dashed var(--line)">
+              <div class="flex-row" style="gap: 10px">
+                <strong style="font-size: 19px; color: var(--accent)">{{ t.fee === 0 ? '免费' : `¥${t.fee}` }}</strong>
                 <div class="seg-group">
                   <button
                     :class="{ active: (youthMatchMode[t.id] ?? '单打') === '单打' }"
-                    style="padding: 3px 9px; font-size: 11px"
                     @click="youthMatchMode[t.id] = '单打'"
                   >
                     单打
                   </button>
                   <button
                     :class="{ active: youthMatchMode[t.id] === '双打' }"
-                    style="padding: 3px 9px; font-size: 11px"
                     @click="youthMatchMode[t.id] = '双打'"
                   >
                     双打
@@ -406,10 +479,9 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
               </div>
               <button
                 :class="t.registered ? 'btn-ghost' : 'btn-orange'"
-                style="padding: 6px 13px; font-size: 12px"
                 @click="registerYouthMatch(t)"
               >
-                {{ t.registered ? '✅ 已报名参赛' : `报名 ${t.groupTag}（+${t.pointsReward}分）` }}
+                {{ t.registered ? '✅ 已报名' : `报名 ${t.groupTag}` }}
               </button>
             </div>
           </div>
@@ -417,23 +489,20 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       </div>
     </div>
 
-    <!-- ===== 二、网球训练营 · 研学课程 · 团建活动 查询报名 ===== -->
+    <!-- ===== 二、网球训练营 · 研学课程 · 团建活动 ===== -->
     <div v-if="trainSection === 'all' || trainSection === 'camps'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
-          <div>
-            <strong style="font-size: 16.5px">🏕️ 网球训练营 · 研学课程 · 团建活动查询报名</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">支持按项目类型、关键词检索，并选择营期/团建日期与人数在线报名或定制</div>
-          </div>
+          <strong style="font-size: 18px">🏕️ 训练营 · 研学课程 · 团建活动</strong>
           <div class="flex-row" style="gap: 8px">
-            <div class="search-bar" style="width: 230px; height: 34px">
+            <div class="search-bar" style="width: 240px; height: 40px">
               <span>🔍</span>
               <input v-model="campKeyword" type="text" placeholder="搜冬夏令营、研学、团建…" />
             </div>
-            <select v-model="campDate" class="f-input" style="width: 132px; padding: 5px 8px; font-size: 12px">
+            <select v-model="campDate" class="f-input" style="width: 145px; padding: 7px 10px">
               <option v-for="d in BOOKING_DATES" :key="`cp-${d.iso}`" :value="d.shortDate">批次：{{ d.shortDate }}</option>
             </select>
-            <select v-model.number="campPeople" class="f-input" style="width: 96px; padding: 5px 8px; font-size: 12px">
+            <select v-model.number="campPeople" class="f-input" style="width: 110px; padding: 7px 10px">
               <option :value="1">1人报名</option>
               <option :value="2">2人同行</option>
               <option :value="5">5人小团</option>
@@ -442,7 +511,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           </div>
         </div>
         <div class="filter-row">
-          <span class="filter-label">分类筛选：</span>
+          <span class="filter-label">分类：</span>
           <button
             v-for="cat in (['全部', '训练营', '研学课程', '团建活动'] as const)"
             :key="cat"
@@ -450,10 +519,10 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             :class="{ active: campFilter === cat }"
             @click="campFilter = cat"
           >
-            {{ cat === '全部' ? `全部项目 (${CAMP_PROGRAMS.length})` : cat }}
+            {{ cat === '全部' ? `全部 (${CAMP_PROGRAMS.length})` : cat }}
           </button>
-          <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-            当前命中 {{ visibleCamps.length }} 个可报名项目
+          <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
+            共 {{ visibleCamps.length }} 个项目
           </span>
         </div>
       </div>
@@ -468,51 +537,35 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           <div>
             <div
               class="photo-box"
-              style="height: 146px"
-              @click="
-                openPhoto({
-                  title: item.title,
-                  category: item.category,
-                  photo: item.photo,
-                  rating: item.rating,
-                  subtitle: `${item.badge} ｜ ${item.duration}`,
-                  intro: item.desc,
-                  openHours: item.scheduleDate,
-                  priceInfo: `¥${item.price}${item.priceUnit}`,
-                  address: item.venue,
-                  tags: item.highlights,
-                  reviews: [{ user: '往期参营家长', origin: '武汉', score: 5.0, date: '2026-11-20', content: '组织非常专业，教练耐心负责，孩子进步很大！' }],
-                })
-              "
+              style="height: 168px"
+              @click="openCampDetail(item)"
             >
               <img :src="item.photo" :alt="item.title" />
-              <span class="badge-tl" style="font-size: 10px">{{ item.badge }}</span>
-              <span class="badge-bl" style="font-size: 10px">★ {{ item.rating }} · {{ item.duration }} · 余{{ item.remaining }}位</span>
+              <span class="badge-tl">{{ item.badge }} · {{ item.duration }}</span>
             </div>
-            <div class="card-pad" style="padding: 12px 14px 8px">
-              <strong style="font-size: 14.5px; display: block; margin-bottom: 4px">{{ item.title }}</strong>
-              <div style="font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 5px">
+            <div class="card-pad">
+              <div class="flex-between" style="margin-bottom: 6px">
+                <strong style="font-size: 17px; cursor: pointer" @click="openCampDetail(item)">{{ item.title }}</strong>
+                <span class="rating-pill">★ {{ item.rating }}</span>
+              </div>
+              <div style="font-size: 13.5px; color: var(--primary); font-weight: 700; margin-bottom: 6px">
                 👥 {{ item.targetAudience }} ｜ 📍 {{ item.venue }}
               </div>
-              <div style="font-size: 11.5px; color: var(--ink-2); margin-bottom: 8px">{{ item.desc }}</div>
-              <div class="flex-row" style="gap: 4px">
-                <span v-for="hl in item.highlights" :key="hl" class="tag" style="font-size: 10px">✔ {{ hl }}</span>
-              </div>
+              <div style="font-size: 13.5px; color: var(--ink-2)">{{ item.desc }}</div>
             </div>
           </div>
 
-          <div class="card-pad flex-between" style="padding: 10px 14px 13px; border-top: 1px dashed var(--line)">
-            <span class="price" style="font-size: 18px">¥{{ item.price }}<small>{{ item.priceUnit }}</small></span>
-            <div class="flex-row" style="gap: 6px">
+          <div class="card-pad flex-between" style="padding: 13px 20px; border-top: 1px dashed var(--line)">
+            <span class="price" style="font-size: 20px">¥{{ item.price }}<small>{{ item.priceUnit }}</small></span>
+            <div class="flex-row" style="gap: 8px">
               <button
                 v-if="item.category === '团建活动'"
                 class="btn-ghost"
-                style="padding: 5px 9px; font-size: 11.5px"
                 @click="openActionModal({ type: 'inquiry', title: `${item.title} · 方案定制`, subtitle: `${item.targetAudience} · 支持定制专属赛制与团餐`, submitLabel: '提交团建定制需求' })"
               >
                 定制方案
               </button>
-              <button class="btn-primary" style="padding: 6px 11px; font-size: 12px" @click="enrollCamp(item)">
+              <button class="btn-primary" @click="enrollCamp(item)">
                 立即报名 ({{ campPeople }}人)
               </button>
             </div>
@@ -528,56 +581,49 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       />
     </div>
 
-    <!-- ===== 三、认证网球俱乐部：介绍 · 课程销售 · 学员真实评价 ===== -->
+    <!-- ===== 三、认证网球俱乐部 ===== -->
     <div v-if="trainSection === 'all' || trainSection === 'clubs'" class="mb-24">
       <div class="flex-between mb-12">
-        <div>
-          <strong style="font-size: 16.5px">🏟️ 认证网球俱乐部 · 俱乐部介绍、课程直售与真实评价</strong>
-          <div style="font-size: 11.5px; color: var(--ink-3)">京山官方认证合作俱乐部，支持直接购买单次体验课/私教包/季度班，并可现场发表评价赚积分</div>
-        </div>
-        <span class="tag green">共 {{ clubs.length }} 家官方认证俱乐部</span>
+        <strong style="font-size: 18px">🏟️ 官方认证网球俱乐部</strong>
+        <span class="tag green">共 {{ clubs.length }} 家认证俱乐部</span>
       </div>
 
       <div class="grid-3">
         <div v-for="club in clubs" :key="club.id" class="card" style="display: flex; flex-direction: column; justify-content: space-between">
           <div>
-            <div class="photo-box" style="height: 144px">
+            <div class="photo-box" style="height: 162px" @click="openClubDetail(club)">
               <img :src="club.photo" :alt="club.name" />
-              <span class="badge-tl" style="font-size: 10px">{{ club.badge }}</span>
-              <span class="badge-bl" style="font-size: 10px">★ {{ club.rating }} ({{ club.reviewCount }}评) · {{ club.coachCount }}位认证教练</span>
+              <span class="badge-tl">{{ club.badge }}</span>
             </div>
-            <div class="card-pad" style="padding: 13px 14px">
-              <div class="flex-between" style="margin-bottom: 4px">
-                <strong style="font-size: 15px">{{ club.name }}</strong>
+            <div class="card-pad">
+              <div class="flex-between" style="margin-bottom: 6px">
+                <strong style="font-size: 17px; cursor: pointer" @click="openClubDetail(club)">{{ club.name }}</strong>
+                <span class="rating-pill">★ {{ club.rating }}</span>
               </div>
-              <div style="font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 5px">
-                🎾 {{ club.courtsInfo }} ｜ 📞 {{ club.phone }}
-              </div>
-              <div style="font-size: 11.5px; color: var(--ink-2); margin-bottom: 8px">{{ club.intro }}</div>
-              <div class="flex-row" style="gap: 4px; margin-bottom: 10px">
-                <span v-for="t in club.tags" :key="t" class="tag" style="font-size: 10px">{{ t }}</span>
+              <div style="font-size: 13.5px; color: var(--primary); font-weight: 700; margin-bottom: 8px">
+                🎾 {{ club.courtsInfo }} · {{ club.coachCount }}位教练
               </div>
 
               <!-- 俱乐部在售课程列表 -->
-              <div style="background: #f5faf8; border: 1px solid #d9ebe2; padding: 9px 10px; margin-bottom: 10px">
-                <div style="font-size: 11.5px; font-weight: 800; color: var(--ink); margin-bottom: 6px">🛒 在售精品课程（点击直购）</div>
+              <div style="background: #f5faf8; border: 1px solid #d9ebe2; padding: 11px 12px; margin-bottom: 12px">
+                <div style="font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 6px">在售课程</div>
                 <div
                   v-for="course in club.courses"
                   :key="course.id"
                   class="flex-between"
-                  style="padding: 6px 0; border-bottom: 1px dashed #dfece6; gap: 6px"
+                  style="padding: 7px 0; border-bottom: 1px dashed #dfece6; gap: 6px"
                 >
                   <div style="min-width: 0">
-                    <div style="font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                    <div style="font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
                       {{ course.name }}
                     </div>
-                    <div style="font-size: 10.5px; color: var(--ink-3)">{{ course.lessons }} · <span style="color: var(--primary)">{{ course.tag }}</span></div>
+                    <div style="font-size: 12.5px; color: var(--ink-3)">{{ course.lessons }}</div>
                   </div>
-                  <div class="flex-row" style="gap: 6px; flex-shrink: 0">
-                    <strong style="font-size: 13.5px; color: var(--accent)">¥{{ course.memberPrice }}</strong>
+                  <div class="flex-row" style="gap: 8px; flex-shrink: 0">
+                    <strong style="font-size: 15.5px; color: var(--accent)">¥{{ course.memberPrice }}</strong>
                     <button
                       class="btn-primary"
-                      style="padding: 3px 8px; font-size: 11px"
+                      style="padding: 5px 10px; font-size: 13px"
                       @click="createQuickOrder('课程', `${club.name.split('（')[0]} · ${course.name}`, `${course.lessons} · 会员专享价`, course.memberPrice, 100)"
                     >
                       购课
@@ -587,29 +633,29 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
               </div>
 
               <!-- 真实评价 + 在线发评 -->
-              <div style="background: #fffcf5; border: 1px solid #f0e1bf; padding: 9px 10px">
+              <div style="background: #fffcf5; border: 1px solid #f0e1bf; padding: 11px 12px">
                 <div class="flex-between" style="margin-bottom: 6px">
-                  <strong style="font-size: 11.5px; color: #7a4e16">💬 学员真实评价（{{ club.reviews.length }}条精选）</strong>
+                  <strong style="font-size: 13.5px; color: #7a4e16">💬 学员评价（{{ club.reviews.length }}条）</strong>
                   <button
                     class="btn-ghost"
-                    style="padding: 2px 7px; font-size: 10.5px"
+                    style="padding: 4px 9px; font-size: 12.5px"
                     @click="openNavigation({ placeName: club.name, address: club.address, lng: club.lng, lat: club.lat, distance: '城区直达', driveMin: '约 6 分钟', tip: `电话 ${club.phone}` })"
                   >
                     🧭 导航
                   </button>
                 </div>
-                <div v-for="rev in club.reviews.slice(0, 2)" :key="rev.id" style="font-size: 11px; color: var(--ink-2); margin-bottom: 5px; line-height: 1.45">
-                  <strong>{{ rev.user }}</strong>（★{{ rev.score.toFixed(1) }} · {{ rev.date }}）：{{ rev.content }}
+                <div v-for="rev in club.reviews.slice(0, 1)" :key="rev.id" style="font-size: 13px; color: var(--ink-2); margin-bottom: 8px; line-height: 1.55">
+                  <strong>{{ rev.user }}</strong>：{{ rev.content }}
                 </div>
-                <div style="display: flex; gap: 5px; margin-top: 7px">
+                <div style="display: flex; gap: 6px">
                   <input
                     v-model="getReviewDraft(club.id).content"
                     class="f-input"
-                    style="padding: 4px 8px; font-size: 11px"
-                    placeholder="写一句上课评价（+15积分）…"
+                    style="padding: 6px 10px; font-size: 13px"
+                    placeholder="发表评价（+15分）…"
                     @keyup.enter="submitClubReview(club)"
                   />
-                  <button class="btn-orange" style="padding: 4px 9px; font-size: 11px; flex-shrink: 0" @click="submitClubReview(club)">
+                  <button class="btn-orange" style="padding: 6px 12px; font-size: 13px; flex-shrink: 0" @click="submitClubReview(club)">
                     发评
                   </button>
                 </div>
@@ -625,8 +671,8 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div class="flex-row">
-            <strong style="font-size: 16px">📅 日常约课排期：{{ currentDateObj.fullTitle }}</strong>
-            <span class="tag green">{{ lessonMode === 'group' ? '团体课课表' : '私教1对1时段' }}</span>
+            <strong style="font-size: 18px">📅 日常约课排期：{{ currentDateObj.fullTitle }}</strong>
+            <span class="tag green">{{ lessonMode === 'group' ? '团体课' : '私教1对1' }}</span>
           </div>
           <div class="flex-row">
             <div class="seg-group">
@@ -658,7 +704,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
 
         <div v-if="lessonMode === 'group'" class="filter-rows">
           <div class="filter-row">
-            <span class="filter-label">课程分类：</span>
+            <span class="filter-label">分类：</span>
             <button
               v-for="cat in (['全部', '零基础入门', '多球强化', '双打战术', '发球专项'] as const)"
               :key="cat"
@@ -690,7 +736,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             >
               {{ lv }}
             </button>
-            <div class="search-bar" style="width: 200px; height: 32px; margin-left: auto">
+            <div class="search-bar" style="width: 220px; height: 38px; margin-left: auto">
               <span>🔍</span>
               <input v-model="groupKeyword" type="text" placeholder="搜课程/教练/场馆…" />
             </div>
@@ -720,7 +766,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             >
               {{ sp }}
             </button>
-            <select v-model="coachVenue" class="f-input" style="width: auto; padding: 4px 10px; margin-left: auto">
+            <select v-model="coachVenue" class="f-input" style="width: auto; padding: 6px 10px; margin-left: auto">
               <option v-for="v in coachVenues" :key="v" :value="v">{{ v === '全部' ? '全部授课场馆' : v }}</option>
             </select>
           </div>
@@ -730,7 +776,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       <!-- 团体课结果 -->
       <div v-if="lessonMode === 'group'">
         <div v-if="filteredGroupClasses.length === 0" class="card card-pad" style="text-align: center; padding: 36px 20px">
-          <strong style="font-size: 14px; display: block; margin-bottom: 8px">当前日期与筛选条件下暂无团体课</strong>
+          <strong style="font-size: 16px; display: block; margin-bottom: 10px">当前日期与筛选条件下暂无团体课</strong>
           <button
             class="btn-primary"
             @click="
@@ -749,28 +795,27 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
               v-for="cls in pagedGroupClasses"
               :key="cls.id"
               class="card card-pad"
-              style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px"
+              style="display: flex; flex-direction: column; justify-content: space-between; gap: 10px"
             >
               <div>
-                <div class="flex-between" style="margin-bottom: 5px">
-                  <div class="flex-row" style="gap: 5px">
-                    <span class="tag green">🕒 {{ BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate }} {{ cls.startTime }}-{{ cls.endTime }}</span>
+                <div class="flex-between" style="margin-bottom: 8px">
+                  <div class="flex-row" style="gap: 6px">
+                    <span class="tag green">{{ BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate }} {{ cls.startTime }}-{{ cls.endTime }}</span>
                     <span class="tag blue">{{ cls.category }}</span>
-                    <span class="tag gold">{{ cls.level }}</span>
                   </div>
                   <span class="tag orange">余 {{ cls.capacity - cls.enrolled }}/{{ cls.capacity }} 位</span>
                 </div>
-                <strong style="font-size: 15px; display: block; margin-bottom: 4px">{{ cls.title }}</strong>
-                <div style="font-size: 12px; color: var(--ink-2)">👨‍🏫 {{ cls.coachName }} ｜ 📍 {{ cls.venueName }}</div>
+                <strong style="font-size: 17px; display: block; margin-bottom: 6px">{{ cls.title }}</strong>
+                <div style="font-size: 14px; color: var(--ink-2)">👨‍🏫 {{ cls.coachName }} ｜ 📍 {{ cls.venueName }}</div>
               </div>
-              <div class="flex-between" style="padding-top: 8px; border-top: 1px dashed var(--line)">
-                <span class="price" style="font-size: 18px">¥{{ cls.memberPrice }}<small>会员价</small></span>
+              <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
+                <span class="price" style="font-size: 20px">¥{{ cls.memberPrice }}<small>会员价</small></span>
                 <button
                   :class="cls.bookedByMe ? 'btn-ghost' : 'btn-orange'"
                   :disabled="cls.bookedByMe || cls.enrolled >= cls.capacity"
                   @click="bookGroupClass(cls.id)"
                 >
-                  {{ cls.bookedByMe ? '✅ 已预约' : '预约本节课程' }}
+                  {{ cls.bookedByMe ? '✅ 已预约' : '预约本节课' }}
                 </button>
               </div>
             </div>
@@ -791,32 +836,32 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           v-for="coach in filteredCoaches"
           :key="coach.id"
           class="card card-pad"
-          style="display: flex; flex-direction: column; justify-content: space-between; gap: 10px"
+          style="display: flex; flex-direction: column; justify-content: space-between; gap: 12px"
         >
           <div>
-            <div style="display: grid; grid-template-columns: 84px 1fr; gap: 12px; margin-bottom: 9px">
-              <img :src="coach.photo" :alt="coach.name" style="width: 84px; height: 84px; object-fit: cover" />
+            <div style="display: grid; grid-template-columns: 90px 1fr; gap: 14px; margin-bottom: 12px">
+              <img :src="coach.photo" :alt="coach.name" style="width: 90px; height: 90px; object-fit: cover" />
               <div>
                 <div class="flex-between">
-                  <strong style="font-size: 15.5px">{{ coach.name }} · {{ coach.title }}</strong>
+                  <strong style="font-size: 17px">{{ coach.name }} · {{ coach.title }}</strong>
                   <span class="rating-pill">★ {{ coach.rating }}</span>
                 </div>
-                <div class="flex-row" style="gap: 5px; margin: 4px 0">
+                <div class="flex-row" style="gap: 6px; margin: 6px 0">
                   <span class="tag green">{{ coach.tier }}</span>
                   <span class="tag blue">{{ coach.specialty }}</span>
                 </div>
-                <div style="font-size: 11px; color: var(--ink-3)">📍 {{ coach.venueName }} · 累计 {{ coach.lessonsCount }} 节</div>
+                <div style="font-size: 13px; color: var(--ink-2)">📍 {{ coach.venueName }}</div>
               </div>
             </div>
-            <div style="background: #f6faf8; border: 1px solid #dfece6; padding: 9px">
-              <div style="font-size: 11.5px; font-weight: 800; margin-bottom: 6px">🕒 选择 {{ currentDateObj.shortDate }} 1对1约课时段：</div>
-              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px">
+            <div style="background: #f6faf8; border: 1px solid #dfece6; padding: 11px">
+              <div style="font-size: 13.5px; font-weight: 800; margin-bottom: 8px">🕒 选择 {{ currentDateObj.shortDate }} 约课时段：</div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px">
                 <button
                   v-for="h in coach.availableHours"
                   :key="h"
                   type="button"
                   class="matrix-cell"
-                  style="height: 34px; font-size: 11px"
+                  style="height: 38px; font-size: 13px"
                   :class="{
                     busy: isCoachSlotBooked(coach.id, h),
                     picked: pickedCoachHours[coach.id] === h,
@@ -825,13 +870,13 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
                   :disabled="isCoachSlotBooked(coach.id, h)"
                   @click="selectCoachSlot(coach.id, h)"
                 >
-                  {{ formatHourRange(h) }}{{ isCoachSlotBooked(coach.id, h) ? ' (已约)' : '' }}
+                  {{ formatHourRange(h) }}{{ isCoachSlotBooked(coach.id, h) ? ' (满)' : '' }}
                 </button>
               </div>
             </div>
           </div>
-          <div class="flex-between" style="padding-top: 9px; border-top: 1px dashed var(--line)">
-            <span class="price" style="font-size: 18px">¥{{ coach.memberPrice }}<small>/小时</small></span>
+          <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
+            <span class="price" style="font-size: 20px">¥{{ coach.memberPrice }}<small>/小时</small></span>
             <button class="btn-primary" @click="submitCoachSlot(coach.id)">
               {{ pickedCoachHours[coach.id] ? `预约 ${formatHourRange(pickedCoachHours[coach.id]!)}` : '预约所选时段' }}
             </button>
@@ -840,22 +885,19 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
       </div>
     </div>
 
-    <!-- ===== 五、运动康复机构专区（卫健认证 + 自选日期时段与理疗项目） ===== -->
+    <!-- ===== 五、运动康复机构专区 ===== -->
     <div v-if="trainSection === 'all' || trainSection === 'rehab'">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between mb-10">
-          <div>
-            <strong style="font-size: 16.5px">🩺 运动康复机构保障（市卫健局认证 · 赛期绿色通道）</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">覆盖三甲医院运动医学中心、中医院推拿理疗与场馆零距离运动康复工作室，支持按日期与时段预约</div>
-          </div>
-          <span class="tag red">赛期绿色优先接诊</span>
+        <div class="flex-between mb-12">
+          <strong style="font-size: 18px">🩺 运动康复机构保障（市卫健局认证）</strong>
+          <span class="tag red">赛期绿色通道</span>
         </div>
-        <div class="filter-row" style="background: #f5faf8; padding: 8px 12px; border: 1px solid #d9ebe2">
-          <span class="filter-label">📅 预约康复日期：</span>
-          <select v-model="rehabDate" class="f-input" style="width: 120px; padding: 4px 8px; font-size: 12px">
+        <div class="filter-row" style="background: #f5faf8; padding: 10px 14px; border: 1px solid #d9ebe2">
+          <span class="filter-label">📅 康复日期：</span>
+          <select v-model="rehabDate" class="f-input" style="width: 145px; padding: 6px 10px">
             <option v-for="d in BOOKING_DATES" :key="`rh-${d.iso}`" :value="d.shortDate">{{ d.shortDate }} {{ d.weekday }}</option>
           </select>
-          <span class="filter-label">🕒 选择理疗时段：</span>
+          <span class="filter-label">🕒 时段：</span>
           <button
             v-for="sl in rehabSlots"
             :key="sl"
@@ -876,29 +918,30 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           style="display: flex; flex-direction: column; justify-content: space-between"
         >
           <div>
-            <div class="photo-box" style="height: 144px">
+            <div class="photo-box" style="height: 162px" @click="openRehabDetail(center)">
               <img :src="center.photo" :alt="center.name" />
-              <span class="badge-tl" style="font-size: 10px">{{ center.badge }}</span>
-              <span class="badge-bl" style="font-size: 10px">★ {{ center.rating }} ({{ center.reviewCount }}评) · {{ center.distance }}</span>
+              <span class="badge-tl">{{ center.badge }}</span>
             </div>
-            <div class="card-pad" style="padding: 13px 14px">
-              <strong style="font-size: 15px; display: block; margin-bottom: 4px">{{ center.name }}</strong>
-              <div style="font-size: 11px; color: var(--primary); font-weight: 700; margin-bottom: 4px">
+            <div class="card-pad">
+              <div class="flex-between" style="margin-bottom: 6px">
+                <strong style="font-size: 17px; cursor: pointer" @click="openRehabDetail(center)">{{ center.name }}</strong>
+                <span class="rating-pill">★ {{ center.rating }}</span>
+              </div>
+              <div style="font-size: 13.5px; color: var(--primary); font-weight: 700; margin-bottom: 5px">
                 👨‍⚕️ {{ center.doctorInfo }}
               </div>
-              <div style="font-size: 11px; color: var(--ink-3); margin-bottom: 8px">
-                🕒 {{ center.openHours }} ｜ 📞 {{ center.phone }}
+              <div style="font-size: 13px; color: var(--ink-3); margin-bottom: 10px">
+                🕒 {{ center.openHours }} · {{ center.distance }}
               </div>
-              <div style="font-size: 11.5px; color: var(--ink-2); margin-bottom: 9px">{{ center.intro }}</div>
 
               <!-- 选择具体理疗项目 -->
-              <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px">
+              <div style="display: flex; flex-direction: column; gap: 7px">
                 <button
                   v-for="(svc, sIdx) in center.services"
                   :key="svc.name"
                   type="button"
                   class="flex-between"
-                  style="padding: 6px 9px; border: 1px solid; text-align: left; font-size: 11.5px"
+                  style="padding: 8px 11px; border: 1px solid; text-align: left; font-size: 13.5px"
                   :style="
                     (pickedRehabService[center.id] ?? 0) === sIdx
                       ? 'border-color: var(--primary); background: #eaf7f1; color: var(--primary-dark); font-weight: 800'
@@ -910,21 +953,18 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
                   <strong style="color: var(--accent)">¥{{ svc.price }}</strong>
                 </button>
               </div>
-
-              <div class="review-quote" style="margin-top: 0">💬 “{{ center.quote }}”</div>
             </div>
           </div>
 
-          <div class="card-pad flex-between" style="padding: 10px 14px 13px; border-top: 1px dashed var(--line)">
+          <div class="card-pad flex-between" style="padding: 13px 20px; border-top: 1px dashed var(--line)">
             <button
               class="btn-ghost"
-              style="padding: 5px 9px; font-size: 11.5px"
               @click="openNavigation({ placeName: center.name, address: center.address, lng: center.lng, lat: center.lat, distance: center.distance, driveMin: '约 5 分钟', tip: `电话 ${center.phone}` })"
             >
-              🧭 导航前往
+              🧭 导航
             </button>
-            <button class="btn-orange" style="padding: 6px 12px; font-size: 12px" @click="bookRehab(center)">
-              预约 {{ rehabDate }} {{ rehabSlot }}
+            <button class="btn-orange" @click="bookRehab(center)">
+              预约 {{ rehabSlot }}
             </button>
           </div>
         </div>

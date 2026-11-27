@@ -1,16 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import ActionDetailModal from './components/ActionDetailModal.vue'
-import BookingModal from './components/BookingModal.vue'
-import CinemaDetailModal from './components/CinemaDetailModal.vue'
 import EventPopupModal from './components/EventPopupModal.vue'
 import HeroSpotlightCarousel from './components/HeroSpotlightCarousel.vue'
 import HomeSummaryStage from './components/HomeSummaryStage.vue'
-import HotelDetailModal from './components/HotelDetailModal.vue'
+import ListingDetailPage from './components/ListingDetailPage.vue'
 import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
-import PhotoLightboxModal from './components/PhotoLightboxModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
-import ProductDetailModal from './components/ProductDetailModal.vue'
 import SubPageNavBar from './components/SubPageNavBar.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
@@ -56,8 +52,13 @@ onMounted(() => {
   <div>
     <PortalHeader />
 
+    <!-- 独立全屏详情页模式（参考爱彼迎大屏详情页布局） -->
+    <template v-if="state.activeDetail">
+      <ListingDetailPage />
+    </template>
+
     <!-- 首页模式：顶部焦点轮播 + 金刚区 + 下方固定热门概览容器 -->
-    <template v-if="!state.isStandalonePage">
+    <template v-else-if="!state.isStandalonePage">
       <!-- 核心热点/赛事/活动轮播宣传区 + 右侧三合一快捷办理卡 -->
       <HeroSpotlightCarousel />
 
@@ -85,13 +86,8 @@ onMounted(() => {
       </div>
     </footer>
 
-    <BookingModal />
-    <PhotoLightboxModal />
     <ActionDetailModal />
     <EventPopupModal />
-    <HotelDetailModal />
-    <ProductDetailModal />
-    <CinemaDetailModal />
 
     <div v-if="state.toastMessage" class="toast-banner">
       <span style="color: var(--lime)">✔</span>

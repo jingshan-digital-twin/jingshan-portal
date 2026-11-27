@@ -5,7 +5,7 @@ import { HOTEL_PROFILES } from '../../mock/details'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
+const { state, openHotelDetail, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
 const PAGE_SIZE = 4
 const stayTab = ref<'全部' | '公寓' | '赛事优惠' | '民宿'>('全部')
 const stayKeyword = ref('')
@@ -58,10 +58,6 @@ const visibleCards = computed(() => {
 watch(filteredHotels, () => {
   stayPage.value = 1
 })
-
-function openHotelDetail(id: string) {
-  state.activeHotelId = id
-}
 </script>
 
 <template>
@@ -79,17 +75,12 @@ function openHotelDetail(id: string) {
     <div class="promo-banner mb-16">
       <div class="flex-row" style="gap: 12px">
         <div
-          style="width: 44px; height: 44px; border-radius: 0; background: #ff5d2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0"
+          style="width: 46px; height: 46px; border-radius: 0; background: #ff5d2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0"
         >
           🏠
         </div>
-        <div>
-          <div style="font-size: 15.5px; font-weight: 900; color: #542600">
-            京山市房管局重磅活动：2026京山网球公开赛期间购房直减 ¥50,000！
-          </div>
-          <div style="font-size: 12px; color: #824e17">
-            凭「京山网球」参赛/观赛/订场实名记录，购买核心区「温泉世家」「网球新城」等品质住宅立享 5 万元专属购房补贴（可预约看房专车）
-          </div>
+        <div style="font-size: 17.5px; font-weight: 900; color: #542600">
+          京山市房管局重磅活动：2026京山网球公开赛期间购房直减 ¥50,000！
         </div>
       </div>
       <div class="flex-row">
@@ -100,7 +91,7 @@ function openHotelDetail(id: string) {
           预约看房专车
         </button>
         <button class="btn-orange" @click="claimHomeSubsidy">
-          {{ state.claimedHomeSubsidy ? '✅ 已领取5万元补贴凭证' : '领取5万元购房补贴券 →' }}
+          {{ state.claimedHomeSubsidy ? '✅ 已领取5万元补贴券' : '领取5万元购房补贴券 →' }}
         </button>
       </div>
     </div>
@@ -110,11 +101,11 @@ function openHotelDetail(id: string) {
       <div class="filter-rows">
         <div class="filter-row">
           <span class="filter-label">入住日期：</span>
-          <select v-model="checkInDate" class="f-input" style="width: 145px; padding: 5px 9px">
+          <select v-model="checkInDate" class="f-input" style="width: 155px; padding: 7px 10px">
             <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`in-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
           </select>
           <span class="filter-label">离店日期：</span>
-          <select v-model="checkOutDate" class="f-input" style="width: 145px; padding: 5px 9px">
+          <select v-model="checkOutDate" class="f-input" style="width: 155px; padding: 7px 10px">
             <option v-for="d in BOOKING_DATES.slice(1)" :key="`out-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
           </select>
           <span class="tag green">共住 {{ nightsCount }} 晚</span>
@@ -129,16 +120,16 @@ function openHotelDetail(id: string) {
           >
             {{ p === '全部' ? '不限' : `¥${p}` }}
           </button>
-          <select v-model="staySort" class="f-input" style="width: auto; padding: 5px 10px; margin-left: auto">
+          <select v-model="staySort" class="f-input" style="width: auto; padding: 7px 10px; margin-left: auto">
             <option value="default">综合推荐</option>
             <option value="price">价格最低</option>
             <option value="rating">评分最高</option>
           </select>
         </div>
         <div class="filter-row">
-          <div class="search-bar" style="width: 230px; height: 34px">
+          <div class="search-bar" style="width: 240px; height: 40px">
             <span>🔍</span>
-            <input v-model="stayKeyword" type="text" placeholder="搜索酒店/公寓/房型/地址…" />
+            <input v-model="stayKeyword" type="text" placeholder="搜索酒店、公寓、房型…" />
           </div>
           <span class="filter-label">设施筛选：</span>
           <button
@@ -150,8 +141,8 @@ function openHotelDetail(id: string) {
           >
             {{ f }}
           </button>
-          <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-            符合条件：{{ filteredHotels.length }} 家精选住宿
+          <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
+            符合条件：{{ filteredHotels.length }} 家
           </span>
         </div>
       </div>
@@ -167,66 +158,61 @@ function openHotelDetail(id: string) {
       >
         <div
           class="photo-box"
-          style="height: 175px"
+          style="height: 185px"
           @click="openHotelDetail(hotel.id)"
         >
           <img :src="hotel.photo" :alt="hotel.name" />
           <span class="badge-tl" :style="hotel.category === '公寓' ? 'background: var(--primary)' : ''">
             {{ hotel.badge }}
           </span>
-          <span class="badge-bl">{{ hotel.subBadge }} · 共{{ hotel.rooms.length }}种房型</span>
         </div>
 
         <div class="card-pad">
-          <div class="flex-between">
-            <strong style="font-size: 15.5px; cursor: pointer" @click="openHotelDetail(hotel.id)">
+          <div class="flex-between" style="margin-bottom: 6px">
+            <strong style="font-size: 17.5px; cursor: pointer" @click="openHotelDetail(hotel.id)">
               {{ hotel.name }}
             </strong>
-            <span class="rating-pill">★ {{ hotel.rating }} ({{ hotel.reviewCount }}评)</span>
+            <span class="rating-pill">★ {{ hotel.rating }}</span>
           </div>
 
           <div class="coord-bar">
-            <span>📍 {{ hotel.address }}</span>
+            <span>📍 {{ hotel.distanceToCourt }} · {{ hotel.address.replace('湖北省荆门市京山市', '') }}</span>
           </div>
 
           <!-- 房型与透明价格预览（前2种房型 + 点击展开全部） -->
-          <div style="background: #f5f9f7; border: 1px solid #dfece6; border-radius: 0; padding: 8px 10px; margin: 7px 0">
+          <div style="background: #f5f9f7; border: 1px solid #dfece6; border-radius: 0; padding: 10px 14px; margin: 10px 0">
             <div
               v-for="rm in hotel.rooms.slice(0, 2)"
               :key="rm.id"
               class="flex-between"
-              style="padding: 4px 0; border-bottom: 1px dashed #e1ece7; font-size: 11.5px"
+              style="padding: 6px 0; border-bottom: 1px dashed #e1ece7; font-size: 13.5px"
             >
               <div>
                 <strong style="color: var(--ink)">{{ rm.name }}</strong>
-                <div style="font-size: 10.5px; color: var(--ink-3)">{{ rm.area }} · {{ rm.bed }} · {{ rm.breakfast }}</div>
+                <div style="font-size: 12.5px; color: var(--ink-3)">{{ rm.area }} · {{ rm.breakfast }}</div>
               </div>
               <div style="text-align: right; flex-shrink: 0">
-                <s style="font-size: 10px; color: #9aa7a2; margin-right: 4px">¥{{ rm.originalPrice }}</s>
-                <strong style="color: var(--accent); font-size: 13.5px">¥{{ rm.eventPrice }}{{ rm.leaseUnit }}</strong>
-                <div style="font-size: 10px; color: var(--primary)">余{{ rm.remaining }}间</div>
+                <strong style="color: var(--accent); font-size: 15.5px">¥{{ rm.eventPrice }}{{ rm.leaseUnit }}</strong>
+                <div style="font-size: 12px; color: var(--primary)">余{{ rm.remaining }}间</div>
               </div>
             </div>
             <div
-              style="font-size: 11px; color: var(--primary); font-weight: 800; padding-top: 5px; cursor: pointer; display: flex; justify-content: space-between"
+              style="font-size: 13.5px; color: var(--primary); font-weight: 800; padding-top: 8px; cursor: pointer; display: flex; justify-content: space-between"
               @click="openHotelDetail(hotel.id)"
             >
-              <span>✨ 配套：{{ hotel.facilities.slice(0, 3).join(' · ') }}</span>
-              <span>查看全部 {{ hotel.rooms.length }} 种房型与详情 →</span>
+              <span>{{ hotel.facilities.slice(0, 2).join(' · ') }}</span>
+              <span>查看全部 {{ hotel.rooms.length }} 种房型 →</span>
             </div>
           </div>
 
-          <div class="review-quote">💬 {{ hotel.reviews[0]?.user }}：“{{ hotel.reviews[0]?.content }}”</div>
-
-          <div class="flex-between" style="margin-top: 10px">
+          <div class="flex-between" style="margin-top: 14px">
             <span class="price">
               ¥{{ hotel.rooms[0]?.eventPrice }}
-              <small>{{ hotel.rooms[0]?.leaseUnit }}起 · 原价¥{{ hotel.rooms[0]?.originalPrice }}</small>
+              <small>{{ hotel.rooms[0]?.leaseUnit }}起</small>
             </span>
-            <div class="flex-row" style="gap: 5px">
+            <div class="flex-row" style="gap: 8px">
               <button
                 class="btn-ghost"
-                style="padding: 5px 8px; font-size: 11.5px"
                 @click="
                   openNavigation({
                     placeName: hotel.name,
@@ -241,7 +227,7 @@ function openHotelDetail(id: string) {
               >
                 🧭 导航
               </button>
-              <button class="btn-primary" style="padding: 6px 11px" @click="openHotelDetail(hotel.id)">
+              <button class="btn-primary" @click="openHotelDetail(hotel.id)">
                 详情与选房
               </button>
             </div>
@@ -261,17 +247,17 @@ function openHotelDetail(id: string) {
 
     <!-- 全部 6 家住宿房型与价格透明对照表 -->
     <div class="card card-pad">
-      <strong style="font-size: 14.5px; display: block; margin-bottom: 8px">
+      <strong style="font-size: 17.5px; display: block; margin-bottom: 12px">
         📋 赛事合作住宿 & 网球公寓房型价格一览
       </strong>
       <table class="clean-table">
         <thead>
           <tr>
-            <th>住宿名称 & 地址</th>
+            <th>住宿名称</th>
             <th>类型</th>
             <th>距赛场</th>
-            <th>全部可选房型</th>
-            <th>日常价 → 赛事/票根价</th>
+            <th>主推房型</th>
+            <th>赛事/票根价</th>
             <th>评分</th>
             <th>操作</th>
           </tr>
@@ -280,31 +266,30 @@ function openHotelDetail(id: string) {
           <tr v-for="h in HOTEL_PROFILES" :key="h.id">
             <td>
               <strong style="cursor: pointer; color: var(--primary-dark)" @click="openHotelDetail(h.id)">{{ h.name }}</strong>
-              <div style="font-size: 10.5px; color: var(--ink-3)">📍 {{ h.address }}</div>
+              <div style="font-size: 12.5px; color: var(--ink-3)">{{ h.address.replace('湖北省荆门市京山市', '') }}</div>
             </td>
             <td>
               <span class="tag" :class="h.category === '公寓' ? 'green' : h.category === '民宿' ? 'orange' : 'blue'">
-                {{ h.category === '公寓' ? '短/长租公寓' : h.category === '民宿' ? '温泉民宿' : '联盟酒店' }}
+                {{ h.category === '公寓' ? '网球公寓' : h.category === '民宿' ? '温泉民宿' : '联盟酒店' }}
               </span>
             </td>
             <td>{{ h.distanceToCourt }}</td>
             <td>
               <div style="font-weight: 700">{{ h.rooms[0]?.name }}</div>
-              <div style="font-size: 10.5px; color: var(--ink-3)">共 {{ h.rooms.length }} 种房型可选（{{ h.rooms[0]?.area }}）</div>
+              <div style="font-size: 12.5px; color: var(--ink-3)">共 {{ h.rooms.length }} 种房型</div>
             </td>
             <td>
-              <s style="color: #888">¥{{ h.rooms[0]?.originalPrice }}</s> →
-              <strong style="color: var(--accent)">¥{{ h.rooms[0]?.eventPrice }}{{ h.rooms[0]?.leaseUnit }}</strong>
+              <strong style="color: var(--accent); font-size: 15px">¥{{ h.rooms[0]?.eventPrice }}{{ h.rooms[0]?.leaseUnit }}</strong>
             </td>
             <td>★ {{ h.rating }}</td>
             <td>
-              <div class="flex-row" style="gap: 5px">
-                <button class="btn-ghost" style="padding: 4px 8px; font-size: 11px" @click="openHotelDetail(h.id)">
-                  酒店详情
+              <div class="flex-row" style="gap: 6px">
+                <button class="btn-ghost" style="padding: 5px 10px; font-size: 13px" @click="openHotelDetail(h.id)">
+                  详情
                 </button>
                 <button
                   class="btn-primary"
-                  style="padding: 4px 9px; font-size: 11px"
+                  style="padding: 5px 12px; font-size: 13px"
                   @click="
                     createQuickOrder(
                       '住宿',
@@ -315,7 +300,7 @@ function openHotelDetail(id: string) {
                     )
                   "
                 >
-                  一键预订
+                  预订
                 </button>
               </div>
             </td>

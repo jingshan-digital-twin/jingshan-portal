@@ -102,12 +102,12 @@ function redeemStubAtMerchant() {
     </div>
 
     <!-- 2. 球场摄像头实况监控 -->
-    <div v-else-if="state.actionModal.type === 'livecam'" class="modal-box" style="width: 680px">
+    <div v-else-if="state.actionModal.type === 'livecam'" class="modal-box" style="width: 700px">
       <div class="card-pad flex-between" style="background: #0b251d; color: #fff">
         <div>
-          <strong style="font-size: 15.5px">📹 球场实时监控画面 · {{ state.actionModal.venueName }}</strong>
-          <div style="font-size: 11px; color: var(--lime)">
-            LIVE 实时推流 {{ clockText }} ｜ {{ state.actionModal.viewers }} 位球友正在查看当前空场实况
+          <strong style="font-size: 18px">📹 球场实时监控画面 · {{ state.actionModal.venueName }}</strong>
+          <div style="font-size: 13px; color: var(--lime); margin-top: 3px">
+            LIVE 实时推流 {{ clockText }} ｜ {{ state.actionModal.viewers }} 位球友正在查看
           </div>
         </div>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
@@ -134,18 +134,18 @@ function redeemStubAtMerchant() {
     </div>
 
     <!-- 3. 餐厅完整菜单与票根85折计算 -->
-    <div v-else-if="state.actionModal.type === 'menu'" class="modal-box" style="width: 600px">
+    <div v-else-if="state.actionModal.type === 'menu'" class="modal-box" style="width: 640px">
       <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff">
         <div>
-          <strong style="font-size: 16px">📖 {{ state.actionModal.shopName }} · 完整菜单</strong>
-          <div style="font-size: 11.5px; color: var(--lime)">
-            网球联盟认证商户 ｜ 凭电子票根 {{ state.ticketStubCode }} 享 85 折优惠 · {{ state.actionModal.dist }}
+          <strong style="font-size: 18px">📖 {{ state.actionModal.shopName }} · 完整菜单</strong>
+          <div style="font-size: 13.5px; color: var(--lime); margin-top: 3px">
+            凭电子票根 {{ state.ticketStubCode }} 享 85 折优惠 · {{ state.actionModal.dist }}
           </div>
         </div>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
       <div class="card-pad">
-        <table class="clean-table" style="margin-bottom: 14px">
+        <table class="clean-table" style="margin-bottom: 16px">
           <thead>
             <tr><th>菜品名称</th><th>门市价</th><th>票根85折价</th></tr>
           </thead>
@@ -153,7 +153,7 @@ function redeemStubAtMerchant() {
             <tr v-for="d in state.actionModal.dishes" :key="d.name">
               <td>
                 <strong>{{ d.name }}</strong>
-                <span v-if="d.tag" class="tag orange" style="margin-left: 6px">{{ d.tag }}</span>
+                <span v-if="d.tag" class="tag orange" style="margin-left: 8px">{{ d.tag }}</span>
               </td>
               <td><s>¥{{ d.price }}</s></td>
               <td><strong style="color: var(--accent)">¥{{ d.stubPrice }}</strong></td>
@@ -161,7 +161,7 @@ function redeemStubAtMerchant() {
           </tbody>
         </table>
         <div class="flex-between">
-          <span style="font-size: 12px; color: var(--ink-3)">到店出示电子票根即可直接按票根价结算，并获 +60 积分</span>
+          <span style="font-size: 13.5px; color: var(--ink-2)">到店出示电子票根即享票根价结算</span>
           <button
             class="btn-orange"
             @click="
@@ -169,65 +169,65 @@ function redeemStubAtMerchant() {
               close()
             "
           >
-            免费预约餐位并绑定票根
+            免费预约餐位
           </button>
         </div>
       </div>
     </div>
 
     <!-- 4. 高德 / 百度真实坐标导航弹窗 -->
-    <div v-else-if="state.actionModal.type === 'nav'" class="modal-box" style="width: 540px">
+    <div v-else-if="state.actionModal.type === 'nav'" class="modal-box" style="width: 580px">
       <div class="card-pad flex-between" style="background: #103b66; color: #fff">
         <div>
-          <strong style="font-size: 16px">🗺️ 一键出行导航 · {{ state.actionModal.placeName }}</strong>
-          <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.85)">
+          <strong style="font-size: 18px">🗺️ 一键导航 · {{ state.actionModal.placeName }}</strong>
+          <div style="font-size: 13.5px; color: rgba(255, 255, 255, 0.88); margin-top: 3px">
             距离 {{ state.actionModal.distance }} ｜ 预计通行 {{ state.actionModal.driveMin }}
           </div>
         </div>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
-      <div class="card-pad" style="display: flex; flex-direction: column; gap: 11px">
-        <div style="background: #f5f9f7; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; font-size: 12px; color: var(--ink-2)">
+      <div class="card-pad" style="display: flex; flex-direction: column; gap: 13px">
+        <div style="background: #f5f9f7; border: 1px solid var(--line); border-radius: 0; padding: 12px 14px; font-size: 14px; color: var(--ink-2)">
           <div><strong>📍 详细地址：</strong>{{ state.actionModal.address }}</div>
         </div>
-        <div style="background: #fff5f5; border: 1px solid #f7c5c8; color: #a81c26; padding: 10px 12px; border-radius: 0; font-size: 12px; font-weight: 700">
-          🚦 实时避堵与到达提示：{{ state.actionModal.tip }}
+        <div style="background: #fff5f5; border: 1px solid #f7c5c8; color: #a81c26; padding: 12px 14px; border-radius: 0; font-size: 14px; font-weight: 700">
+          🚦 到达提示：{{ state.actionModal.tip }}
         </div>
-        <div class="grid-2" style="gap: 10px">
+        <div class="grid-2" style="gap: 12px">
           <a
             :href="`https://uri.amap.com/marker?position=${state.actionModal.lng},${state.actionModal.lat}&name=${encodeURIComponent(state.actionModal.placeName)}`"
             target="_blank"
             rel="noopener"
             class="btn-primary"
-            style="padding: 11px; text-align: center; text-decoration: none"
+            style="padding: 12px; text-align: center; text-decoration: none"
           >
-            🧭 跳转高德地图导航 ↗
+            🧭 高德地图导航 ↗
           </a>
           <a
             :href="`https://api.map.baidu.com/marker?location=${state.actionModal.lat},${state.actionModal.lng}&title=${encodeURIComponent(state.actionModal.placeName)}&content=${encodeURIComponent(state.actionModal.address)}&output=html`"
             target="_blank"
             rel="noopener"
             class="btn-orange"
-            style="padding: 11px; text-align: center; text-decoration: none"
+            style="padding: 12px; text-align: center; text-decoration: none"
           >
-            🗺️ 跳转百度地图导航 ↗
+            🗺️ 百度地图导航 ↗
           </a>
         </div>
       </div>
     </div>
 
     <!-- 5. 电子票根二维码核销弹窗 -->
-    <div v-else-if="state.actionModal.type === 'stub'" class="modal-box" style="width: 480px">
+    <div v-else-if="state.actionModal.type === 'stub'" class="modal-box" style="width: 500px">
       <div class="card-pad flex-between" style="background: linear-gradient(135deg, #0b3326, #115a43); color: #fff">
         <div>
-          <strong style="font-size: 16px">🎫 京山网球电子票根核销码</strong>
-          <div style="font-size: 11.5px; color: var(--lime)">凭证号：{{ state.actionModal.code }} · 有效中</div>
+          <strong style="font-size: 18px">🎫 京山网球电子票根核销码</strong>
+          <div style="font-size: 13.5px; color: var(--lime); margin-top: 3px">凭证号：{{ state.actionModal.code }} · 有效中</div>
         </div>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
       <div class="card-pad" style="text-align: center">
-        <div style="width: 156px; height: 156px; margin: 4px auto 12px; padding: 10px; border: 2px solid #d5e6df; border-radius: 0; background: #fff">
-          <svg viewBox="0 0 60 60" width="132" height="132">
+        <div style="width: 168px; height: 168px; margin: 6px auto 14px; padding: 12px; border: 2px solid #d5e6df; border-radius: 0; background: #fff">
+          <svg viewBox="0 0 60 60" width="140" height="140">
             <rect width="60" height="60" fill="#fff" />
             <rect x="4" y="4" width="16" height="16" fill="none" stroke="#0B251D" stroke-width="3.2" />
             <rect x="9" y="9" width="6" height="6" fill="#0D7A58" />
@@ -245,48 +245,48 @@ function redeemStubAtMerchant() {
             <rect x="44" y="44" width="6" height="6" fill="#fff" />
           </svg>
         </div>
-        <div style="font-size: 13px; font-weight: 800; margin-bottom: 4px">仅限全市 79 家「京山网球联盟商家」扫码核销</div>
-        <div style="font-size: 11.5px; color: var(--ink-3); margin-bottom: 14px">
-          包含联盟餐饮85折、合作酒店85折、天沐温泉立减¥60、特产满150减30
+        <div style="font-size: 15.5px; font-weight: 800; margin-bottom: 6px">全市 79 家「京山网球联盟商家」扫码核销</div>
+        <div style="font-size: 13.5px; color: var(--ink-2); margin-bottom: 16px">
+          享餐饮85折、酒店85折、温泉立减¥60与特产满减
         </div>
-        <button class="btn-orange" style="width: 100%; padding: 10px" @click="redeemStubAtMerchant">
-          模拟商户扫码核销 · +60 积分即时到账
+        <button class="btn-orange" style="width: 100%; padding: 12px" @click="redeemStubAtMerchant">
+          模拟商户扫码核销（+60 积分）
         </button>
       </div>
     </div>
 
     <!-- 6. 景点语音导览播放器 -->
-    <div v-else-if="state.actionModal.type === 'audio'" class="modal-box" style="width: 560px">
-      <div class="photo-box" style="height: 200px">
+    <div v-else-if="state.actionModal.type === 'audio'" class="modal-box" style="width: 600px">
+      <div class="photo-box" style="height: 210px">
         <img :src="state.actionModal.photo" :alt="state.actionModal.spotName" />
-        <span class="badge-tl">🎧 官方 AI 语音导览 · 建议游玩 {{ state.actionModal.duration }}</span>
+        <span class="badge-tl">🎧 官方语音导览 · 建议游玩 {{ state.actionModal.duration }}</span>
       </div>
       <div class="card-pad">
-        <div class="flex-between" style="margin-bottom: 8px">
-          <strong style="font-size: 16px">{{ state.actionModal.spotName }}</strong>
+        <div class="flex-between" style="margin-bottom: 10px">
+          <strong style="font-size: 18px">{{ state.actionModal.spotName }}</strong>
           <button class="btn-ghost" @click="close">✕ 关闭</button>
         </div>
-        <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.75; background: #f5faf8; padding: 11px 13px; border-radius: 0; margin-bottom: 12px">
+        <p style="font-size: 14.5px; color: var(--ink-2); line-height: 1.8; background: #f5faf8; padding: 13px 15px; border-radius: 0; margin-bottom: 14px">
           “{{ state.actionModal.script }}”
         </p>
-        <div style="height: 6px; background: #e3ece8; border-radius: 0; overflow: hidden; margin-bottom: 12px">
+        <div style="height: 7px; background: #e3ece8; border-radius: 0; overflow: hidden; margin-bottom: 14px">
           <div :style="{ width: progress + '%', height: '100%', background: 'var(--primary)', transition: 'width 0.4s linear' }" />
         </div>
         <div class="flex-between">
           <button class="btn-primary" @click="playing = !playing">
             {{ playing ? '⏸ 暂停讲解' : '▶ 继续讲解' }}
           </button>
-          <span style="font-size: 11.5px; color: var(--ink-3)">支持息屏播放 · 沿途自动讲解</span>
+          <span style="font-size: 13.5px; color: var(--ink-3)">支持息屏播放 · 沿途自动讲解</span>
         </div>
       </div>
     </div>
 
-    <!-- 7. 通用咨询/报名表单弹窗（省网校/团建/团餐/看房专车） -->
-    <div v-else-if="state.actionModal.type === 'inquiry'" class="modal-box" style="width: 520px">
+    <!-- 7. 通用咨询/报名表单弹窗 -->
+    <div v-else-if="state.actionModal.type === 'inquiry'" class="modal-box" style="width: 560px">
       <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff">
         <div>
-          <strong style="font-size: 16px">{{ state.actionModal.title }}</strong>
-          <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">{{ state.actionModal.subtitle }}</div>
+          <strong style="font-size: 18px">{{ state.actionModal.title }}</strong>
+          <div style="font-size: 13.5px; color: rgba(255, 255, 255, 0.86); margin-top: 3px">{{ state.actionModal.subtitle }}</div>
         </div>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
@@ -295,7 +295,7 @@ function redeemStubAtMerchant() {
           <label class="f-label">联系人姓名</label>
           <input v-model="inquiryName" class="f-input" />
         </div>
-        <div class="grid-2" style="gap: 10px">
+        <div class="grid-2" style="gap: 12px">
           <div class="f-group">
             <label class="f-label">联系电话</label>
             <input v-model="inquiryPhone" class="f-input" />
@@ -307,28 +307,28 @@ function redeemStubAtMerchant() {
         </div>
         <div class="f-group">
           <label class="f-label">补充需求说明</label>
-          <textarea v-model="inquiryNote" class="f-input" rows="3" placeholder="例如：希望安排的日期、住宿/餐标要求、学员年龄段等…" />
+          <textarea v-model="inquiryNote" class="f-input" rows="3" placeholder="例如：希望安排的日期、住宿/餐标要求等…" />
         </div>
         <div class="flex-between">
-          <span style="font-size: 11.5px; color: var(--ink-3)">官方专员 15 分钟内响应对接</span>
+          <span style="font-size: 13.5px; color: var(--ink-3)">官方专员 15 分钟内响应</span>
           <button class="btn-orange" @click="submitInquiryForm">{{ state.actionModal.submitLabel }}</button>
         </div>
       </div>
     </div>
 
     <!-- 8. 小程序授权跳转弹窗 -->
-    <div v-else-if="state.actionModal.type === 'miniprogram'" class="modal-box" style="width: 460px">
+    <div v-else-if="state.actionModal.type === 'miniprogram'" class="modal-box" style="width: 500px">
       <div class="card-pad flex-between" style="background: #0b251d; color: #fff">
-        <strong style="font-size: 15.5px">🔗 小程序互联互通授权</strong>
+        <strong style="font-size: 17.5px">🔗 小程序互联互通授权</strong>
         <button class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
       <div class="card-pad" style="text-align: center">
-        <div style="font-size: 16px; font-weight: 900; margin-bottom: 6px">{{ state.actionModal.appName }}</div>
-        <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 14px">{{ state.actionModal.desc }}</div>
-        <div style="background: #f3faf6; border: 1px dashed #0d7a58; border-radius: 0; padding: 14px; font-size: 12px; color: #0b5c42; margin-bottom: 14px">
-          ✅ 已自动携带您的「京山网球」实名账号与当前定位，免重复登录
+        <div style="font-size: 18px; font-weight: 900; margin-bottom: 8px">{{ state.actionModal.appName }}</div>
+        <div style="font-size: 14px; color: var(--ink-2); margin-bottom: 16px">{{ state.actionModal.desc }}</div>
+        <div style="background: #f3faf6; border: 1px dashed #0d7a58; border-radius: 0; padding: 14px; font-size: 14px; color: #0b5c42; margin-bottom: 16px">
+          ✅ 已携带实名账号与当前定位，免重复登录
         </div>
-        <button class="btn-primary" style="width: 100%; padding: 10px" @click="showToast(`已成功授权并拉起「${state.actionModal.appName}」`); close()">
+        <button class="btn-primary" style="width: 100%; padding: 12px" @click="showToast(`已成功授权并拉起「${state.actionModal.appName}」`); close()">
           确认授权并打开小程序 →
         </button>
       </div>

@@ -25,6 +25,7 @@ import type {
   ComplaintTicket,
   CouponItem,
   CourtVenue,
+  DetailPagePayload,
   FeedbackPost,
   GroupClassItem,
   LightboxPayload,
@@ -161,6 +162,7 @@ const state = reactive({
     { id: 'p2', name: '文峰公园 P2', address: '新市街道文峰路文峰公园南门', lng: 113.1128, lat: 31.0185, remain: 42, total: 120, rating: 4.8, note: '距文峰夜市150m · 可预约', reserved: false, reservedSlot: '' },
   ],
   lightbox: null as LightboxPayload | null,
+  activeDetail: null as DetailPagePayload | null,
   bookingDraft: null as BookingDraft | null,
   actionModal: null as ActionModalPayload | null,
   toastMessage: '',
@@ -217,6 +219,29 @@ function updateDocumentTitle(moduleId: ModuleId, standalone: boolean) {
   document.title = standalone
     ? `${meta.title} - 京山网球`
     : '京山网球 · 中国网球之城'
+}
+
+function parseDetailFromUrl(): DetailPagePayload | null {
+  try {
+    const raw = new URLSearchParams(window.location.search).get('detail')
+    if (!raw) return null
+    if (raw === 'cinema') return { kind: 'cinema' }
+    const [kind, id] = raw.split(':')
+    if (kind === 'hotel' && id) return { kind: 'hotel', hotelId: id }
+    if (kind === 'product' && id) return { kind: 'product', productId: id }
+    if (kind === 'venue' && id) return { kind: 'venue', venueId: id }
+  } catch {
+    // ignore URL parse errors
+  }
+  return null
+}
+
+function encodeDetailParam(payload: DetailPagePayload): string {
+  if (payload.kind === 'hotel') return `hotel:${payload.hotelId}`
+  if (payload.kind === 'product') return `product:${payload.productId}`
+  if (payload.kind === 'venue') return `venue:${payload.venueId}`
+  if (payload.kind === 'cinema') return 'cinema'
+  return `place:${encodeURIComponent(payload.data.title.slice(0, 24))}`
 }
 
 export function buildModuleUrl(
@@ -289,6 +314,61 @@ export function usePortalStore() {
     }
   }
 
+  function openDetailPage(payload: DetailPagePayload) {
+    state.activeDetail = payload
+    state.lightbox = null
+    state.activeHotelId = null
+    state.activeProductId = null
+    state.showCinemaModal = false
+    state.bookingDraft = null
+    persistStateNow()
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('detail', encodeDetailParam(payload))
+      window.history.pushState({ detail: true, moduleId: state.activeModule }, '', url.toString())
+    } catch {
+      // ignore history errors
+    }
+    const titleText =
+      payload.kind === 'place'
+        ? payload.data.title
+        : payload.kind === 'cinema'
+          ? '京山国际影城 · 在线选座'
+          : '详情页'
+    document.title = `${titleText} - 京山网球`
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+
+  function closeDetailPage() {
+    if (!state.activeDetail) return
+    state.activeDetail = null
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('detail')
+      window.history.replaceState({ moduleId: state.activeModule }, '', url.toString())
+    } catch {
+      // ignore history errors
+    }
+    updateDocumentTitle(state.activeModule, state.isStandalonePage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function openHotelDetail(hotelId: string) {
+    openDetailPage({ kind: 'hotel', hotelId })
+  }
+
+  function openProductDetail(productId: string) {
+    openDetailPage({ kind: 'product', productId })
+  }
+
+  function openVenueDetail(venueId: string, opts?: { date?: string; courtId?: string; slotTime?: string }) {
+    openDetailPage({ kind: 'venue', venueId, ...opts })
+  }
+
+  function openCinemaDetail() {
+    openDetailPage({ kind: 'cinema' })
+  }
+
   function openModulePage(
     id: ModuleId,
     options?: {
@@ -301,6 +381,18 @@ export function usePortalStore() {
     if (options?.newWindow && id !== 1) {
       openModuleInNewWindow(id, options.params, options.silent)
       return
+    }
+
+    // Exit detail page if currently viewing one
+    if (state.activeDetail) {
+      state.activeDetail = null
+      try {
+        const cleanUrl = new URL(window.location.href)
+        cleanUrl.searchParams.delete('detail')
+        window.history.replaceState({ moduleId: id }, '', cleanUrl.toString())
+      } catch {
+        // ignore
+      }
     }
 
     // Standalone detail page mode (?module=2..13)
@@ -432,11 +524,17 @@ export function usePortalStore() {
   }
 
   function openPhoto(payload: LightboxPayload) {
-    state.lightbox = payload
+    openDetailPage({ kind: 'place', data: payload })
   }
 
   function openBookingModal(draft: BookingDraft) {
-    state.bookingDraft = draft
+    openDetailPage({
+      kind: 'venue',
+      venueId: draft.venueId,
+      date: draft.date,
+      courtId: draft.courtId,
+      slotTime: draft.slotTime,
+    })
   }
 
   function refreshLiveScores() {
@@ -477,13 +575,28 @@ export function usePortalStore() {
   }
 
   async function confirmCourtBooking(opts: {
+    venueId?: string
     date?: string
     selectedSlots?: { courtId: string; courtName: string; hour: string; price: number; memberPrice: number }[]
     bookParking: boolean
     bookCharger: boolean
     usePoints: boolean
   }) {
-    const draft = state.bookingDraft
+    const venueFromId = opts.venueId ? state.courts.find((c) => c.id === opts.venueId) : null
+    const draft =
+      state.bookingDraft ??
+      (venueFromId
+        ? {
+            venueId: venueFromId.id,
+            venueName: venueFromId.name,
+            date: opts.date,
+            slotTime: opts.selectedSlots?.[0]?.hour ?? '16:00',
+            price: opts.selectedSlots?.[0]?.price ?? 80,
+            memberPrice: opts.selectedSlots?.[0]?.memberPrice ?? 68,
+            parkingName: venueFromId.parkingName,
+            chargerName: venueFromId.chargerName,
+          }
+        : null)
     if (!draft) return
     const dateIso = opts.date ?? draft.date ?? BOOKING_DATES[0]!.iso
     const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
@@ -798,30 +911,61 @@ export function usePortalStore() {
   }
 
   function initHashRouting() {
+    // Bridge legacy modal triggers directly to the full Airbnb-style detail page
+    watch(
+      () => state.activeHotelId,
+      (id) => {
+        if (id) openDetailPage({ kind: 'hotel', hotelId: id })
+      },
+    )
+    watch(
+      () => state.activeProductId,
+      (id) => {
+        if (id) openDetailPage({ kind: 'product', productId: id })
+      },
+    )
+    watch(
+      () => state.showCinemaModal,
+      (show) => {
+        if (show) openDetailPage({ kind: 'cinema' })
+      },
+    )
+
     const syncFromLocation = () => {
+      const urlDetail = parseDetailFromUrl()
       const urlModule = parseModuleFromUrl()
       if (urlModule) {
         state.isStandalonePage = true
         state.activeModule = urlModule
         state.courtSurfaceFilter = parseSurfaceFromUrl()
         state.courtRegionFilter = parseRegionFromUrl()
-        updateDocumentTitle(urlModule, true)
-        return
-      }
-      // Backward compatibility: legacy #m2~#m13 links enter standalone mode directly
-      const hashMatch = window.location.hash.match(/^#m(\d+)$/)
-      if (hashMatch) {
-        const id = Number(hashMatch[1])
-        if (id >= 2 && id <= 13) {
-          state.isStandalonePage = true
-          state.activeModule = id as ModuleId
-          updateDocumentTitle(id as ModuleId, true)
-          return
+      } else {
+        const hashMatch = window.location.hash.match(/^#m(\d+)$/)
+        if (hashMatch) {
+          const id = Number(hashMatch[1])
+          if (id >= 2 && id <= 13) {
+            state.isStandalonePage = true
+            state.activeModule = id as ModuleId
+          }
+        } else {
+          state.isStandalonePage = false
+          const histMod = (window.history.state as { moduleId?: ModuleId } | null)?.moduleId
+          if (histMod && histMod >= 1 && histMod <= 13) {
+            state.activeModule = histMod
+          } else if (!state.activeModule) {
+            state.activeModule = 1
+          }
         }
       }
-      state.isStandalonePage = false
-      state.activeModule = 1
-      updateDocumentTitle(1, false)
+
+      if (urlDetail) {
+        state.activeDetail = urlDetail
+        return
+      }
+      if (!new URLSearchParams(window.location.search).get('detail')) {
+        state.activeDetail = null
+      }
+      updateDocumentTitle(state.activeModule, state.isStandalonePage)
     }
 
     syncFromLocation()
@@ -846,6 +990,12 @@ export function usePortalStore() {
     switchModule,
     openModulePage,
     openModuleInNewWindow,
+    openDetailPage,
+    closeDetailPage,
+    openHotelDetail,
+    openProductDetail,
+    openVenueDetail,
+    openCinemaDetail,
     buildModuleUrl,
     openActionModal,
     openNavigation,
