@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
@@ -20,7 +21,7 @@ const {
   showToast,
 } = usePortalStore()
 
-const subView = ref<'all' | 'courts' | 'matchmaking' | 'scores'>('courts')
+const subView = ref<'courts' | 'matchmaking' | 'scores'>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
@@ -36,11 +37,15 @@ const selectedVenueAmenities = ref<string[]>([])
 const surfaces: ('全部' | '硬地' | '红土' | '室内风雨' | '匹克球')[] = ['全部', '硬地', '红土', '室内风雨', '匹克球']
 const venueAmenityOptions = ['公益免费', '免费停车', '有充电桩', '有空调', '灯光夜场', '可看实况']
 
-function toggleVenueAmenity(tag: string) {
-  const idx = selectedVenueAmenities.value.indexOf(tag)
-  if (idx >= 0) selectedVenueAmenities.value.splice(idx, 1)
-  else selectedVenueAmenities.value.push(tag)
-}
+const hasActiveCourtFilters = computed(
+  () =>
+    !!venueKeyword.value.trim() ||
+    state.courtRegionFilter !== '全部' ||
+    state.courtSurfaceFilter !== '全部' ||
+    selectedEnv.value !== '全部' ||
+    courtTimePeriod.value !== '全天' ||
+    selectedVenueAmenities.value.length > 0,
+)
 
 function getPeriodHours(period: '全天' | '上午' | '下午' | '晚间'): string[] {
   if (period === '上午') return ['08:00', '09:00', '10:00', '11:00']
@@ -160,19 +165,12 @@ const mgTimeStart = ref('00:00')
 const mgTimeEnd = ref('24:00')
 const mgAmenities = ref<string[]>([])
 const mgScopeTab = ref<'全部' | '我报名的' | '可加入'>('全部')
-const showMgAdvanced = ref(true)
 const showPublishModal = ref(false)
 
 const mgAmenityOptions = ['有空调', '免费停车', '有充电桩', '有休息区', '好停车']
 const timePickOptions = [
   '00:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '19:00', '20:00', '22:00', '24:00',
 ]
-
-function toggleMgAmenity(tag: string) {
-  const idx = mgAmenities.value.indexOf(tag)
-  if (idx >= 0) mgAmenities.value.splice(idx, 1)
-  else mgAmenities.value.push(tag)
-}
 
 function resetMgFilters() {
   mgSearch.value = ''
@@ -274,7 +272,6 @@ function submitNewGame() {
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: subView === 'all' }" @click="subView = 'all'">全部功能</button>
         <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>
         <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">同城约球（CUTR分级）</button>
         <button class="m-tab" :class="{ active: subView === 'scores' }" @click="subView = 'scores'">网球记实时赛况</button>
@@ -343,105 +340,114 @@ function submitNewGame() {
     </div>
 
     <!-- 场地预约多维检索区 + 左侧场馆列表 + 右侧服务圈地图 -->
-    <div v-if="subView === 'all' || subView === 'courts'" class="mb-18">
-      <!-- 顶部多维筛选面板 -->
+    <div v-if="subView === 'courts'" class="mb-18">
+      <!-- 顶部清晰下拉筛选栏 -->
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between" style="gap: 12px; margin-bottom: 14px">
-          <div class="search-bar" style="max-width: 440px; height: 42px">
+        <div class="dd-filter-top">
+          <div class="search-bar" style="flex: 1; min-width: 260px; max-width: 440px; height: 42px">
             <span style="color: var(--ink-3)">🔍</span>
             <input v-model="venueKeyword" type="text" placeholder="搜索场馆名称、片区或街道…" />
             <button v-if="venueKeyword" class="btn-ghost" style="padding: 3px 9px; font-size: 12.5px" @click="venueKeyword = ''">清空</button>
           </div>
-          <div class="flex-row">
-            <select v-model="state.courtRegionFilter" class="f-input" style="width: auto; padding: 8px 12px">
+          <div class="flex-row" style="gap: 10px">
+            <label class="m-tab" :class="{ active: onlyBookable }" style="cursor: pointer; border: 1px solid #cbdcd5; border-radius: 6px; padding: 7px 14px">
+              <input v-model="onlyBookable" type="checkbox" style="display: none" />
+              {{ onlyBookable ? '✔ 仅看可约场馆' : '显示全部场馆' }}
+            </label>
+            <button class="btn-ghost" style="border-radius: 6px" @click="resetCourtFilters">重置筛选</button>
+            <span class="dd-count-pill">共 {{ filteredCourts.length }} 家可约场馆</span>
+          </div>
+        </div>
+
+        <div class="dd-filter-grid cols-7">
+          <label class="dd-field">
+            <span class="dd-field-label">预约日期</span>
+            <select v-model="selectedCourtDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+                {{ d.weekday }}（{{ d.shortDate }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">预约时段</span>
+            <select v-model="courtTimePeriod" class="dd-select" :class="{ active: courtTimePeriod !== '全天' }">
+              <option value="全天">全天（08:00-22:00）</option>
+              <option value="上午">上午（08:00-12:00）</option>
+              <option value="下午">下午（12:00-18:00）</option>
+              <option value="晚间">晚间（18:00-22:00）</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">所属区域</span>
+            <select v-model="state.courtRegionFilter" class="dd-select" :class="{ active: state.courtRegionFilter !== '全部' }">
               <option value="全部">全部区域</option>
               <option value="温泉街道">温泉街道</option>
               <option value="新市街道">新市街道</option>
               <option value="永兴街道">永兴街道</option>
             </select>
-            <select v-model="venueSort" class="f-input" style="width: auto; padding: 8px 12px">
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">场地类型</span>
+            <select v-model="state.courtSurfaceFilter" class="dd-select" :class="{ active: state.courtSurfaceFilter !== '全部' }">
+              <option v-for="sf in surfaces" :key="sf" :value="sf">
+                {{ sf === '全部' ? '全部类型' : sf }}
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">场地环境</span>
+            <select v-model="selectedEnv" class="dd-select" :class="{ active: selectedEnv !== '全部' }">
+              <option value="全部">全部环境</option>
+              <option value="室内">室内</option>
+              <option value="室外">室外</option>
+              <option value="风雨棚">风雨棚</option>
+            </select>
+          </label>
+
+          <MultiSelectDropdown
+            v-model="selectedVenueAmenities"
+            label="设施配套"
+            :options="venueAmenityOptions"
+            placeholder="全部不限"
+          />
+
+          <label class="dd-field">
+            <span class="dd-field-label">排序方式</span>
+            <select v-model="venueSort" class="dd-select">
               <option value="distance">按距离最近</option>
               <option value="price">按最低价格</option>
               <option value="rating">按评分最高</option>
               <option value="slots">按空场最多</option>
             </select>
-            <label class="m-tab" :class="{ active: onlyBookable }" style="cursor: pointer">
-              <input v-model="onlyBookable" type="checkbox" style="display: none" />
-              {{ onlyBookable ? '✔ 仅看可约' : '全部场馆' }}
-            </label>
-            <button class="btn-ghost" @click="resetCourtFilters">重置</button>
-          </div>
+          </label>
         </div>
 
-        <!-- 7日日期条 + 时段区间 -->
-        <div style="display: grid; grid-template-columns: 1fr 330px; gap: 14px; align-items: center; margin-bottom: 14px">
-          <div class="date-strip-7">
-            <button
-              v-for="d in BOOKING_DATES"
-              :key="d.iso"
-              class="date-chip"
-              :class="{ active: selectedCourtDate === d.iso }"
-              @click="selectedCourtDate = d.iso"
-            >
-              <strong>{{ d.weekday }}</strong>
-              <span>{{ d.shortDate }}</span>
-            </button>
-          </div>
-          <div class="flex-row" style="justify-content: flex-end">
-            <span style="font-size: 14px; font-weight: 800; color: var(--ink-2)">时段：</span>
-            <button
-              v-for="p in (['全天', '上午', '下午', '晚间'] as const)"
-              :key="p"
-              class="m-tab"
-              :class="{ active: courtTimePeriod === p }"
-              @click="courtTimePeriod = p"
-            >
-              {{ p }}
-            </button>
-          </div>
-        </div>
-
-        <!-- 场地地面 + 室内外 + 设施标签 -->
-        <div class="filter-rows">
-          <div class="filter-row">
-            <span class="filter-label">场地类型：</span>
-            <button
-              v-for="sf in surfaces"
-              :key="sf"
-              class="filter-pill"
-              :class="{ active: state.courtSurfaceFilter === sf }"
-              @click="state.courtSurfaceFilter = sf"
-            >
-              {{ sf }}
-            </button>
-            <span class="filter-divider" />
-            <span class="filter-label">环境：</span>
-            <button
-              v-for="env in (['全部', '室内', '室外', '风雨棚'] as const)"
-              :key="env"
-              class="filter-pill"
-              :class="{ active: selectedEnv === env }"
-              @click="selectedEnv = env"
-            >
-              {{ env }}
-            </button>
-          </div>
-
-          <div class="filter-row">
-            <span class="filter-label">设施：</span>
-            <button
-              v-for="tag in venueAmenityOptions"
-              :key="tag"
-              class="filter-pill"
-              :class="{ active: selectedVenueAmenities.includes(tag) }"
-              @click="toggleVenueAmenity(tag)"
-            >
-              {{ tag }}
-            </button>
-            <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
-              共 {{ filteredCourts.length }} 家可约场馆
-            </span>
-          </div>
+        <div v-if="hasActiveCourtFilters" class="dd-active-chips">
+          <span style="font-size: 13px; color: var(--ink-3); font-weight: 700">已选条件：</span>
+          <span v-if="courtTimePeriod !== '全天'" class="dd-chip">
+            时段：{{ courtTimePeriod }}
+            <button type="button" @click="courtTimePeriod = '全天'">✕</button>
+          </span>
+          <span v-if="state.courtRegionFilter !== '全部'" class="dd-chip">
+            区域：{{ state.courtRegionFilter }}
+            <button type="button" @click="state.courtRegionFilter = '全部'">✕</button>
+          </span>
+          <span v-if="state.courtSurfaceFilter !== '全部'" class="dd-chip">
+            类型：{{ state.courtSurfaceFilter }}
+            <button type="button" @click="state.courtSurfaceFilter = '全部'">✕</button>
+          </span>
+          <span v-if="selectedEnv !== '全部'" class="dd-chip">
+            环境：{{ selectedEnv }}
+            <button type="button" @click="selectedEnv = '全部'">✕</button>
+          </span>
+          <span v-for="am in selectedVenueAmenities" :key="am" class="dd-chip">
+            {{ am }}
+            <button type="button" @click="selectedVenueAmenities = selectedVenueAmenities.filter((x) => x !== am)">✕</button>
+          </span>
         </div>
       </div>
 
@@ -660,173 +666,123 @@ function submitNewGame() {
     </div>
 
     <!-- 同城约球完整工作台 -->
-    <div v-if="subView === 'all' || subView === 'matchmaking'" class="card card-pad">
-      <div class="flex-between mb-16" style="padding-bottom: 14px; border-bottom: 1px solid var(--line)">
-        <div>
+    <div v-if="subView === 'matchmaking'" class="card card-pad filter-workbench">
+      <div class="dd-filter-top" style="padding-bottom: 14px; border-bottom: 1px solid var(--line)">
+        <div class="flex-row" style="gap: 12px">
           <strong style="font-size: 19px">🤝 同城约球大厅（CUTR 分级匹配）</strong>
-          <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px">
-            按日期、CUTR 水平区间、场馆类型、拉球/比赛、男女、单双打与精确起止时间筛选球局，支持一键报名或发起约球
-          </div>
-        </div>
-        <div class="flex-row">
           <div class="search-bar" style="width: 240px; height: 40px">
             <span>🔍</span>
             <input v-model="mgSearch" type="text" placeholder="搜场馆/球局…" />
           </div>
-          <select v-model="mgSort" class="f-input" style="width: auto; padding: 7px 10px">
-            <option value="distance">距离最近</option>
-            <option value="time">开球最早</option>
-            <option value="spots">空位最多</option>
-          </select>
+        </div>
+        <div class="flex-row" style="gap: 8px">
           <button class="btn-orange" @click="showPublishModal = true">＋ 发布约球</button>
           <button class="btn-ghost" @click="mgScopeTab = mgScopeTab === '我报名的' ? '全部' : '我报名的'">
             我的约球（{{ state.matchmakingGames.filter((g) => g.joinedByMe).length }}）
           </button>
+          <button class="btn-ghost" @click="resetMgFilters">重置筛选</button>
+          <span class="dd-count-pill">共 {{ filteredGames.length }} 场球局</span>
         </div>
       </div>
 
-      <!-- 日期选择条 -->
-      <div class="date-strip-8 mb-12">
-        <button class="date-chip" :class="{ active: mgDate === '全部' }" @click="mgDate = '全部'">
-          <strong>全部</strong>
-          <span>不限日期</span>
-        </button>
-        <button
-          v-for="d in BOOKING_DATES"
-          :key="d.iso"
-          class="date-chip"
-          :class="{ active: mgDate === d.iso }"
-          @click="mgDate = d.iso"
-        >
-          <strong>{{ d.weekday }}</strong>
-          <span>{{ d.shortDate }}</span>
-        </button>
-      </div>
+      <!-- 清晰分项下拉筛选区 -->
+      <div class="dd-filter-grid cols-6 mb-16">
+        <label class="dd-field">
+          <span class="dd-field-label">约球日期</span>
+          <select v-model="mgDate" class="dd-select" :class="{ active: mgDate !== '全部' }">
+            <option value="全部">全部日期</option>
+            <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+              {{ d.weekday }}（{{ d.shortDate }}）
+            </option>
+          </select>
+        </label>
 
-      <!-- CUTR 多档水平卡片 + 多维筛选 -->
-      <div v-if="showMgAdvanced" class="mg-filter-box mb-16">
-        <div class="cutr-grid mb-12">
-          <button
-            class="cutr-all-btn"
-            :class="{ active: mgCutr === '全部' }"
-            @click="mgCutr = '全部'"
-          >
-            全部<br />水平
-          </button>
-          <div class="cutr-tiers">
-            <button
-              v-for="band in CUTR_BANDS"
-              :key="band.value"
-              class="cutr-card"
-              :class="{ active: mgCutr === band.value }"
-              :style="{
-                borderColor: mgCutr === band.value ? band.color : `${band.color}55`,
-                background: mgCutr === band.value ? band.bg : '#fff',
-                color: band.color,
-              }"
-              @click="mgCutr = band.value"
-            >
-              <small>CUTR</small>
-              <strong>{{ band.value }}</strong>
-            </button>
-          </div>
-        </div>
+        <label class="dd-field">
+          <span class="dd-field-label">CUTR 水平</span>
+          <select v-model="mgCutr" class="dd-select" :class="{ active: mgCutr !== '全部' }">
+            <option value="全部">全部水平</option>
+            <option v-for="band in CUTR_BANDS" :key="band.value" :value="band.value">
+              CUTR {{ band.value }}
+            </option>
+          </select>
+        </label>
 
-        <div class="filter-rows">
-          <div class="filter-row">
-            <span class="filter-label">环境：</span>
-            <button
-              v-for="vt in (['全部', '室内', '室外', '风雨棚', '学练馆'] as const)"
-              :key="vt"
-              class="filter-pill"
-              :class="{ active: mgVenueType === vt }"
-              @click="mgVenueType = vt"
-            >
-              {{ vt }}
-            </button>
-            <span class="filter-divider" />
-            <span class="filter-label">形式：</span>
-            <button
-              v-for="at in (['全部', '拉球', '比赛', '发球机', '人工训练'] as const)"
-              :key="at"
-              class="filter-pill"
-              :class="{ active: mgActivityType === at }"
-              @click="mgActivityType = at"
-            >
-              {{ at }}
-            </button>
-          </div>
+        <label class="dd-field">
+          <span class="dd-field-label">场地环境</span>
+          <select v-model="mgVenueType" class="dd-select" :class="{ active: mgVenueType !== '全部' }">
+            <option value="全部">全部环境</option>
+            <option value="室内">室内</option>
+            <option value="室外">室外</option>
+            <option value="风雨棚">风雨棚</option>
+            <option value="学练馆">学练馆</option>
+          </select>
+        </label>
 
-          <div class="filter-row">
-            <span class="filter-label">性别：</span>
-            <div class="seg-group">
-              <button
-                v-for="g in (['不限', '男', '女'] as const)"
-                :key="g"
-                :class="{ active: mgGender === g }"
-                @click="mgGender = g"
-              >
-                {{ g }}
-              </button>
-            </div>
-            <span class="filter-label" style="margin-left: 10px">赛制：</span>
-            <div class="seg-group">
-              <button
-                v-for="fm in (['全部', '单打', '双打'] as const)"
-                :key="fm"
-                :class="{ active: mgFormat === fm }"
-                @click="mgFormat = fm"
-              >
-                {{ fm }}
-              </button>
-            </div>
-            <span class="filter-label" style="margin-left: 10px">时间：</span>
-            <select v-model="mgTimeStart" class="f-input" style="width: 108px; padding: 6px 8px">
-              <option v-for="t in timePickOptions" :key="`s-${t}`" :value="t">🕒 {{ t }}</option>
+        <label class="dd-field">
+          <span class="dd-field-label">活动形式</span>
+          <select v-model="mgActivityType" class="dd-select" :class="{ active: mgActivityType !== '全部' }">
+            <option value="全部">全部形式</option>
+            <option value="拉球">拉球</option>
+            <option value="比赛">比赛</option>
+            <option value="发球机">发球机</option>
+            <option value="人工训练">人工训练</option>
+          </select>
+        </label>
+
+        <div class="dd-field">
+          <span class="dd-field-label">赛制 / 性别</span>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
+            <select v-model="mgFormat" class="dd-select" :class="{ active: mgFormat !== '全部' }" style="padding-left: 8px; padding-right: 24px">
+              <option value="全部">赛制不限</option>
+              <option value="单打">单打</option>
+              <option value="双打">双打</option>
             </select>
-            <span style="font-size: 13.5px; color: var(--ink-3)">至</span>
-            <select v-model="mgTimeEnd" class="f-input" style="width: 108px; padding: 6px 8px">
-              <option v-for="t in timePickOptions" :key="`e-${t}`" :value="t">🕒 {{ t }}</option>
+            <select v-model="mgGender" class="dd-select" :class="{ active: mgGender !== '不限' }" style="padding-left: 8px; padding-right: 24px">
+              <option value="不限">性别不限</option>
+              <option value="男">仅限男</option>
+              <option value="女">仅限女</option>
             </select>
           </div>
-
-          <div class="filter-row">
-            <span class="filter-label">配套：</span>
-            <button
-              v-for="am in mgAmenityOptions"
-              :key="am"
-              class="filter-pill"
-              :class="{ active: mgAmenities.includes(am) }"
-              @click="toggleMgAmenity(am)"
-            >
-              {{ am }}
-            </button>
-            <div style="margin-left: auto" class="flex-row">
-              <button class="btn-ghost" @click="resetMgFilters">重置</button>
-              <button class="btn-ghost" @click="showMgAdvanced = false">收起筛选 ▲</button>
-            </div>
-          </div>
         </div>
-      </div>
-      <div v-else class="flex-between mb-12" style="background: #f5faf8; padding: 10px 14px; border-radius: 0">
-        <span style="font-size: 14px; color: var(--ink-2)">已收起筛选条件（当前命中 {{ filteredGames.length }} 场球局）</span>
-        <button class="btn-ghost" @click="showMgAdvanced = true">展开筛选 ▼</button>
+
+        <MultiSelectDropdown
+          v-model="mgAmenities"
+          label="场地配套"
+          :options="mgAmenityOptions"
+          placeholder="全部不限"
+        />
       </div>
 
-      <!-- 范围切换 + 约球卡片结果 -->
-      <div class="flex-between mb-12">
-        <div class="flex-row">
-          <button
-            v-for="tab in (['全部', '我报名的', '可加入'] as const)"
-            :key="tab"
-            class="m-tab"
-            :class="{ active: mgScopeTab === tab }"
-            @click="mgScopeTab = tab"
-          >
-            {{ tab }}
-          </button>
+      <!-- 状态与时间段排序轻条 -->
+      <div class="flex-between mb-16" style="padding: 10px 14px; background: #f6faf8; border: 1px solid #e1eee8; border-radius: 6px">
+        <div class="flex-row" style="gap: 12px; flex-wrap: wrap">
+          <label class="flex-row" style="gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--ink-2)">
+            <span>状态：</span>
+            <select v-model="mgScopeTab" class="dd-select" style="width: 124px; height: 36px; font-size: 13.5px">
+              <option value="全部">全部球局</option>
+              <option value="可加入">仅看可加入</option>
+              <option value="我报名的">我报名的</option>
+            </select>
+          </label>
+          <label class="flex-row" style="gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--ink-2)">
+            <span>时间段：</span>
+            <select v-model="mgTimeStart" class="dd-select" style="width: 108px; height: 36px; font-size: 13.5px">
+              <option v-for="t in timePickOptions" :key="`s-${t}`" :value="t">{{ t }}</option>
+            </select>
+            <span>至</span>
+            <select v-model="mgTimeEnd" class="dd-select" style="width: 108px; height: 36px; font-size: 13.5px">
+              <option v-for="t in timePickOptions" :key="`e-${t}`" :value="t">{{ t }}</option>
+            </select>
+          </label>
         </div>
-        <span style="font-size: 14px; color: var(--ink-2)">共 <strong style="color: var(--primary)">{{ filteredGames.length }}</strong> 场球局</span>
+        <label class="flex-row" style="gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--ink-2)">
+          <span>排序：</span>
+          <select v-model="mgSort" class="dd-select" style="width: 132px; height: 36px; font-size: 13.5px">
+            <option value="distance">按距离最近</option>
+            <option value="time">按开球最早</option>
+            <option value="spots">按空位最多</option>
+          </select>
+        </label>
       </div>
 
       <div v-if="filteredGames.length === 0" style="text-align: center; padding: 36px 20px; background: #fafdfc; border-radius: 0; border: 1px dashed var(--line)">

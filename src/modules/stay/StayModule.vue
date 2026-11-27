@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import { HOTEL_PROFILES } from '../../mock/details'
 import { BOOKING_DATES } from '../../mock/schedules'
@@ -17,10 +18,11 @@ const staySort = ref<'default' | 'price' | 'rating'>('default')
 const stayFacilities = ref<string[]>([])
 const facilityOptions = ['免费停车', '快充充电桩', '免费赛场摆渡车', '天然私汤入户', '独立厨房/洗衣机']
 
-function toggleFacility(f: string) {
-  const idx = stayFacilities.value.indexOf(f)
-  if (idx >= 0) stayFacilities.value.splice(idx, 1)
-  else stayFacilities.value.push(f)
+function resetStayFilters() {
+  stayKeyword.value = ''
+  stayPriceFilter.value = '全部'
+  stayFacilities.value = []
+  staySort.value = 'default'
 }
 
 const nightsCount = computed(() => {
@@ -95,55 +97,65 @@ watch(filteredHotels, () => {
       </div>
     </div>
 
-    <!-- 入住日期、价格区间与配套筛选 -->
+    <!-- 入住日期、价格区间与配套下拉筛选 -->
     <div class="card card-pad mb-16 filter-workbench">
-      <div class="filter-rows">
-        <div class="filter-row">
-          <span class="filter-label">入住日期：</span>
-          <select v-model="checkInDate" class="f-input" style="width: 155px; padding: 7px 10px">
-            <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`in-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
-          </select>
-          <span class="filter-label">离店日期：</span>
-          <select v-model="checkOutDate" class="f-input" style="width: 155px; padding: 7px 10px">
-            <option v-for="d in BOOKING_DATES.slice(1)" :key="`out-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
-          </select>
+      <div class="dd-filter-top">
+        <div class="search-bar" style="flex: 1; min-width: 240px; max-width: 400px; height: 42px">
+          <span>🔍</span>
+          <input v-model="stayKeyword" type="text" placeholder="搜索酒店、公寓、房型…" />
+          <button v-if="stayKeyword" class="btn-ghost" style="padding: 3px 9px; font-size: 12.5px" @click="stayKeyword = ''">清空</button>
+        </div>
+        <div class="flex-row" style="gap: 10px">
           <span class="tag green">共住 {{ nightsCount }} 晚</span>
-          <span class="filter-divider" />
-          <span class="filter-label">价格：</span>
-          <button
-            v-for="p in (['全部', '200以下', '200-400', '400以上'] as const)"
-            :key="p"
-            class="filter-pill"
-            :class="{ active: stayPriceFilter === p }"
-            @click="stayPriceFilter = p"
-          >
-            {{ p === '全部' ? '不限' : `¥${p}` }}
-          </button>
-          <select v-model="staySort" class="f-input" style="width: auto; padding: 7px 10px; margin-left: auto">
-            <option value="default">综合推荐</option>
-            <option value="price">价格最低</option>
-            <option value="rating">评分最高</option>
+          <button class="btn-ghost" style="border-radius: 6px" @click="resetStayFilters">重置筛选</button>
+          <span class="dd-count-pill">符合条件：{{ filteredHotels.length }} 家</span>
+        </div>
+      </div>
+
+      <div class="dd-filter-grid cols-5">
+        <label class="dd-field">
+          <span class="dd-field-label">入住日期</span>
+          <select v-model="checkInDate" class="dd-select active">
+            <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`in-${d.iso}`" :value="d.iso">
+              {{ d.shortDate }}（{{ d.weekday }}）
+            </option>
           </select>
-        </div>
-        <div class="filter-row">
-          <div class="search-bar" style="width: 240px; height: 40px">
-            <span>🔍</span>
-            <input v-model="stayKeyword" type="text" placeholder="搜索酒店、公寓、房型…" />
-          </div>
-          <span class="filter-label">设施筛选：</span>
-          <button
-            v-for="f in facilityOptions"
-            :key="f"
-            class="filter-pill"
-            :class="{ active: stayFacilities.includes(f) }"
-            @click="toggleFacility(f)"
-          >
-            {{ f }}
-          </button>
-          <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
-            符合条件：{{ filteredHotels.length }} 家
-          </span>
-        </div>
+        </label>
+
+        <label class="dd-field">
+          <span class="dd-field-label">离店日期</span>
+          <select v-model="checkOutDate" class="dd-select active">
+            <option v-for="d in BOOKING_DATES.slice(1)" :key="`out-${d.iso}`" :value="d.iso">
+              {{ d.shortDate }}（{{ d.weekday }}）
+            </option>
+          </select>
+        </label>
+
+        <label class="dd-field">
+          <span class="dd-field-label">价格区间</span>
+          <select v-model="stayPriceFilter" class="dd-select" :class="{ active: stayPriceFilter !== '全部' }">
+            <option value="全部">不限价格</option>
+            <option value="200以下">¥200 以下</option>
+            <option value="200-400">¥200 – ¥400</option>
+            <option value="400以上">¥400 以上</option>
+          </select>
+        </label>
+
+        <MultiSelectDropdown
+          v-model="stayFacilities"
+          label="设施配套"
+          :options="facilityOptions"
+          placeholder="全部不限"
+        />
+
+        <label class="dd-field">
+          <span class="dd-field-label">排序方式</span>
+          <select v-model="staySort" class="dd-select">
+            <option value="default">综合推荐</option>
+            <option value="price">按价格最低</option>
+            <option value="rating">按评分最高</option>
+          </select>
+        </label>
       </div>
     </div>
 

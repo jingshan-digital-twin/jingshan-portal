@@ -492,38 +492,47 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     <!-- ===== 二、网球训练营 · 研学课程 · 团建活动 ===== -->
     <div v-if="trainSection === '全部' || trainSection === 'camps'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between mb-12">
+        <div class="dd-filter-top">
           <strong style="font-size: 18px">🏕️ 训练营 · 研学课程 · 团建活动</strong>
-          <div class="flex-row" style="gap: 8px">
-            <div class="search-bar" style="width: 240px; height: 40px">
+          <span class="dd-count-pill">共 {{ visibleCamps.length }} 个项目</span>
+        </div>
+        <div class="dd-filter-grid cols-4">
+          <div class="dd-field">
+            <span class="dd-field-label">项目搜索</span>
+            <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
               <span>🔍</span>
               <input v-model="campKeyword" type="text" placeholder="搜冬夏令营、研学、团建…" />
             </div>
-            <select v-model="campDate" class="f-input" style="width: 145px; padding: 7px 10px">
-              <option v-for="d in BOOKING_DATES" :key="`cp-${d.iso}`" :value="d.shortDate">批次：{{ d.shortDate }}</option>
+          </div>
+
+          <label class="dd-field">
+            <span class="dd-field-label">项目分类</span>
+            <select v-model="campFilter" class="dd-select" :class="{ active: campFilter !== '全部' }">
+              <option value="全部">全部分类（{{ CAMP_PROGRAMS.length }}）</option>
+              <option value="训练营">训练营</option>
+              <option value="研学课程">研学课程</option>
+              <option value="团建活动">团建活动</option>
             </select>
-            <select v-model.number="campPeople" class="f-input" style="width: 110px; padding: 7px 10px">
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">开营批次</span>
+            <select v-model="campDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="`cp-${d.iso}`" :value="d.shortDate">
+                {{ d.shortDate }}（{{ d.weekday }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">报名人数</span>
+            <select v-model.number="campPeople" class="dd-select">
               <option :value="1">1人报名</option>
               <option :value="2">2人同行</option>
               <option :value="5">5人小团</option>
               <option :value="20">20人团建</option>
             </select>
-          </div>
-        </div>
-        <div class="filter-row">
-          <span class="filter-label">分类：</span>
-          <button
-            v-for="cat in (['全部', '训练营', '研学课程', '团建活动'] as const)"
-            :key="cat"
-            class="filter-pill"
-            :class="{ active: campFilter === cat }"
-            @click="campFilter = cat"
-          >
-            {{ cat === '全部' ? `全部 (${CAMP_PROGRAMS.length})` : cat }}
-          </button>
-          <span style="margin-left: auto; font-size: 14px; font-weight: 800; color: var(--primary)">
-            共 {{ visibleCamps.length }} 个项目
-          </span>
+          </label>
         </div>
       </div>
 
@@ -669,107 +678,113 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     <!-- ===== 四、日常团体课 / 私教课 7日日历约课 ===== -->
     <div v-if="trainSection === 'booking'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between mb-12">
-          <div class="flex-row">
+        <div class="dd-filter-top">
+          <div class="flex-row" style="gap: 10px">
             <strong style="font-size: 18px">📅 日常约课排期：{{ currentDateObj.fullTitle }}</strong>
-            <span class="tag green">{{ lessonMode === 'group' ? '团体课' : '私教1对1' }}</span>
-          </div>
-          <div class="flex-row">
             <div class="seg-group">
               <button :class="{ active: lessonMode === 'group' }" @click="lessonMode = 'group'">团体课</button>
-              <button :class="{ active: lessonMode === 'private' }" @click="lessonMode = 'private'">私教课</button>
+              <button :class="{ active: lessonMode === 'private' }" @click="lessonMode = 'private'">私教1对1</button>
             </div>
-            <label v-if="lessonMode === 'group'" class="m-tab" :class="{ active: showAllDatesForGroup }" style="cursor: pointer">
-              <input v-model="showAllDatesForGroup" type="checkbox" style="display: none" />
-              {{ showAllDatesForGroup ? '✔ 显示近7日全部' : '查看近7日全部' }}
-            </label>
           </div>
+          <label v-if="lessonMode === 'group'" class="m-tab" :class="{ active: showAllDatesForGroup }" style="cursor: pointer; border: 1px solid #cbdcd5; border-radius: 6px; padding: 6px 12px">
+            <input v-model="showAllDatesForGroup" type="checkbox" style="display: none" />
+            {{ showAllDatesForGroup ? '✔ 显示近7日全部课程' : '按所选日期查看' }}
+          </label>
         </div>
 
-        <div class="date-strip-7 mb-12">
-          <button
-            v-for="d in BOOKING_DATES"
-            :key="d.iso"
-            class="date-chip"
-            :class="{ active: selectedDate === d.iso && !(lessonMode === 'group' && showAllDatesForGroup) }"
-            @click="
-              selectedDate = d.iso;
-              showAllDatesForGroup = false
-            "
-          >
-            <strong>{{ d.weekday }}</strong>
-            <span>{{ d.shortDate }}</span>
-          </button>
-        </div>
+        <div v-if="lessonMode === 'group'" class="dd-filter-grid cols-5">
+          <label class="dd-field">
+            <span class="dd-field-label">上课日期</span>
+            <select
+              v-model="selectedDate"
+              class="dd-select active"
+              @change="showAllDatesForGroup = false"
+            >
+              <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+                {{ d.weekday }}（{{ d.shortDate }}）
+              </option>
+            </select>
+          </label>
 
-        <div v-if="lessonMode === 'group'" class="filter-rows">
-          <div class="filter-row">
-            <span class="filter-label">分类：</span>
-            <button
-              v-for="cat in (['全部', '零基础入门', '多球强化', '双打战术', '发球专项'] as const)"
-              :key="cat"
-              class="filter-pill"
-              :class="{ active: groupCat === cat }"
-              @click="groupCat = cat"
-            >
-              {{ cat }}
-            </button>
-            <span class="filter-divider" />
-            <span class="filter-label">时段：</span>
-            <button
-              v-for="p in (['全天', '上午', '下午', '晚间'] as const)"
-              :key="p"
-              class="filter-pill"
-              :class="{ active: groupPeriod === p }"
-              @click="groupPeriod = p"
-            >
-              {{ p }}
-            </button>
-            <span class="filter-divider" />
-            <span class="filter-label">水平：</span>
-            <button
-              v-for="lv in (['全部', '零基础', 'CUTR 2.0-3.0', 'CUTR 3.0-4.0', '青少年'] as const)"
-              :key="lv"
-              class="filter-pill"
-              :class="{ active: groupLevel === lv }"
-              @click="groupLevel = lv"
-            >
-              {{ lv }}
-            </button>
-            <div class="search-bar" style="width: 220px; height: 38px; margin-left: auto">
+          <label class="dd-field">
+            <span class="dd-field-label">课程分类</span>
+            <select v-model="groupCat" class="dd-select" :class="{ active: groupCat !== '全部' }">
+              <option value="全部">全部分类</option>
+              <option value="零基础入门">零基础入门</option>
+              <option value="多球强化">多球强化</option>
+              <option value="双打战术">双打战术</option>
+              <option value="发球专项">发球专项</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">上课时段</span>
+            <select v-model="groupPeriod" class="dd-select" :class="{ active: groupPeriod !== '全天' }">
+              <option value="全天">全天时段</option>
+              <option value="上午">上午</option>
+              <option value="下午">下午</option>
+              <option value="晚间">晚间</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">适配水平</span>
+            <select v-model="groupLevel" class="dd-select" :class="{ active: groupLevel !== '全部' }">
+              <option value="全部">全部水平</option>
+              <option value="零基础">零基础</option>
+              <option value="CUTR 2.0-3.0">CUTR 2.0-3.0</option>
+              <option value="CUTR 3.0-4.0">CUTR 3.0-4.0</option>
+              <option value="青少年">青少年</option>
+            </select>
+          </label>
+
+          <div class="dd-field">
+            <span class="dd-field-label">搜索课程 / 教练</span>
+            <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
               <span>🔍</span>
               <input v-model="groupKeyword" type="text" placeholder="搜课程/教练/场馆…" />
             </div>
           </div>
         </div>
 
-        <div v-else class="filter-rows">
-          <div class="filter-row">
-            <span class="filter-label">教练等级：</span>
-            <button
-              v-for="t in (['全部', '省网校国家级', '金网5.0', 'CTA高级'] as const)"
-              :key="t"
-              class="filter-pill"
-              :class="{ active: coachTier === t }"
-              @click="coachTier = t"
-            >
-              {{ t }}
-            </button>
-            <span class="filter-divider" />
-            <span class="filter-label">专长：</span>
-            <button
-              v-for="sp in (['全部', '零基础启蒙', '发球提速', '网前截击', '比赛实战', '青少年'] as const)"
-              :key="sp"
-              class="filter-pill"
-              :class="{ active: coachSpecialty === sp }"
-              @click="coachSpecialty = sp"
-            >
-              {{ sp }}
-            </button>
-            <select v-model="coachVenue" class="f-input" style="width: auto; padding: 6px 10px; margin-left: auto">
+        <div v-else class="dd-filter-grid cols-4">
+          <label class="dd-field">
+            <span class="dd-field-label">约课日期</span>
+            <select v-model="selectedDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+                {{ d.weekday }}（{{ d.shortDate }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">教练等级</span>
+            <select v-model="coachTier" class="dd-select" :class="{ active: coachTier !== '全部' }">
+              <option value="全部">全部等级</option>
+              <option value="省网校国家级">省网校国家级</option>
+              <option value="金网5.0">金网5.0</option>
+              <option value="CTA高级">CTA高级</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">教学专长</span>
+            <select v-model="coachSpecialty" class="dd-select" :class="{ active: coachSpecialty !== '全部' }">
+              <option value="全部">全部专长</option>
+              <option value="零基础启蒙">零基础启蒙</option>
+              <option value="发球提速">发球提速</option>
+              <option value="网前截击">网前截击</option>
+              <option value="比赛实战">比赛实战</option>
+              <option value="青少年">青少年</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">授课场馆</span>
+            <select v-model="coachVenue" class="dd-select" :class="{ active: coachVenue !== '全部' }">
               <option v-for="v in coachVenues" :key="v" :value="v">{{ v === '全部' ? '全部授课场馆' : v }}</option>
             </select>
-          </div>
+          </label>
         </div>
       </div>
 
@@ -888,25 +903,26 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     <!-- ===== 五、运动康复机构专区 ===== -->
     <div v-if="trainSection === '全部' || trainSection === 'rehab'">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between mb-12">
+        <div class="dd-filter-top">
           <strong style="font-size: 18px">🩺 运动康复机构保障（市卫健局认证）</strong>
           <span class="tag red">赛期绿色通道</span>
         </div>
-        <div class="filter-row" style="background: #f5faf8; padding: 10px 14px; border: 1px solid #d9ebe2">
-          <span class="filter-label">📅 康复日期：</span>
-          <select v-model="rehabDate" class="f-input" style="width: 145px; padding: 6px 10px">
-            <option v-for="d in BOOKING_DATES" :key="`rh-${d.iso}`" :value="d.shortDate">{{ d.shortDate }} {{ d.weekday }}</option>
-          </select>
-          <span class="filter-label">🕒 时段：</span>
-          <button
-            v-for="sl in rehabSlots"
-            :key="sl"
-            class="filter-pill"
-            :class="{ active: rehabSlot === sl }"
-            @click="rehabSlot = sl"
-          >
-            {{ sl }}
-          </button>
+        <div class="dd-filter-grid" style="grid-template-columns: repeat(2, minmax(0, 260px))">
+          <label class="dd-field">
+            <span class="dd-field-label">康复日期</span>
+            <select v-model="rehabDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="`rh-${d.iso}`" :value="d.shortDate">
+                {{ d.shortDate }}（{{ d.weekday }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">预约时段</span>
+            <select v-model="rehabSlot" class="dd-select active">
+              <option v-for="sl in rehabSlots" :key="sl" :value="sl">{{ sl }}</option>
+            </select>
+          </label>
         </div>
       </div>
 

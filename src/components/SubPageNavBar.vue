@@ -6,14 +6,6 @@ const { state, switchModule } = usePortalStore()
 
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
 const subModules = MODULE_META_LIST.filter((m) => m.id >= 2 && m.id <= 9)
-
-function closeOrReturnHome() {
-  if (window.opener && !window.opener.closed) {
-    window.close()
-  } else {
-    switchModule(1)
-  }
-}
 </script>
 
 <template>
@@ -27,10 +19,6 @@ function closeOrReturnHome() {
           <span class="subpage-sep">/</span>
           <strong class="subpage-current">{{ currentMeta.title }}</strong>
         </div>
-
-        <button class="subpage-close-btn" @click="closeOrReturnHome">
-          ✕ 返回/关闭当前页
-        </button>
       </div>
 
       <div class="subpage-pills">

@@ -210,50 +210,58 @@ const visibleTrails = computed(() =>
     <!-- ===== 模块一：景区 · 乡村景点 · 网红打卡点 · 夜市消费场景 ===== -->
     <div v-if="['all', 'spots', 'scenic', 'rural', 'trendy'].includes(activeSection)" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between mb-12">
+        <div class="dd-filter-top">
           <strong style="font-size: 18px">{{ sectionTitle }}</strong>
-          <div class="flex-row" style="gap: 8px">
-            <div class="search-bar" style="width: 240px; height: 40px">
-              <span>🔍</span>
-              <input v-model="spotKeyword" type="text" placeholder="搜索景区、乡村、夜市…" />
-              <button v-if="spotKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 12px" @click="spotKeyword = ''">✕</button>
-            </div>
-            <template v-if="activeSection === 'spots' || activeSection === 'all'">
-              <button
-                v-for="cat in (['全部', '景区', '乡村景点', '网红打卡点', '夜市消费'] as const)"
-                :key="cat"
-                class="filter-pill"
-                :class="{ active: spotCategory === cat }"
-                @click="spotCategory = cat"
-              >
-                {{ cat === '全部' ? `全部 (${TOUR_SPOTS.length})` : cat }}
-              </button>
-            </template>
-          </div>
+          <span class="dd-count-pill">共 {{ visibleSpots.length }} 处景点</span>
         </div>
 
-        <div class="filter-row" style="background: #f5faf8; padding: 10px 14px; border: 1px solid #d9ebe2">
-          <span class="filter-label">📅 预约日期：</span>
-          <select v-model="visitDate" class="f-input" style="width: 150px; padding: 6px 10px">
-            <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
-          </select>
-          <span class="filter-label">🕒 时段：</span>
-          <button
-            v-for="sl in (['上午 08:30-12:00', '下午 13:00-17:00', '夜游 17:30-22:00'] as const)"
-            :key="sl"
-            class="filter-pill"
-            :class="{ active: visitSlot === sl }"
-            @click="visitSlot = sl"
-          >
-            {{ sl }}
-          </button>
-          <span class="filter-label">张数：</span>
-          <select v-model.number="ticketCount" class="f-input" style="width: 90px; padding: 6px 10px">
-            <option :value="1">1 份</option>
-            <option :value="2">2 份</option>
-            <option :value="3">3 份</option>
-            <option :value="4">4 份</option>
-          </select>
+        <div class="dd-filter-grid" :class="activeSection === 'spots' || activeSection === 'all' ? 'cols-5' : 'cols-4'">
+          <div class="dd-field">
+            <span class="dd-field-label">关键词搜索</span>
+            <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
+              <span>🔍</span>
+              <input v-model="spotKeyword" type="text" placeholder="搜索景区、乡村、夜市…" />
+            </div>
+          </div>
+
+          <label v-if="activeSection === 'spots' || activeSection === 'all'" class="dd-field">
+            <span class="dd-field-label">场景分类</span>
+            <select v-model="spotCategory" class="dd-select" :class="{ active: spotCategory !== '全部' }">
+              <option value="全部">全部场景（{{ TOUR_SPOTS.length }}）</option>
+              <option value="景区">景区</option>
+              <option value="乡村景点">乡村景点</option>
+              <option value="网红打卡点">网红打卡点</option>
+              <option value="夜市消费">夜市消费</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">预约日期</span>
+            <select v-model="visitDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+                {{ d.shortDate }}（{{ d.weekday }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">入园时段</span>
+            <select v-model="visitSlot" class="dd-select active">
+              <option value="上午 08:30-12:00">上午 08:30-12:00</option>
+              <option value="下午 13:00-17:00">下午 13:00-17:00</option>
+              <option value="夜游 17:30-22:00">夜游 17:30-22:00</option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">预约份数</span>
+            <select v-model.number="ticketCount" class="dd-select">
+              <option :value="1">1 份</option>
+              <option :value="2">2 份</option>
+              <option :value="3">3 份</option>
+              <option :value="4">4 份</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -346,32 +354,47 @@ const visibleTrails = computed(() =>
     <!-- ===== 模块二：“游”网旅产品专区 ===== -->
     <div v-if="activeSection === 'all' || activeSection === 'packages'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
-        <div class="flex-between">
+        <div class="dd-filter-top">
           <strong style="font-size: 18px">🌿 网旅产品专区</strong>
-          <div class="flex-row" style="gap: 8px">
-            <div class="search-bar" style="width: 220px; height: 40px">
+          <span class="dd-count-pill">共 {{ visiblePackages.length }} 款套餐</span>
+        </div>
+        <div class="dd-filter-grid cols-4">
+          <div class="dd-field">
+            <span class="dd-field-label">套餐搜索</span>
+            <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
               <span>🔍</span>
               <input v-model="pkgKeyword" type="text" placeholder="搜网旅套餐关键词…" />
             </div>
-            <button
-              v-for="sc in (['全部', '京山本地', '荆门周边', '湖北省内'] as const)"
-              :key="sc"
-              class="filter-pill"
-              :class="{ active: pkgScope === sc }"
-              @click="pkgScope = sc"
-            >
-              {{ sc === '全部' ? '全圈层' : sc }}
-            </button>
-            <select v-model="pkgDate" class="f-input" style="width: 140px; padding: 6px 10px">
-              <option v-for="d in BOOKING_DATES" :key="`pkg-${d.iso}`" :value="d.iso">出发 {{ d.shortDate }}</option>
+          </div>
+
+          <label class="dd-field">
+            <span class="dd-field-label">旅游圈层</span>
+            <select v-model="pkgScope" class="dd-select" :class="{ active: pkgScope !== '全部' }">
+              <option value="全部">全部圈层</option>
+              <option value="京山本地">京山本地</option>
+              <option value="荆门周边">荆门周边</option>
+              <option value="湖北省内">湖北省内</option>
             </select>
-            <select v-model.number="pkgPeople" class="f-input" style="width: 108px; padding: 6px 10px">
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">出发日期</span>
+            <select v-model="pkgDate" class="dd-select active">
+              <option v-for="d in BOOKING_DATES" :key="`pkg-${d.iso}`" :value="d.iso">
+                {{ d.shortDate }}（{{ d.weekday }}）
+              </option>
+            </select>
+          </label>
+
+          <label class="dd-field">
+            <span class="dd-field-label">同行人数</span>
+            <select v-model.number="pkgPeople" class="dd-select">
               <option :value="1">1人独享</option>
               <option :value="2">2人同行</option>
               <option :value="3">3人家庭</option>
               <option :value="6">6人球队</option>
             </select>
-          </div>
+          </label>
         </div>
       </div>
 

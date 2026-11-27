@@ -410,38 +410,53 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       </button>
     </div>
 
-    <!-- 用餐日期、时段与排序筛选条 -->
+    <!-- 用餐日期、时段与排序清晰下拉筛选 -->
     <div class="card card-pad mb-16 filter-workbench">
-      <div class="filter-row">
-        <div class="search-bar" style="width: 230px; height: 40px">
-          <span>🔍</span>
-          <input v-model="foodKeyword" type="text" placeholder="搜餐厅、招牌菜、地址…" />
+      <div class="dd-filter-grid cols-5">
+        <div class="dd-field">
+          <span class="dd-field-label">关键词搜索</span>
+          <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
+            <span>🔍</span>
+            <input v-model="foodKeyword" type="text" placeholder="搜餐厅、招牌菜、地址…" />
+          </div>
         </div>
-        <span class="filter-label">📅 订座日期：</span>
-        <select v-model="dineDate" class="f-input" style="width: 150px; padding: 7px 10px">
-          <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
-        </select>
-        <span class="filter-label">🕒 时段：</span>
-        <button
-          v-for="p in (['午市 11:30-13:30', '晚市 17:30-20:00', '夜宵 20:30-23:30'] as const)"
-          :key="p"
-          class="filter-pill"
-          :class="{ active: dinePeriod === p }"
-          @click="dinePeriod = p"
-        >
-          {{ p }}
-        </button>
-        <select v-model="dineGuests" class="f-input" style="width: 126px; padding: 7px 10px">
-          <option>2人桌</option>
-          <option>4人桌</option>
-          <option>6-8人包厢</option>
-          <option>10人+球队桌</option>
-        </select>
-        <select v-model="foodSort" class="f-input" style="width: auto; padding: 7px 10px; margin-left: auto">
-          <option value="default">综合口碑</option>
-          <option value="price">人均最低</option>
-          <option value="rating">评分最高</option>
-        </select>
+
+        <label class="dd-field">
+          <span class="dd-field-label">订座日期</span>
+          <select v-model="dineDate" class="dd-select active">
+            <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
+              {{ d.shortDate }}（{{ d.weekday }}）
+            </option>
+          </select>
+        </label>
+
+        <label class="dd-field">
+          <span class="dd-field-label">用餐时段</span>
+          <select v-model="dinePeriod" class="dd-select active">
+            <option value="午市 11:30-13:30">午市 11:30-13:30</option>
+            <option value="晚市 17:30-20:00">晚市 17:30-20:00</option>
+            <option value="夜宵 20:30-23:30">夜宵 20:30-23:30</option>
+          </select>
+        </label>
+
+        <label class="dd-field">
+          <span class="dd-field-label">桌型人数</span>
+          <select v-model="dineGuests" class="dd-select">
+            <option>2人桌</option>
+            <option>4人桌</option>
+            <option>6-8人包厢</option>
+            <option>10人+球队桌</option>
+          </select>
+        </label>
+
+        <label class="dd-field">
+          <span class="dd-field-label">排序方式</span>
+          <select v-model="foodSort" class="dd-select">
+            <option value="default">综合口碑</option>
+            <option value="price">人均最低</option>
+            <option value="rating">评分最高</option>
+          </select>
+        </label>
       </div>
     </div>
 
