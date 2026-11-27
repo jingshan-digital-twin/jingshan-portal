@@ -25,7 +25,6 @@ function closeOrReturnHome() {
             ← 返回首页总览
           </button>
           <span class="subpage-sep">/</span>
-          <span class="subpage-code">{{ currentMeta.code }}</span>
           <strong class="subpage-current">{{ currentMeta.title }}</strong>
         </div>
 
@@ -42,7 +41,6 @@ function closeOrReturnHome() {
           :class="{ active: state.activeModule === m.id }"
           @click="switchModule(m.id)"
         >
-          <span class="subpage-pill-num">{{ m.code }}</span>
           <span class="subpage-pill-name">{{ m.shortName }}</span>
         </button>
       </div>

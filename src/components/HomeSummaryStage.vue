@@ -21,7 +21,7 @@ const {
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
 
 const kpiPillsMap = computed<Record<ModuleId, string[]>>(() => ({
-  1: ['356片标准球场', '79家联盟商家', `来源地：${state.origin.slice(0, 3)}`],
+  1: ['356片标准球场', '79家联盟商家', `来源地：${state.origin}`],
   2: ['全市356片球场', '今日84片可约', `实时${state.liveMatches.length}场焦点赛`],
   3: ['3大旅游圈层', '配智能语音导览', '持证社保障'],
   4: ['79家联盟餐饮', '打球票根85折', '支持赛事团餐'],
@@ -193,7 +193,6 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
     <!-- 固定容器统一顶栏 -->
     <div class="summary-stage-header">
       <div class="mh-left">
-        <div class="mh-num">{{ currentMeta.code }}</div>
         <div>
           <div class="flex-row" style="gap: 8px">
             <h1 class="summary-stage-title">{{ currentMeta.title }}</h1>
@@ -405,7 +404,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
       <!-- 03 游 · 旅游游览摘要 -->
       <div v-else-if="state.activeModule === 3" class="summary-view-col">
         <div class="ticket-stub-banner" style="padding: 12px 16px; flex-shrink: 0">
-          <strong style="font-size: 14.5px">🌿 为您推荐您的专属游玩路线</strong>
+          <strong style="font-size: 14.5px">🌿 精选游玩路线</strong>
           <span class="tag" style="background: var(--lime); color: #0b251d">三圈层精选 3 条热卖线</span>
         </div>
 

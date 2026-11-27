@@ -116,16 +116,7 @@ const visibleTrails = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">03</div>
-        <div>
-          <h1 class="mh-title">“游”：旅游游览服务与网旅专区</h1>
-          <div class="mh-desc">
-            涵盖核心景区、乡村景点、网红打卡点、夜市消费场景（含导航与选日期门票预约）、网旅产品专区、语音导览时长建议及文旅专线与骑行徒步路线
-          </div>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: activeSection === 'all' }" @click="activeSection = 'all'">全部总览</button>
         <button class="m-tab" :class="{ active: activeSection === 'spots' }" @click="activeSection = 'spots'">景区/乡村/网红/夜市</button>
@@ -139,15 +130,12 @@ const visibleTrails = computed(() =>
     <div class="ticket-stub-banner mb-16">
       <div>
         <div style="font-size: 15px; font-weight: 900">
-          🧭 您的来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 电子票根 {{ state.ticketStubCode }} 畅享全市景区/夜市/专线优待
-        </div>
-        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.84); margin-top: 3px">
-          以京山挥拍为核心，一站串联 4A 生态景区、美丽乡村、网红球场、河畔夜市，并辐射钟祥明显陵与湖北省内环线！
+          📍 来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 电子票根 {{ state.ticketStubCode }} 畅享全市景区/夜市/专线优待
         </div>
       </div>
       <div class="flex-row">
-        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ 8大特色场景</button>
-        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 4大网旅套餐</button>
+        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ {{ TOUR_SPOTS.length }} 处热门场景</button>
+        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 {{ TOUR_PACKAGES.length }} 大网旅套餐</button>
         <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'lines'">🚌 专线与绿道</button>
       </div>
     </div>
@@ -157,8 +145,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div>
-            <strong style="font-size: 16px">🏔️ 景区 · 乡村景点 · 网红打卡点 · 夜市消费场景</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">支持按场景分类筛选、查看游玩时长与语音导览、一键导航及选定日期时段预约门票/消费券</div>
+            <strong style="font-size: 16px">🏔️ 热门景区与打卡点</strong>
           </div>
           <div class="flex-row" style="gap: 6px">
             <div class="search-bar" style="width: 240px; height: 34px">
@@ -200,9 +187,6 @@ const visibleTrails = computed(() =>
             <option :value="3">3 份</option>
             <option :value="4">4 份</option>
           </select>
-          <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-            当前展示 {{ visibleSpots.length }} 处打卡点
-          </span>
         </div>
       </div>
 
@@ -323,8 +307,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between">
           <div>
-            <strong style="font-size: 16px">🌿 网旅产品专区 · 官方「打球 + 吃住游」一站式打包套餐</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">持证旅行社品质保障，覆盖京山本地、荆门世遗延伸与湖北省内大环线</div>
+            <strong style="font-size: 16px">🌿 网旅产品专区</strong>
           </div>
           <div class="flex-row" style="gap: 8px">
             <div class="search-bar" style="width: 210px; height: 34px">
@@ -412,10 +395,7 @@ const visibleTrails = computed(() =>
     <div v-if="activeSection === 'all' || activeSection === 'audio'" class="card card-pad mb-24">
       <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
         <div>
-          <strong style="font-size: 16.5px">🎧 智能语音导览 & 分时长游玩路线建议</strong>
-          <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px">
-            根据您的停留时间一键切换最佳动线，每站配齐建议停留时长与免费实景语音讲解
-          </div>
+          <strong style="font-size: 16.5px">🎧 智能语音导览</strong>
         </div>
         <div class="seg-group">
           <button
@@ -482,8 +462,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad">
         <div class="flex-between mb-12" style="padding-bottom: 10px; border-bottom: 1px solid var(--line)">
           <div>
-            <strong style="font-size: 16px">🚌 网球主题文旅专线（高铁 → 球场 → 景区 → 夜市）</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">凭订场/参赛电子票根免费乘坐，下层配专业网球包行李舱</div>
+            <strong style="font-size: 16px">🚌 网球主题文旅专线</strong>
           </div>
         </div>
 
@@ -549,8 +528,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad">
         <div class="flex-between mb-12" style="padding-bottom: 10px; border-bottom: 1px solid var(--line)">
           <div>
-            <strong style="font-size: 16px">🚴 骑行绿道与生态徒步路线（含补给驿站与语音导览）</strong>
-            <div style="font-size: 11.5px; color: var(--ink-3)">高负氧离子山水绿道，赛后有氧恢复与摄影打卡首选</div>
+            <strong style="font-size: 16px">🚴 骑行绿道与生态徒步路线</strong>
           </div>
           <div class="flex-row" style="gap: 5px">
             <button

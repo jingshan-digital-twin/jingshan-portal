@@ -42,7 +42,6 @@ const visibleGroups = computed(() =>
           </div>
           <span class="tag green">● 已连通</span>
         </div>
-        <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 10px">{{ g.desc }}</div>
         <div class="grid-2" style="gap: 8px; margin-bottom: 12px">
           <button
             v-for="a in g.apps"
@@ -56,23 +55,6 @@ const visibleGroups = computed(() =>
         </div>
         <button class="btn-primary" :style="{ background: g.color }" @click="openActionModal({ type: 'miniprogram', appName: g.cat, desc: g.desc })">
           一键授权跳转对应小程序 →
-        </button>
-      </div>
-    </div>
-
-    <div class="ticket-stub-banner">
-      <div>
-        <div style="font-size: 15.5px; font-weight: 900">🎾 原有核心网球小程序深度融合：「京网有约」+「网球记」实时数据互通</div>
-        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 3px">
-          您的账号、场地预约、分级赛签表、实时比分、会员积分在 PC 网页与手机小程序间毫秒级同步，外地游客无需额外下载 APP。
-        </div>
-      </div>
-      <div class="flex-row">
-        <button class="btn-orange" @click="openActionModal({ type: 'miniprogram', appName: '「京网有约」微信小程序', desc: '同步场地预约、金网陪练、出行司机与会员积分数据' })">
-          📱 打开「京网有约」
-        </button>
-        <button class="btn-ghost" @click="openActionModal({ type: 'miniprogram', appName: '「网球记」赛事小程序', desc: '实时拉取中国青少年巡回赛签表、场次占用与逐分比分' })">
-          📊 打开「网球记」
         </button>
       </div>
     </div>
