@@ -561,7 +561,7 @@ button {
 .kk-card {
   background: #ffffff;
   border-radius: 0;
-  padding: 14px 16px 12px;
+  padding: 14px 16px;
   box-shadow: var(--shadow-md);
   border: 1px solid #dfeae5;
 }
@@ -569,8 +569,6 @@ button {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 6px;
-  padding-bottom: 12px;
-  border-bottom: 1px dashed #e6efeb;
 }
 .kk-btn {
   display: flex;
@@ -2244,8 +2242,7 @@ button {
   align-items: start;
 }
 .play-map-sticky {
-  position: sticky;
-  top: 86px;
+  position: static;
 }
 .court-item-compact {
   display: grid;
@@ -2314,4 +2311,38 @@ button {
 .js-amap-pin {
   background: transparent;
   border: none;
+}
+.js-amap-pin .map-poi-node {
+  transition: transform 0.14s ease;
+}
+.js-amap-pin:hover {
+  z-index: 1200 !important;
+}
+.js-amap-pin:hover .map-poi-node {
+  filter: brightness(1.05);
+}
+
+.amenity-court-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.amenity-court-btn {
+  padding: 9px 11px;
+  border: 1.5px solid #d5e4dd;
+  background: #ffffff;
+  color: var(--ink);
+  text-align: left;
+  transition: all 0.14s ease;
+}
+.amenity-court-btn:hover {
+  border-color: var(--primary);
+  background: #f3fbf7;
+}
+.amenity-court-btn.active {
+  border-color: var(--primary);
+  border-left: 4px solid var(--primary);
+  background: #eaf7f1;
+  color: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(13, 122, 88, 0.12);
 }
