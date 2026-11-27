@@ -6,6 +6,8 @@ import { BOOKING_DATES, COURT_HOURS, formatHourRange } from '../mock/schedules'
 import { getModuleMeta, usePortalStore } from '../store/usePortalStore'
 import type { CourtUnit, LightboxReview, MenuDish } from '../types/portal'
 import DetailLocationMap from './DetailLocationMap.vue'
+import MapResultsLayout from './MapResultsLayout.vue'
+import MapViewToggle from './MapViewToggle.vue'
 
 const {
   state,
@@ -30,6 +32,8 @@ const showAllPhotosModal = ref(false)
 const activePhotoIndex = ref(0)
 const showAllAmenities = ref(false)
 const activeMentionTag = ref<string | null>(null)
+const showLocationMap = ref(true)
+const detailMap = ref<InstanceType<typeof DetailLocationMap>>()
 const showReviewForm = ref(false)
 const newReviewText = ref('')
 const newReviewRating = ref(5)
@@ -82,6 +86,10 @@ const place = computed(() => (detail.value?.kind === 'place' ? detail.value.data
 // 1. Hotel state
 const checkIn = ref(BOOKING_DATES[0]!.iso)
 const checkOut = ref(BOOKING_DATES[2]!.iso)
+const hotelCheckOutOptions = computed(() => BOOKING_DATES.filter((day) => day.iso > checkIn.value))
+watch(hotelCheckOutOptions, (options) => {
+  if (checkOut.value <= checkIn.value && options[0]) checkOut.value = options[0].iso
+})
 const roomCount = ref(1)
 const selectedRoomId = ref<string>('')
 const showAllRooms = ref(false)
@@ -97,10 +105,11 @@ const selectedRoom = computed(() => {
   return hotel.value.rooms.find((r) => r.id === selectedRoomId.value) ?? hotel.value.rooms[0]!
 })
 
+const selectedRoomIsLongStay = computed(() => selectedRoom.value?.leaseUnit === '/月' || selectedRoom.value?.leaseUnit === '/周')
+
 const hotelTotalPrice = computed(() => {
   if (!selectedRoom.value) return 0
-  const isLong = selectedRoom.value.leaseUnit === '/月' || selectedRoom.value.leaseUnit === '/周'
-  return isLong
+  return selectedRoomIsLongStay.value
     ? selectedRoom.value.eventPrice * roomCount.value
     : selectedRoom.value.eventPrice * hotelNights.value * roomCount.value
 })
@@ -305,6 +314,7 @@ watch(
   (val) => {
     showAllPhotosModal.value = false
     showAllAmenities.value = false
+    showLocationMap.value = true
     showAllRooms.value = false
     activeMentionTag.value = null
     showReviewForm.value = false
@@ -313,7 +323,9 @@ watch(
 
     if (val?.kind === 'hotel') {
       const h = HOTEL_PROFILES.find((x) => x.id === val.hotelId) ?? HOTEL_PROFILES[0]!
-      selectedRoomId.value = h.rooms[0]?.id ?? ''
+      selectedRoomId.value = h.rooms.find((room) => room.id === val.stay?.roomId)?.id ?? h.rooms[0]?.id ?? ''
+      checkIn.value = val.stay?.checkIn ?? BOOKING_DATES[0]!.iso
+      checkOut.value = val.stay?.checkOut ?? BOOKING_DATES[2]!.iso
     } else if (val?.kind === 'product') {
       selectedSpecIdx.value = 0
       prodQty.value = 1
@@ -399,6 +411,13 @@ const displayCoords = computed(() => {
   if (place.value?.lat && place.value?.lng) return { lat: place.value.lat, lng: place.value.lng }
   return { lat: 31.0218, lng: 113.1195 }
 })
+
+const detailMapItems = computed(() => [{
+  id: 'location',
+  title: displayTitle.value,
+  photo: hotel.value?.photo ?? venue.value?.photo ?? place.value?.photo,
+  location: displayAddress.value,
+}])
 
 const displayIntro = computed(() => {
   if (hotel.value) return hotel.value.intro
@@ -712,7 +731,7 @@ function submitLocalReview() {
 // Price headline for sticky nav & right card
 const headlinePriceText = computed(() => {
   if (hotel.value && selectedRoom.value) {
-    const unit = selectedRoom.value.leaseUnit ?? ` / ${hotelNights.value} 晚`
+    const unit = selectedRoomIsLongStay.value ? selectedRoom.value.leaseUnit : ` / ${hotelNights.value} 晚`
     return { main: `¥${hotelTotalPrice.value}`, sub: unit }
   }
   if (product.value) {
@@ -744,6 +763,7 @@ const optionsTabLabel = computed(() => {
 })
 
 const isFavorited = computed(() => state.favorites.includes(displayTitle.value))
+const isTourDetail = computed(() => place.value?.actionKind === 'spot' || place.value?.actionKind === 'package')
 
 function shareCurrentDetail() {
   if (navigator.clipboard) {
@@ -766,7 +786,7 @@ function triggerPrimaryNav() {
 </script>
 
 <template>
-  <div v-if="detail" class="dp-page">
+  <div v-if="detail" class="dp-page" :class="{ 'dp-tour-page': isTourDetail }">
     <!-- 1. Scroll-Activated Sticky Anchor Sub-Nav (matches Airbnb sticky nav) -->
     <div v-if="showStickyBar" class="dp-sticky-nav">
       <div class="dp-container dp-sticky-inner">
@@ -827,8 +847,8 @@ function triggerPrimaryNav() {
             <span>{{ headlinePriceText.sub }}</span>
             <div class="dp-sticky-rating">★ {{ displayRating.toFixed(1) }} · {{ displayReviewCount }} 条评价</div>
           </div>
-          <button type="button" class="dp-cta-pill" @click="scrollToSection('dp-options')">
-            {{ optionsTabLabel }}
+          <button type="button" class="dp-cta-pill" @click="scrollToSection(isTourDetail ? 'dp-booking' : 'dp-options')">
+            {{ isTourDetail ? '预约游览' : optionsTabLabel }}
           </button>
         </div>
       </div>
@@ -867,6 +887,35 @@ function triggerPrimaryNav() {
         </div>
       </div>
 
+      <section v-if="isTourDetail && place" class="dp-tour-overview" aria-label="游览信息">
+        <div class="dp-tour-facts">
+          <div class="dp-tour-summary">
+            <p>{{ displaySubtitle }}</p>
+            <button type="button" class="dp-rating-anchor" @click="scrollToSection('dp-reviews')">
+              <strong>★ {{ displayRating.toFixed(1) }}</strong>
+              <span>· {{ displayReviewCount }} 条评价</span>
+            </button>
+          </div>
+          <dl>
+            <div v-if="place.openHours">
+              <dt>{{ place.actionKind === 'package' ? '出发时间' : '开放时间' }}</dt>
+              <dd>{{ place.openHours }}</dd>
+            </div>
+            <div>
+              <dt>{{ place.actionKind === 'package' ? '集合地点' : '景点位置' }}</dt>
+              <dd>{{ displayAddress }}<span v-if="place.distance && place.actionKind === 'spot'"> · {{ place.distance }}</span></dd>
+            </div>
+          </dl>
+        </div>
+        <div class="dp-tour-actions">
+          <p class="dp-tour-price"><strong>{{ headlinePriceText.main }}</strong><small>{{ headlinePriceText.sub }}</small></p>
+          <div class="flex-row">
+            <button type="button" class="btn-primary" @click="scrollToSection('dp-booking')">{{ place.actionKind === 'package' ? '预约套餐' : '预约游览' }}</button>
+            <button type="button" class="btn-ghost" @click="triggerPrimaryNav">导航</button>
+          </div>
+        </div>
+      </section>
+
       <!-- 4. 5-Photo Mosaic Gallery (Airbnb 50% Hero + 2x2 Grid) -->
       <section id="dp-photos" class="dp-gallery">
         <div class="dp-gallery-hero" @click="activePhotoIndex = 0; showAllPhotosModal = true">
@@ -892,11 +941,11 @@ function triggerPrimaryNav() {
       </section>
 
       <!-- 5. Two-Column Main Body (Left Details ~60% + Right Sticky Booking Card ~36%) -->
-      <div class="dp-main-split">
+      <div :id="isTourDetail ? 'dp-booking' : undefined" class="dp-main-split">
         <!-- ===== LEFT DETAILS COLUMN ===== -->
         <div class="dp-left-col">
           <!-- Subtitle & Rating Strip -->
-          <div class="dp-section-block dp-intro-head">
+          <div v-if="!isTourDetail" class="dp-section-block dp-intro-head">
             <h2 class="dp-h2">{{ displaySubtitle }}</h2>
             <div class="dp-rating-strip">
               <button type="button" class="dp-rating-anchor" @click="scrollToSection('dp-reviews')">
@@ -908,7 +957,7 @@ function triggerPrimaryNav() {
           </div>
 
           <!-- 4-Row Feature Highlights -->
-          <div class="dp-section-block">
+          <div v-if="!isTourDetail" class="dp-section-block">
             <div class="dp-highlights-list">
               <div v-for="hl in featureHighlights" :key="hl.title" class="dp-highlight-row">
                 <div class="dp-hl-icon">{{ hl.icon }}</div>
@@ -919,6 +968,11 @@ function triggerPrimaryNav() {
               </div>
             </div>
           </div>
+
+          <section v-if="isTourDetail" id="dp-about" class="dp-section-block">
+            <h2 class="dp-h2" style="margin-bottom: 8px">{{ place?.actionKind === 'package' ? '行程介绍' : '景点介绍' }}</h2>
+            <p class="dp-about-text">{{ displayIntro }}</p>
+          </section>
 
           <!-- Primary Domain Options Block (#dp-options) -->
           <section id="dp-options" class="dp-section-block">
@@ -1242,7 +1296,7 @@ function triggerPrimaryNav() {
           </div>
 
           <!-- About Section (#dp-about) -->
-          <section id="dp-about" class="dp-section-block">
+          <section v-if="!isTourDetail" id="dp-about" class="dp-section-block">
             <h2 class="dp-h2" style="margin-bottom: 14px">关于「{{ displayTitle }}」</h2>
             <p class="dp-about-text">{{ displayIntro }}</p>
           </section>
@@ -1273,7 +1327,7 @@ function triggerPrimaryNav() {
         <!-- ===== RIGHT STICKY BOOKING / ACTION COLUMN ===== -->
         <aside class="dp-right-col">
           <!-- Top Promo Pill Card (matches Airbnb travel credit card) -->
-          <div class="dp-promo-pill-card">
+          <div v-if="!isTourDetail" class="dp-promo-pill-card">
             <span style="font-size: 20px">🎫</span>
             <span>凭电子票根 <strong>{{ state.ticketStubCode }}</strong> 享联盟优待并累计积分</span>
           </div>
@@ -1301,7 +1355,7 @@ function triggerPrimaryNav() {
                   <div class="dp-ub-cell">
                     <label>退房日期</label>
                     <select v-model="checkOut">
-                      <option v-for="d in BOOKING_DATES.slice(1)" :key="`ro-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
+                      <option v-for="d in hotelCheckOutOptions" :key="`ro-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
                     </select>
                   </div>
                 </div>
@@ -1322,7 +1376,7 @@ function triggerPrimaryNav() {
 
               <div class="dp-bc-breakdown">
                 <div class="flex-between">
-                  <span>单价 ¥{{ selectedRoom?.eventPrice }} × {{ selectedRoom?.leaseUnit ? `${roomCount}套` : `${hotelNights}晚 × ${roomCount}间` }}</span>
+                  <span>单价 ¥{{ selectedRoom?.eventPrice }} × {{ selectedRoomIsLongStay ? `${roomCount}套` : `${hotelNights}晚 × ${roomCount}间` }}</span>
                   <span>¥{{ hotelTotalPrice }}</span>
                 </div>
                 <div class="flex-between dp-bc-total">
@@ -1530,24 +1584,39 @@ function triggerPrimaryNav() {
       <!-- 6. Full-Width Location & Transit Section (#dp-location) -->
       <section id="dp-location" class="dp-full-section">
         <div class="flex-between" style="margin-bottom: 10px">
-          <div>
-            <h2 class="dp-h2">位置与交通</h2>
-            <p style="font-size: 15px; color: var(--ink-2); margin-top: 4px">{{ displayAddress }}</p>
+          <h2 class="dp-h2">位置与交通</h2>
+          <div class="flex-row">
+            <MapViewToggle v-model="showLocationMap" />
+            <button type="button" class="btn-primary" @click="triggerPrimaryNav">
+              🧭 高德 / 百度一键导航
+            </button>
           </div>
-          <button type="button" class="btn-primary" @click="triggerPrimaryNav">
-            🧭 高德 / 百度一键导航
-          </button>
         </div>
 
-        <DetailLocationMap
-          :title="displayTitle"
-          :address="displayAddress"
-          :lat="displayCoords.lat"
-          :lng="displayCoords.lng"
-        />
+        <MapResultsLayout
+          v-if="showLocationMap"
+          class="dp-location-results"
+          :items="detailMapItems"
+          selected-id="location"
+          list-label="地图位置列表"
+          empty-text="暂无位置信息"
+          @select="detailMap?.showLocation()"
+        >
+          <DetailLocationMap
+            ref="detailMap"
+            :title="displayTitle"
+            :address="displayAddress"
+            :lat="displayCoords.lat"
+            :lng="displayCoords.lng"
+          />
+        </MapResultsLayout>
+        <div v-else class="dp-location-address">
+          <strong>地址</strong>
+          <span>{{ displayAddress }}</span>
+        </div>
 
         <!-- Airbnb-style Transit Strip -->
-        <div class="dp-transit-box">
+        <div v-if="!isTourDetail" class="dp-transit-box">
           <h3 class="dp-h3">交通方式</h3>
           <div class="dp-transit-row">
             <div class="flex-row" style="gap: 10px">
@@ -1792,3 +1861,54 @@ function triggerPrimaryNav() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.dp-location-results :deep(.dp-map-shell) { margin: 0; border: 0; border-radius: 0; }
+.dp-location-address {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink-2);
+}
+.dp-tour-page { padding-bottom: 40px; }
+.dp-tour-page .dp-breadcrumb-bar { padding-block: 14px 10px; }
+.dp-tour-page .dp-title-bar { padding-block: 15px 12px; }
+.dp-tour-page .dp-gallery { height: 300px; margin-bottom: 24px; }
+.dp-tour-page .dp-main-split { gap: 32px; }
+.dp-tour-page .dp-section-block { padding-block: 20px; }
+.dp-tour-page .dp-section-block:first-child { padding-top: 0; }
+.dp-tour-page .dp-full-section { padding-block: 32px; }
+.dp-tour-page .dp-map-shell { height: 340px; }
+.dp-tour-page .dp-hot-item-card { padding: 10px 13px; }
+.dp-tour-page .dp-room-stack { gap: 8px; }
+.dp-tour-page .dp-booking-card { padding: 18px; }
+.dp-tour-page .dp-bc-header { margin-bottom: 12px; }
+
+.dp-tour-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 14px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f5faf7;
+}
+
+.dp-tour-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-bottom: 8px; }
+.dp-tour-summary p { color: var(--ink); font-weight: 700; }
+.dp-tour-summary button { font-size: 13px; }
+.dp-tour-facts dl { display: flex; flex-wrap: wrap; gap: 5px 20px; }
+.dp-tour-facts dl div { display: flex; flex-wrap: wrap; gap: 2px 7px; font-size: 13px; }
+.dp-tour-facts dt { color: var(--ink-2); font-weight: 800; }
+.dp-tour-facts dd { margin: 0; }
+.dp-tour-actions { text-align: right; }
+.dp-tour-price { color: var(--primary-dark); line-height: 1.35; margin-bottom: 5px; }
+.dp-tour-price strong { font-size: 20px; }
+.dp-tour-price small { margin-left: 3px; font-size: 13px; }
+.dp-tour-actions button { padding: 5px 12px; font-size: 13px; }
+</style>

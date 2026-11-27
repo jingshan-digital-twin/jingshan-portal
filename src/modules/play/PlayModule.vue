@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import MapResultsLayout from '../../components/MapResultsLayout.vue'
+import MapViewToggle from '../../components/MapViewToggle.vue'
 import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
@@ -25,6 +27,7 @@ const subView = ref<'courts' | 'matchmaking' | 'scores'>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
+const showCourtMap = ref(false)
 
 // ===== 场地预约多维筛选 =====
 const venueKeyword = ref('')
@@ -136,9 +139,17 @@ const selectedVenue = computed(
   () =>
     filteredCourts.value.find((c) => c.id === activeVenueId.value) ??
     pagedCourts.value[0] ??
-    state.courts[0] ??
     null,
 )
+
+const courtMapItems = computed(() => filteredCourts.value.map((venue) => ({
+  id: venue.id,
+  title: venue.name.split('（')[0] ?? venue.name,
+  photo: venue.photo,
+  description: `${venue.rating} 分 · ${venue.distanceKm} km`,
+  location: venue.address,
+  highlight: venue.minPrice === 0 ? '免费' : `¥${venue.minPrice} 起`,
+})))
 
 watch(filteredCourts, (list) => {
   courtPage.value = 1
@@ -355,6 +366,7 @@ function submitNewGame() {
               {{ onlyBookable ? '✔ 仅看可约场馆' : '显示全部场馆' }}
             </label>
             <button class="btn-ghost" style="border-radius: 6px" @click="resetCourtFilters">重置筛选</button>
+            <MapViewToggle v-model="showCourtMap" />
             <span class="dd-count-pill">共 {{ filteredCourts.length }} 家可约场馆</span>
           </div>
         </div>
@@ -451,9 +463,8 @@ function submitNewGame() {
         </div>
       </div>
 
-      <!-- 左侧精简场馆列表 + 右侧高德联动标注地图 -->
-      <div class="play-map-split">
-        <div style="display: flex; flex-direction: column; gap: 12px">
+      <template v-if="!showCourtMap">
+        <div class="grid-2 play-court-results">
           <div v-if="filteredCourts.length === 0" class="card card-pad" style="text-align: center; padding: 48px 20px">
             <div style="font-size: 32px; margin-bottom: 10px">🎾</div>
             <strong style="font-size: 16.5px; display: block; margin-bottom: 8px">当前筛选条件下暂无匹配场馆</strong>
@@ -560,17 +571,25 @@ function submitNewGame() {
             </div>
           </div>
 
-          <PaginationBar
-            :total="filteredCourts.length"
-            :page="courtPage"
-            :page-size="PAGE_SIZE"
-            unit="家场馆"
-            @update:page="courtPage = $event"
-          />
         </div>
+        <PaginationBar
+          :total="filteredCourts.length"
+          :page="courtPage"
+          :page-size="PAGE_SIZE"
+          unit="家场馆"
+          @update:page="courtPage = $event"
+        />
+      </template>
 
-        <!-- 右侧固定地图 -->
-        <div class="card play-map-sticky">
+      <MapResultsLayout
+        v-else
+        :items="courtMapItems"
+        :selected-id="selectedVenue?.id"
+        list-label="地图场馆列表"
+        empty-text="当前筛选条件下暂无匹配场馆"
+        @select="activeVenueId = $event"
+      >
+        <div>
           <div class="card-pad" style="border-bottom: 1px solid var(--line); background: #fafdfc; padding: 14px 16px">
             <div class="flex-between" style="margin-bottom: 10px">
               <strong style="font-size: 16.5px; color: var(--ink)">
@@ -662,7 +681,7 @@ function submitNewGame() {
             </div>
           </div>
         </div>
-      </div>
+      </MapResultsLayout>
     </div>
 
     <!-- 同城约球完整工作台 -->
@@ -929,3 +948,18 @@ function submitNewGame() {
     </div>
   </section>
 </template>
+
+<style scoped>
+.play-court-results {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.play-court-results > .card {
+  grid-column: 1 / -1;
+}
+
+.play-court-results .court-item-compact {
+  grid-template-columns: minmax(128px, 30%) minmax(0, 1fr);
+}
+</style>

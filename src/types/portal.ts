@@ -357,8 +357,14 @@ export interface LightboxPayload {
   reviews: (string | LightboxReview)[]
 }
 
+export interface HotelStaySelection {
+  checkIn: string
+  checkOut: string
+  roomId?: string
+}
+
 export type DetailPagePayload =
-  | { kind: 'hotel'; hotelId: string }
+  | { kind: 'hotel'; hotelId: string; stay?: HotelStaySelection }
   | { kind: 'product'; productId: string }
   | { kind: 'venue'; venueId: string; date?: string; courtId?: string; slotTime?: string }
   | { kind: 'cinema' }

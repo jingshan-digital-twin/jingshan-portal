@@ -12,7 +12,7 @@ import {
 } from '../../mock/tourData'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, openPhoto, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
+const { openPhoto, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
 
 // 模块顶部主视图切换
 const activeSection = ref<'all' | 'scenic' | 'rural' | 'trendy' | 'spots' | 'packages' | 'audio' | 'lines'>('scenic')
@@ -123,6 +123,7 @@ function openSpotDetail(spot: (typeof TOUR_SPOTS)[number]) {
     address: spot.address,
     lng: spot.lng,
     lat: spot.lat,
+    actionKind: 'spot',
     tags: spot.tags,
     hotItemsTitle: '✨ 必体验亮点与消费推荐',
     hotItems: spot.hotItems,
@@ -187,23 +188,13 @@ const visibleTrails = computed(() =>
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: activeSection === 'scenic' || activeSection === 'spots' || activeSection === 'all' }" @click="activeSection = 'scenic'">景区</button>
+        <button class="m-tab" :class="{ active: activeSection === 'scenic' }" @click="activeSection = 'scenic'">景区</button>
         <button class="m-tab" :class="{ active: activeSection === 'rural' }" @click="activeSection = 'rural'">乡村</button>
         <button class="m-tab" :class="{ active: activeSection === 'trendy' }" @click="activeSection = 'trendy'">网红</button>
+        <button class="m-tab" :class="{ active: activeSection === 'spots' }" @click="activeSection = 'spots'">全部景点</button>
         <button class="m-tab" :class="{ active: activeSection === 'packages' }" @click="activeSection = 'packages'">网旅产品</button>
         <button class="m-tab" :class="{ active: activeSection === 'audio' }" @click="activeSection = 'audio'">语音导览</button>
         <button class="m-tab" :class="{ active: activeSection === 'lines' }" @click="activeSection = 'lines'">文旅专线与骑行徒步</button>
-      </div>
-    </div>
-
-    <!-- 顶部来源地定制横幅 -->
-    <div class="ticket-stub-banner mb-16">
-      <div style="font-size: 16.5px; font-weight: 900">
-        📍 来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 电子票根畅享景区、夜市与文旅专线优待
-      </div>
-      <div class="flex-row">
-        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ {{ TOUR_SPOTS.length }} 处景点</button>
-        <button class="tag" style="background: rgba(255, 255, 255, 0.2); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 {{ TOUR_PACKAGES.length }} 款网旅套餐</button>
       </div>
     </div>
 

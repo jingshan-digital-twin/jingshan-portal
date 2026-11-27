@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import PaginationBar from '../../components/PaginationBar.vue'
-import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, openPhoto, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
+const { openPhoto } = usePortalStore()
 const PAGE_SIZE = 4
 const foodTab = ref<'联盟85折' | '农家菜' | '夜市'>('联盟85折')
 const foodKeyword = ref('')
 const foodPage = ref(1)
-const dineDate = ref(BOOKING_DATES[0]!.iso)
-const dinePeriod = ref<'午市 11:30-13:30' | '晚市 17:30-20:00' | '夜宵 20:30-23:30'>('晚市 17:30-20:00')
-const dineGuests = ref('4人桌')
 const foodSort = ref<'default' | 'price' | 'rating'>('default')
 
 const restaurants = [
@@ -28,7 +24,7 @@ const restaurants = [
     dist: '距国际网球中心 600m',
     rating: 4.9,
     reviews: 612,
-    menu: '国宝桥米锅巴 ¥48 ｜ 洪湖排骨藕汤 ¥68 ｜ 惠亭湖刁子鱼 ¥56',
+    dishes: ['国宝桥米锅巴', '洪湖排骨藕汤', '惠亭湖刁子鱼'],
     intro:
       '京山最具代表性的非遗桥米主题鄂菜旗舰馆，紧邻国际网球中心。严选孙桥镇核心产区当年新磨“国宝京山桥米”配明火砂锅现焖，同时面向打球游客推出低脂高蛋白运动轻食菜品，出示京山网球订场/参赛电子票根立享全单85折。',
     tags: ['网球联盟85折', '非遗国宝桥米', '明厨亮灶A级食安', '免费停车2小时', '有大桌包厢'],
@@ -48,7 +44,6 @@ const restaurants = [
       { user: '长沙欣然妈妈', origin: '长沙', score: 4.9, date: '2026-11-22', content: '带娃打中青赛连吃了三顿，特意夸一下他家的低脂鸡胸和清炒葛粉，清淡不油腻，孩子赛前吃很放心。' },
       { user: '深圳球友小周', origin: '深圳', score: 4.9, date: '2026-11-19', content: '惠亭湖刁子鱼煎得太香了，吃完饭顺手在店里买了两盒同款有机桥米寄回深圳。' },
     ],
-    quote: '打完球出示订场票根直接减了¥30，桥米锅巴香到光盘！',
     avg: 78,
   },
   {
@@ -64,7 +59,7 @@ const restaurants = [
     dist: '绿林山景区入口 200m',
     rating: 4.8,
     reviews: 384,
-    menu: '山泉土鸡汤 ¥98 ｜ 京山香菇滑鸡 ¥52 ｜ 农家腊肉炒竹笋 ¥46',
+    dishes: ['山泉土鸡汤', '京山香菇滑鸡', '农家腊肉炒竹笋'],
     intro:
       '扎根绿林山南门15年的口碑农家老店，坚持使用大洪山泉水与山林散养土鸡、自家地窖腊肉、当年椴木花菇和柴火铁锅焖桥米饭。明码标价童叟无欺，是打球延伸游绿林山必吃的宝藏土菜馆。',
     tags: ['票根满100减25', '柴火铁锅现炖', '山林散养土鸡', '明码标价零套路'],
@@ -83,7 +78,6 @@ const restaurants = [
       { user: '武汉小李', origin: '武汉', score: 4.8, date: '2026-11-20', content: '景区门口居然一点不宰客，菜单明码标价份量很足，腊肉炒竹笋特别正宗。' },
       { user: '北京家长王女士', origin: '北京', score: 4.8, date: '2026-11-17', content: '老板娘很实在，主动提醒我们4个人点3个菜就够吃，汤鲜味美非常推荐！' },
     ],
-    quote: '现杀土鸡配本地桥米饭，明码标价童叟无欺，强烈推荐！',
     avg: 65,
   },
   {
@@ -99,7 +93,7 @@ const restaurants = [
     dist: '距文峰公园球场 300m',
     rating: 4.9,
     reviews: 520,
-    menu: '秘制小龙虾 ¥88 ｜ 京山米茶 ¥8 ｜ 运动低脂鸡胸沙拉 ¥36',
+    dishes: ['秘制小龙虾', '京山米茶', '运动低脂鸡胸沙拉'],
     intro:
       '位于文峰公园网球场步行仅300米的京山夜宵人气地标！既有荆楚风味十足的秘制油焖大虾、现切鲜牛肉碳火小串与冰爽京山传统米茶，也贴心为夜打球友准备了高蛋白运动轻食沙拉和电解质特饮，河畔晚风氛围感拉满。',
     tags: ['距文峰球场300m', '营业至凌晨2点', '票根赠冰镇米茶', '夜场球友聚餐据点'],
@@ -118,7 +112,6 @@ const restaurants = [
       { user: '上海球友Mia', origin: '上海', score: 4.9, date: '2026-11-23', content: '没想到京山夜市还有专门给打球人做的轻食沙拉，河边灯光超美，烟火气十足！' },
       { user: '武汉小刘', origin: '武汉', score: 4.9, date: '2026-11-18', content: '出示电子票根直接送了一大扎米茶，人均50多吃到撑，来京山一定要体验文峰夜打+河畔夜宵！' },
     ],
-    quote: '打完夜场球走3分钟就到，球友聚餐氛围超棒！',
     avg: 58,
   },
   {
@@ -134,7 +127,7 @@ const restaurants = [
     dist: '距国际网球中心 2.1km',
     rating: 4.7,
     reviews: 326,
-    menu: '温泉鱼头煲 ¥88 ｜ 香煎小白鱼 ¥48 ｜ 葛粉圆子 ¥28',
+    dishes: ['温泉鱼头煲', '香煎小白鱼', '葛粉圆子'],
     intro:
       '温泉小镇里的本地鱼庄，招牌温泉鱼头煲用惠亭湖胖头鱼慢炖，汤白味浓。打完球泡完汤过来吃一顿，凭电子票根整单 85 折。',
     tags: ['网球联盟85折', '温泉鱼头煲', '可停8辆车', '有包间'],
@@ -146,7 +139,6 @@ const restaurants = [
     detailedReviews: [
       { user: '荆门球友老周', origin: '荆门', score: 4.7, date: '2026-11-23', content: '泡完温泉过来吃鱼头，汤鲜得能喝三碗，票根还打了折。' },
     ],
-    quote: '温泉鱼头汤够鲜，泡完汤吃一顿正好。',
     avg: 72,
   },
   {
@@ -162,7 +154,7 @@ const restaurants = [
     dist: '距文峰公园球场 300m',
     rating: 4.6,
     reviews: 410,
-    menu: '腊味煲仔饭 ¥32 ｜ 桥米鸡蓉粥 ¥18 ｜ 例汤 ¥8',
+    dishes: ['腊味煲仔饭', '桥米鸡蓉粥', '例汤'],
     intro:
       '打完球想快速解决一餐的最佳选择：砂锅现焖桥米煲仔饭，锅巴焦香，出餐快、分量足，凭票根 85 折。',
     tags: ['网球联盟85折', '出餐快', '单人友好', '可打包'],
@@ -174,7 +166,6 @@ const restaurants = [
     detailedReviews: [
       { user: '武汉球友小林', origin: '武汉', score: 4.6, date: '2026-11-24', content: '打完早场过来十分钟就上饭，锅巴香脆，价格也实惠。' },
     ],
-    quote: '出餐快、锅巴香，打完球吃最省时间。',
     avg: 38,
   },
   {
@@ -190,7 +181,7 @@ const restaurants = [
     dist: '距国际网球中心 9.4km',
     rating: 4.8,
     reviews: 512,
-    menu: '柴火土鸡 ¥88 ｜ 湖水煮鱼 ¥68 ｜ 蒸白花菜 ¥26',
+    dishes: ['柴火土鸡', '湖水煮鱼', '蒸白花菜'],
     intro:
       '开在惠亭湖边的老院子，柴火灶现炖散养土鸡，配自家腌的白花菜和湖边时蔬，是本地人周末聚餐常去的一家。',
     tags: ['柴火灶土鸡', '湖边院子', '亲子友好', '免费停车'],
@@ -202,7 +193,6 @@ const restaurants = [
     detailedReviews: [
       { user: '京山本地阿珍', origin: '京山', score: 4.8, date: '2026-11-21', content: '带外地朋友来的，土鸡炖得脱骨，院子里坐着很舒服。' },
     ],
-    quote: '湖边院子炖土鸡，周末带家人来最合适。',
     avg: 58,
   },
   {
@@ -218,7 +208,7 @@ const restaurants = [
     dist: '距国际网球中心 13km',
     rating: 4.7,
     reviews: 298,
-    menu: '柴火焖鹅 ¥128 ｜ 山笋炒腊肉 ¥58 ｜ 野菜煎蛋 ¥28',
+    dishes: ['柴火焖鹅', '山笋炒腊肉', '野菜煎蛋'],
     intro:
       '去太子山徒步、看玻璃栈道后顺路吃饭的院子菜，招牌柴火焖鹅分量足，山笋、野菜都是当天从林场收的。',
     tags: ['柴火焖鹅', '山野时蔬', '适合团队', '院子停车'],
@@ -230,7 +220,6 @@ const restaurants = [
     detailedReviews: [
       { user: '荆门自驾客', origin: '荆门', score: 4.7, date: '2026-11-18', content: '爬完太子山过来吃焖鹅，锅气足，分量给得实在。' },
     ],
-    quote: '焖鹅够香，爬山下来吃一锅很满足。',
     avg: 65,
   },
   {
@@ -246,7 +235,7 @@ const restaurants = [
     dist: '距国际网球中心 8km',
     rating: 4.6,
     reviews: 730,
-    menu: '炭火烤鱼 ¥78 ｜ 牛油小串 ¥3/串 ｜ 炒米粉 ¥12',
+    dishes: ['炭火烤鱼', '牛油小串', '炒米粉'],
     intro:
       '新市大道夜市里开了十几年的烤鱼摊，炭火现烤草鱼，配土豆片豆皮，是本地人下夜班和球友夜宵的固定据点。',
     tags: ['炭火烤鱼', '营业到凌晨', '明码标价', '人均50'],
@@ -258,7 +247,6 @@ const restaurants = [
     detailedReviews: [
       { user: '京山本地阿凯', origin: '京山', score: 4.6, date: '2026-11-25', content: '十点多过来还满座，烤鱼入味，价格也实在。' },
     ],
-    quote: '夜场打完来一锅烤鱼，配冰米茶最爽。',
     avg: 48,
   },
   {
@@ -274,7 +262,7 @@ const restaurants = [
     dist: '距国际网球中心 700m',
     rating: 4.5,
     reviews: 366,
-    menu: '油焖大虾 ¥98/份 ｜ 冰镇米茶 ¥6 ｜ 卤藕 ¥18',
+    dishes: ['油焖大虾', '冰镇米茶', '卤藕'],
     intro:
       '离球场最近的一摊宵夜：夏天油焖大虾、冬天羊肉汤，配一杯冰镇京山米茶解腻，走回酒店只要十分钟。',
     tags: ['步行可达', '油焖大虾', '京山米茶', '可打包'],
@@ -286,41 +274,7 @@ const restaurants = [
     detailedReviews: [
       { user: '襄阳小敏', origin: '襄阳', score: 4.5, date: '2026-11-20', content: '住温泉这边，晚上下来吃虾喝米茶，走回去很近。' },
     ],
-    quote: '就在酒店楼下，虾新鲜、米茶解腻。',
     avg: 55,
-  },
-]
-
-const groupVenues = [
-  {
-    name: '文峰迎宾馆赛事宴会厅',
-    rating: 4.9,
-    desc: '可同时接待 320 人 · 运动员营养自助 ¥60/人起 · 距赛场0.8km',
-    address: '温泉街道京山大道128号文峰迎宾馆二楼',
-    lng: 113.1146,
-    lat: 31.0241,
-    dist: '距赛场 0.8km',
-    driveMin: '驾车约 3 分钟',
-  },
-  {
-    name: '京源网球中心餐厅（定点）',
-    rating: 4.8,
-    desc: '可接待 200 人 · 赛间简餐/团餐 ¥45/人起 · 场馆内步行2分钟',
-    address: '温泉街道网球大道1号国际网球中心东附楼',
-    lng: 113.1202,
-    lat: 31.0215,
-    dist: '场馆内 150m',
-    driveMin: '步行约 2 分钟',
-  },
-  {
-    name: '温泉度假区生态宴会中心',
-    rating: 4.9,
-    desc: '可接待 400 人 · 鄂菜庆功宴 ¥880/桌起 · 免费大巴泊位',
-    address: '温泉街道天沐温泉度假区东区宴会楼',
-    lng: 113.1408,
-    lat: 31.0305,
-    dist: '距赛场 3.4km',
-    driveMin: '驾车约 8 分钟',
   },
 ]
 
@@ -328,7 +282,7 @@ const visibleShops = computed(() => {
   const q = foodKeyword.value.trim().toLowerCase()
   const list = restaurants.filter((r) => {
     const okTab = r.cat === foodTab.value
-    const okQ = !q || r.name.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q) || r.address.toLowerCase().includes(q)
+    const okQ = !q || [r.name, r.address, ...r.dishes].some((text) => text.toLowerCase().includes(q))
     return okTab && okQ
   })
   return [...list].sort((a, b) => {
@@ -374,17 +328,6 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
     reviews: shop.detailedReviews,
   })
 }
-
-function reserveTable(shop: (typeof restaurants)[number]) {
-  const dLabel = BOOKING_DATES.find((d) => d.iso === dineDate.value)?.shortDate ?? dineDate.value
-  createQuickOrder(
-    '门票',
-    `美食订座：${shop.name}`,
-    `${dLabel} ${dinePeriod.value} · ${dineGuests.value} · 凭票根 ${state.ticketStubCode} 享优惠`,
-    0,
-    30,
-  )
-}
 </script>
 
 <template>
@@ -403,50 +346,14 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       </div>
     </div>
 
-    <div class="ticket-stub-banner mb-16">
-      <div style="font-size: 17px; font-weight: 900">打球凭证直享「京山网球联盟商家」餐饮特惠！</div>
-      <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">
-        出示我的电子票根码
-      </button>
-    </div>
-
-    <!-- 用餐日期、时段与排序清晰下拉筛选 -->
     <div class="card card-pad mb-16 filter-workbench">
-      <div class="dd-filter-grid cols-5">
-        <div class="dd-field">
+      <div class="dd-filter-grid food-filters">
+        <label class="dd-field">
           <span class="dd-field-label">关键词搜索</span>
-          <div class="search-bar" style="width: 100%; height: 42px; border-radius: 6px">
-            <span>🔍</span>
+          <span class="search-bar food-search">
+            <span aria-hidden="true">🔍</span>
             <input v-model="foodKeyword" type="text" placeholder="搜餐厅、招牌菜、地址…" />
-          </div>
-        </div>
-
-        <label class="dd-field">
-          <span class="dd-field-label">订座日期</span>
-          <select v-model="dineDate" class="dd-select active">
-            <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">
-              {{ d.shortDate }}（{{ d.weekday }}）
-            </option>
-          </select>
-        </label>
-
-        <label class="dd-field">
-          <span class="dd-field-label">用餐时段</span>
-          <select v-model="dinePeriod" class="dd-select active">
-            <option value="午市 11:30-13:30">午市 11:30-13:30</option>
-            <option value="晚市 17:30-20:00">晚市 17:30-20:00</option>
-            <option value="夜宵 20:30-23:30">夜宵 20:30-23:30</option>
-          </select>
-        </label>
-
-        <label class="dd-field">
-          <span class="dd-field-label">桌型人数</span>
-          <select v-model="dineGuests" class="dd-select">
-            <option>2人桌</option>
-            <option>4人桌</option>
-            <option>6-8人包厢</option>
-            <option>10人+球队桌</option>
-          </select>
+          </span>
         </label>
 
         <label class="dd-field">
@@ -461,60 +368,24 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     </div>
 
     <div class="mb-16">
-      <div class="grid-3">
-        <div v-for="shop in pagedShops" :key="shop.name" class="card">
-        <div
-          class="photo-box"
-          style="height: 180px"
-          @click="openShopDetail(shop)"
-        >
-          <img :src="shop.photo" :alt="shop.name" />
-          <span class="badge-tl">{{ shop.badge }}</span>
-        </div>
-        <div class="card-pad">
-          <div class="flex-between" style="margin-bottom: 6px">
-            <strong style="font-size: 17px; cursor: pointer" @click="openShopDetail(shop)">{{ shop.name }}</strong>
-            <span class="rating-pill">★ {{ shop.rating }}</span>
-          </div>
-          <div class="coord-bar">
-            <span>📍 {{ shop.dist }} · {{ shop.address.replace('湖北省荆门市京山市', '') }}</span>
-          </div>
-          <div style="font-size: 13.5px; color: var(--ink-2); background: #f4faf7; padding: 9px 11px; border-radius: 0; margin: 10px 0">
-            <strong>招牌推荐：</strong>{{ shop.menu }}
-          </div>
-          <div class="review-quote">💬 评：“{{ shop.quote }}”</div>
-          <div class="flex-between" style="margin-top: 14px; gap: 8px; flex-wrap: wrap">
-            <span class="price" style="font-size: 20px">¥{{ shop.avg }}<small>/人均 · 核销+60分</small></span>
-            <div class="flex-row" style="gap: 6px; flex-shrink: 0; flex-wrap: nowrap; margin-left: auto">
-              <button
-                class="btn-ghost"
-                @click="openShopDetail(shop)"
-              >
-                详情菜单
+      <div class="grid-2 food-grid">
+        <article v-for="shop in pagedShops" :key="shop.name" class="card food-card">
+          <img class="food-card-photo" :src="shop.photo" alt="" />
+          <div class="food-card-content">
+            <h2 class="food-card-heading">
+              <button type="button" class="food-card-title" @click="openShopDetail(shop)">
+                {{ shop.name }}
               </button>
-              <button class="btn-orange" @click="reserveTable(shop)">
-                预约桌位
-              </button>
-              <button
-                class="btn-primary"
-                @click="
-                  openNavigation({
-                    placeName: shop.name,
-                    address: shop.address,
-                    lng: shop.lng,
-                    lat: shop.lat,
-                    distance: shop.dist,
-                    driveMin: shop.driveMin,
-                    tip: '凭订场电子票根进店扫码即可直接享85折/满减优惠，支持高德/百度一键导航',
-                  })
-                "
-              >
-                导航
-              </button>
+            </h2>
+            <div class="food-card-meta">
+              <span class="rating-pill"><span aria-hidden="true">★</span> {{ shop.rating }} 分</span>
+              <span>{{ shop.reviews }} 条评价</span>
+              <span>人均 <strong>¥{{ shop.avg }}</strong></span>
             </div>
+            <p>{{ shop.dist }}</p>
+            <p><strong>推荐菜</strong> {{ shop.dishes.join('、') }}</p>
           </div>
-        </div>
-      </div>
+        </article>
       </div>
       <PaginationBar
         :total="visibleShops.length"
@@ -524,50 +395,96 @@ function reserveTable(shop: (typeof restaurants)[number]) {
         @update:page="foodPage = $event"
       />
     </div>
-
-    <div class="card card-pad" style="background: #fffbf2; border-color: #f2d59b">
-      <div class="flex-between" style="margin-bottom: 14px">
-        <strong style="font-size: 18px; color: #6e4300">🍱 赛事团餐定点餐饮推荐（A级食安保障）</strong>
-        <button
-          class="btn-orange"
-          @click="openActionModal({ type: 'inquiry', title: '赛事团餐 / 研学团队用餐预订', subtitle: '支持 10–400 人定制菜单与运动员营养自助餐，食安 A 级保障', submitLabel: '提交团餐预订需求' })"
-        >
-          提交团餐需求
-        </button>
-      </div>
-      <div class="grid-3">
-        <div
-          v-for="gv in groupVenues"
-          :key="gv.name"
-          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 0; padding: 14px 16px; font-size: 14px"
-        >
-          <div class="flex-between" style="margin-bottom: 6px">
-            <strong style="font-size: 15.5px">{{ gv.name }}</strong>
-            <span class="rating-pill">★ {{ gv.rating }}</span>
-          </div>
-          <div style="color: var(--ink-2); margin-bottom: 8px; font-size: 13.5px">{{ gv.desc }}</div>
-          <div class="flex-between" style="font-size: 13px; color: var(--ink-3)">
-            <span>📍 {{ gv.dist }}</span>
-            <button
-              class="btn-ghost"
-              style="padding: 5px 10px; font-size: 13px; flex-shrink: 0"
-              @click="
-                openNavigation({
-                  placeName: gv.name,
-                  address: gv.address,
-                  lng: gv.lng,
-                  lat: gv.lat,
-                  distance: gv.dist,
-                  driveMin: gv.driveMin,
-                  tip: '团队大巴可免费停靠专属区域，食安 A 级定点接待',
-                })
-              "
-            >
-              🧭 导航
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </section>
 </template>
+
+<style scoped>
+.food-filters {
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+
+.food-search {
+  width: 100%;
+  height: 42px;
+  border-radius: 6px;
+}
+
+.food-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.food-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 36%) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.food-card-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.food-card-content {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 4px 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.food-card-heading {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
+.food-card-title {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.food-card-title::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.food-card-title:focus-visible {
+  outline: none;
+}
+
+.food-card-title:focus-visible::after {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+
+.food-card:hover .food-card-title {
+  color: var(--primary-dark);
+}
+
+.food-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.food-card-meta .rating-pill {
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+</style>

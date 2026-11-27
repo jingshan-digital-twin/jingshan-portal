@@ -28,6 +28,7 @@ import type {
   DetailPagePayload,
   FeedbackPost,
   GroupClassItem,
+  HotelStaySelection,
   LightboxPayload,
   LiveMatch,
   MatchmakingGame,
@@ -226,8 +227,15 @@ function parseDetailFromUrl(): DetailPagePayload | null {
     const raw = new URLSearchParams(window.location.search).get('detail')
     if (!raw) return null
     if (raw === 'cinema') return { kind: 'cinema' }
-    const [kind, id] = raw.split(':')
-    if (kind === 'hotel' && id) return { kind: 'hotel', hotelId: id }
+    const [kind, id, checkIn, checkOut, roomId] = raw.split(':')
+    if (kind === 'hotel' && id) {
+      const stay = checkIn && checkOut && checkOut > checkIn
+        && BOOKING_DATES.some((day) => day.iso === checkIn)
+        && BOOKING_DATES.some((day) => day.iso === checkOut)
+        ? { checkIn, checkOut, roomId }
+        : undefined
+      return { kind: 'hotel', hotelId: id, stay }
+    }
     if (kind === 'product' && id) return { kind: 'product', productId: id }
     if (kind === 'venue' && id) return { kind: 'venue', venueId: id }
   } catch {
@@ -237,7 +245,12 @@ function parseDetailFromUrl(): DetailPagePayload | null {
 }
 
 function encodeDetailParam(payload: DetailPagePayload): string {
-  if (payload.kind === 'hotel') return `hotel:${payload.hotelId}`
+  if (payload.kind === 'hotel') {
+    const hotel = `hotel:${payload.hotelId}`
+    if (!payload.stay) return hotel
+    const { checkIn, checkOut, roomId } = payload.stay
+    return `${hotel}:${checkIn}:${checkOut}${roomId ? `:${roomId}` : ''}`
+  }
   if (payload.kind === 'product') return `product:${payload.productId}`
   if (payload.kind === 'venue') return `venue:${payload.venueId}`
   if (payload.kind === 'cinema') return 'cinema'
@@ -353,8 +366,8 @@ export function usePortalStore() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function openHotelDetail(hotelId: string) {
-    openDetailPage({ kind: 'hotel', hotelId })
+  function openHotelDetail(hotelId: string, stay?: HotelStaySelection) {
+    openDetailPage({ kind: 'hotel', hotelId, stay })
   }
 
   function openProductDetail(productId: string) {

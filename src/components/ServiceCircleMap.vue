@@ -33,10 +33,13 @@ const props = defineProps<{
   venues?: CourtVenue[]
   poiCategory?: MapPoiCategory
   customAmenities?: AmenityMapPoint[]
+  parkingLocations?: { id: string; name: string; address: string; lat: number; lng: number; remain: number; total: number; isCharger?: boolean }[]
+  selectedLocationId?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'select-venue', venueId: string): void
+  (e: 'select-location', locationId: string): void
 }>()
 
 const mapEl = ref<HTMLDivElement | null>(null)
@@ -46,6 +49,7 @@ let map: L.Map | null = null
 let baseLayer: L.TileLayer | null = null
 let labelLayer: L.TileLayer | null = null
 let overlayGroup: L.LayerGroup | null = null
+const locationMarkers = new Map<string, L.Marker>()
 
 const DEFAULT_CENTER: [number, number] = [31.0218, 113.1195]
 
@@ -258,9 +262,20 @@ function popupHtml(title: string, desc: string, lat: number, lng: number) {
   </div>`
 }
 
+function registerLocation(id: string, marker: L.Marker) {
+  locationMarkers.set(id, marker)
+  marker.on('popupopen', () => emit('select-location', id))
+}
+
+function openSelectedLocation() {
+  const marker = locationMarkers.get(props.selectedLocationId ?? '')
+  if (marker && !marker.isPopupOpen()) marker.openPopup()
+}
+
 function renderOverlays(animatePan = false) {
   if (!map || !overlayGroup) return
   overlayGroup.clearLayers()
+  locationMarkers.clear()
 
   const center = activeCenter.value
 
@@ -294,11 +309,19 @@ function renderOverlays(animatePan = false) {
     L.marker([31.0242, 113.1202], { icon: makeSimpleIcon('⛔ 温泉大道段 临时封闭', '#DF2E38') }).addTo(overlayGroup)
     L.marker([31.0268, 113.1172], { icon: makeSimpleIcon('⚠️ 京山大道 限行禁停', '#E87112') }).addTo(overlayGroup)
 
-    for (const poi of VENUE_POIS['venue-international']!.filter((p) => p.category === '停车充电')) {
-      L.marker([poi.lat, poi.lng], { icon: makeAmapPoiIcon(poi) })
-        .bindPopup(popupHtml(poi.name, `${poi.priceOrMeta} · ${poi.desc}`, poi.lat, poi.lng))
-        .addTo(overlayGroup)
+    for (const location of props.parkingLocations ?? []) {
+      const availability = `${location.isCharger ? '闲' : '剩'}${location.remain}/${location.total}`
+      registerLocation(location.id, L.marker([location.lat, location.lng], {
+        icon: makeSimpleIcon(availability, location.isCharger ? '#1c73e8' : '#0d7a58'),
+        title: location.name,
+      }).bindPopup(popupHtml(location.name, `${availability} · ${location.address}`, location.lat, location.lng)).addTo(overlayGroup))
     }
+    openSelectedLocation()
+    return
+  }
+
+  if (props.mode === 'courts' && !props.venues?.length) {
+    map.setView(DEFAULT_CENTER, 14)
     return
   }
 
@@ -324,7 +347,7 @@ function renderOverlays(animatePan = false) {
     // 周边其他球场（可点击切换）
     for (const v of props.venues ?? []) {
       if (props.selectedVenue && v.id === props.selectedVenue.id) continue
-      L.marker([v.lat, v.lng], { icon: makeVenueFocalIcon(v.name, v.minPrice, false), zIndexOffset: 200 })
+      L.marker([v.lat, v.lng], { icon: makeVenueFocalIcon(v.name, v.minPrice, false), title: v.name, zIndexOffset: 200 })
         .on('click', () => emit('select-venue', v.id))
         .addTo(overlayGroup)
     }
@@ -348,10 +371,12 @@ function renderOverlays(animatePan = false) {
       { key: 'ATM', name: '24h ATM自助点', lat: 31.0248, lng: 113.1142, dist: '350m', info: '文峰花园酒店旁 · 支持外卡' },
     ]
     for (const item of list) {
-      L.marker([item.lat, item.lng], { icon: makeAmenityPointIcon(item), zIndexOffset: 600 })
+      const marker = L.marker([item.lat, item.lng], { icon: makeAmenityPointIcon(item), title: item.name, zIndexOffset: 600 })
         .bindPopup(popupHtml(`${item.name}（${item.key}）`, `${item.info} · 距球场 ${item.dist}`, item.lat, item.lng))
         .addTo(overlayGroup)
+      registerLocation(item.name, marker)
     }
+    openSelectedLocation()
     return
   }
 
@@ -365,7 +390,7 @@ function renderOverlays(animatePan = false) {
   // Render other venues (clickable to switch selection)
   for (const v of props.venues ?? []) {
     if (props.selectedVenue && v.id === props.selectedVenue.id) continue
-    L.marker([v.lat, v.lng], { icon: makeVenueFocalIcon(v.name, v.minPrice, false), zIndexOffset: 200 })
+    L.marker([v.lat, v.lng], { icon: makeVenueFocalIcon(v.name, v.minPrice, false), title: v.name, zIndexOffset: 200 })
       .on('click', () => emit('select-venue', v.id))
       .addTo(overlayGroup)
   }
@@ -389,6 +414,9 @@ function renderOverlays(animatePan = false) {
   } else {
     L.marker(DEFAULT_CENTER, { icon: makeVenueFocalIcon('京山国际网球中心', 68, true), zIndexOffset: 1000 }).addTo(overlayGroup)
   }
+  if (!animatePan && props.venues?.length) {
+    map.fitBounds(L.latLngBounds(props.venues.map((venue) => [venue.lat, venue.lng])), { padding: [45, 45], maxZoom: targetZoom, animate: false })
+  }
 }
 
 onMounted(() => {
@@ -406,13 +434,13 @@ onMounted(() => {
 
 watch(baseType, (val) => setBasemap(val))
 watch(
-  () => [props.mode, props.radius, props.poiCategory, props.venues?.length, props.customAmenities],
-  () => renderOverlays(false),
+  () => [props.venues, props.selectedVenue?.id, props.mode, props.radius, props.poiCategory, props.customAmenities, props.parkingLocations] as const,
+  ([venues, venueId], [previousVenues, previousVenueId]) => {
+    renderOverlays(venueId !== previousVenueId && (props.mode !== 'courts' || venues === previousVenues))
+  },
 )
-watch(
-  () => props.selectedVenue?.id,
-  () => renderOverlays(true),
-)
+watch(() => props.selectedLocationId, openSelectedLocation)
+defineExpose({ openSelectedLocation })
 
 onUnmounted(() => {
   map?.remove()

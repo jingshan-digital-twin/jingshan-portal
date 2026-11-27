@@ -1,53 +1,118 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import { HOTEL_PROFILES } from '../../mock/details'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
+import type { HotelProfile, HotelRoom } from '../../types/portal'
 
+const StayResultsMap = defineAsyncComponent(() => import('./StayResultsMap.vue'))
 const { state, openHotelDetail, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
 const PAGE_SIZE = 4
-const stayTab = ref<'公寓' | '赛事优惠' | '民宿'>('公寓')
+const promotionMessage = '京山市房管局重磅活动：2026京山网球公开赛期间购房直减 ¥50,000！'
+const typeLabels: Record<HotelProfile['category'], string> = {
+  公寓: '网球公寓',
+  赛事优惠: '赛事合作酒店',
+  民宿: '温泉民宿',
+}
+const facilityOptions = ['免费停车', '快充充电桩', '免费赛场摆渡车', '天然私汤入户', '独立厨房/洗衣机']
+const isNightlyRoom = (room: HotelRoom) => room.leaseUnit !== '/周' && room.leaseUnit !== '/月'
+const hotelOffers = HOTEL_PROFILES.map((hotel) => ({
+  hotel,
+  rooms: hotel.rooms.filter(isNightlyRoom).sort((a, b) => a.eventPrice - b.eventPrice),
+}))
+const maxNightlyPrice = Math.max(100, ...hotelOffers.flatMap(({ rooms }) => rooms.map((room) => room.eventPrice)))
+const priceLimit = Math.ceil(maxNightlyPrice / 100) * 100
+
+const keywordInput = ref('')
 const stayKeyword = ref('')
 const stayPage = ref(1)
 const checkInDate = ref(BOOKING_DATES[0]!.iso)
 const checkOutDate = ref(BOOKING_DATES[2]!.iso)
-const stayPriceFilter = ref<'全部' | '200以下' | '200-400' | '400以上'>('全部')
-const staySort = ref<'default' | 'price' | 'rating'>('default')
+const minPrice = ref(0)
+const maxPrice = ref(priceLimit)
+const stayType = ref<HotelProfile['category'] | ''>('')
+const minRating = ref(0)
+const minReviews = ref(0)
+const breakfast = ref<'' | 'included' | 'excluded'>('')
 const stayFacilities = ref<string[]>([])
-const facilityOptions = ['免费停车', '快充充电桩', '免费赛场摆渡车', '天然私汤入户', '独立厨房/洗衣机']
+const staySort = ref<'default' | 'price' | 'rating' | 'reviews'>('default')
+const showMap = ref(false)
+const mapTrigger = ref<HTMLButtonElement>()
+const resultsHeading = ref<HTMLHeadingElement>()
+const promoCollapsed = ref(false)
+const promoHintDismissed = ref(false)
+const promoCloseButton = ref<HTMLButtonElement>()
+const promoReminderButton = ref<HTMLButtonElement>()
+const checkOutOptions = computed(() => BOOKING_DATES.filter((day) => day.iso > checkInDate.value))
+const nightsCount = computed(() => (Date.parse(checkOutDate.value) - Date.parse(checkInDate.value)) / 86400000)
+const priceTrack = computed(() => ({
+  left: `${minPrice.value / priceLimit * 100}%`,
+  right: `${100 - maxPrice.value / priceLimit * 100}%`,
+}))
 
-function resetStayFilters() {
-  stayKeyword.value = ''
-  stayPriceFilter.value = '全部'
-  stayFacilities.value = []
-  staySort.value = 'default'
+watch(checkOutOptions, (options) => {
+  if (checkOutDate.value <= checkInDate.value) checkOutDate.value = options[0]!.iso
+}, { flush: 'sync' })
+
+function updatePrice(event: Event, bound: 'min' | 'max') {
+  const input = event.target as HTMLInputElement
+  if (bound === 'min') {
+    minPrice.value = Math.min(input.valueAsNumber, maxPrice.value)
+    input.valueAsNumber = minPrice.value
+  } else {
+    maxPrice.value = Math.max(input.valueAsNumber, minPrice.value)
+    input.valueAsNumber = maxPrice.value
+  }
 }
 
-const nightsCount = computed(() => {
-  const s = new Date(checkInDate.value).getTime()
-  const e = new Date(checkOutDate.value).getTime()
-  return Math.max(1, Math.round((e - s) / 86400000))
-})
+function searchStays() {
+  stayKeyword.value = keywordInput.value.trim().toLowerCase()
+  stayPage.value = 1
+}
+
+function resetStayFilters() {
+  keywordInput.value = ''
+  stayKeyword.value = ''
+  minPrice.value = 0
+  maxPrice.value = priceLimit
+  stayType.value = ''
+  minRating.value = 0
+  minReviews.value = 0
+  breakfast.value = ''
+  stayFacilities.value = []
+  staySort.value = 'default'
+  stayPage.value = 1
+}
+
+function includesBreakfast(room: HotelRoom) {
+  return room.breakfast.startsWith('含') && room.breakfast.includes('早')
+}
 
 const filteredHotels = computed(() => {
-  const q = stayKeyword.value.trim().toLowerCase()
-  const list = HOTEL_PROFILES.filter((h) => {
-    const okTab = h.category === stayTab.value
-    const okQ = !q || h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q) || h.rooms.some((r) => r.name.toLowerCase().includes(q))
-    const minP = h.rooms[0]?.eventPrice ?? 0
-    const okPrice =
-      stayPriceFilter.value === '全部' ||
-      (stayPriceFilter.value === '200以下' && minP < 200) ||
-      (stayPriceFilter.value === '200-400' && minP >= 200 && minP <= 400) ||
-      (stayPriceFilter.value === '400以上' && minP > 400)
-    const okFac = stayFacilities.value.every((f) => h.facilities.some((hf) => hf.includes(f.slice(0, 4))))
-    return okTab && okQ && okPrice && okFac
+  const list = hotelOffers.flatMap(({ hotel, rooms }) => {
+    if (stayType.value && hotel.category !== stayType.value) return []
+    if (hotel.rating < minRating.value || hotel.reviewCount < minReviews.value) return []
+    if (!stayFacilities.value.every((facility) =>
+      hotel.facilities.includes(facility) || (facility === '免费停车' && hotel.facilities.includes('免费地下车库')),
+    )) return []
+
+    const query = stayKeyword.value
+    const matchesHotel = [hotel.name, hotel.address, typeLabels[hotel.category]].some((text) => text.toLowerCase().includes(query))
+    const matchesLongStay = hotel.rooms.some((offer) => !isNightlyRoom(offer) && offer.name.toLowerCase().includes(query))
+    const eligibleRooms = rooms.filter((room) => !breakfast.value || includesBreakfast(room) === (breakfast.value === 'included'))
+    const room = matchesHotel || matchesLongStay
+      ? eligibleRooms[0]
+      : eligibleRooms.find((offer) => offer.name.toLowerCase().includes(query))
+    if (!room || room.eventPrice < minPrice.value || room.eventPrice > maxPrice.value) return []
+    return [{ hotel, room }]
   })
-  return [...list].sort((a, b) => {
-    if (staySort.value === 'price') return (a.rooms[0]?.eventPrice ?? 0) - (b.rooms[0]?.eventPrice ?? 0)
-    if (staySort.value === 'rating') return b.rating - a.rating
+
+  return list.sort((a, b) => {
+    if (staySort.value === 'price') return a.room.eventPrice - b.room.eventPrice
+    if (staySort.value === 'rating') return b.hotel.rating - a.hotel.rating
+    if (staySort.value === 'reviews') return b.hotel.reviewCount - a.hotel.reviewCount
     return 0
   })
 })
@@ -57,267 +122,466 @@ const visibleCards = computed(() => {
   return filteredHotels.value.slice(start, start + PAGE_SIZE)
 })
 
-watch(filteredHotels, () => {
-  stayPage.value = 1
-})
+watch(filteredHotels, () => { stayPage.value = 1 })
+
+function toggleMap() {
+  showMap.value = !showMap.value
+  if (showMap.value) resultsHeading.value?.focus()
+  else mapTrigger.value?.focus()
+}
+
+async function togglePromotion() {
+  promoCollapsed.value = !promoCollapsed.value
+  promoHintDismissed.value = false
+  await nextTick()
+  const button = promoCollapsed.value ? promoReminderButton.value : promoCloseButton.value
+  button?.focus({ preventScroll: true })
+}
+
+function openStayDetail(hotelId: string, roomId: string) {
+  openHotelDetail(hotelId, { checkIn: checkInDate.value, checkOut: checkOutDate.value, roomId })
+}
+
+function navigateToHotel(hotel: HotelProfile) {
+  openNavigation({
+    placeName: hotel.name,
+    address: hotel.address,
+    lng: hotel.lng,
+    lat: hotel.lat,
+    distance: hotel.distanceToCourt,
+    driveMin: '约 5 分钟',
+    tip: `${hotel.openYear} · 前台电话 ${hotel.phone}`,
+  })
+}
+
+function bookStay(hotel: HotelProfile, room: HotelRoom) {
+  const arrival = BOOKING_DATES.find((day) => day.iso === checkInDate.value)?.shortDate
+  const departure = BOOKING_DATES.find((day) => day.iso === checkOutDate.value)?.shortDate
+  createQuickOrder(
+    '住宿',
+    `${hotel.name} · ${room.name}`,
+    `${arrival}入住 - ${departure}离店（共${nightsCount.value}晚） · 已核销电子票根 ${state.ticketStubCode} · ${room.breakfast}`,
+    room.eventPrice * nightsCount.value,
+    60,
+  )
+}
 </script>
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: stayTab === '公寓' }" @click="stayTab = '公寓'">短/长租网球公寓</button>
-        <button class="m-tab" :class="{ active: stayTab === '赛事优惠' }" @click="stayTab = '赛事优惠'">赛事合作优惠专区</button>
-        <button class="m-tab" :class="{ active: stayTab === '民宿' }" @click="stayTab = '民宿'">温泉精品民宿</button>
+    <form class="stay-search mb-16" aria-label="搜索住宿" @submit.prevent="searchStays">
+      <div class="stay-destination">
+        <span>目的地</span>
+        <strong>京山市</strong>
+      </div>
+      <label class="dd-field">
+        <span class="dd-field-label">入住日期</span>
+        <select v-model="checkInDate" class="dd-select">
+          <option v-for="day in BOOKING_DATES.slice(0, -1)" :key="day.iso" :value="day.iso">{{ day.shortDate }}（{{ day.weekday }}）</option>
+        </select>
+      </label>
+      <label class="dd-field">
+        <span class="dd-field-label">离店日期</span>
+        <select v-model="checkOutDate" class="dd-select">
+          <option v-for="day in checkOutOptions" :key="day.iso" :value="day.iso">{{ day.shortDate }}（{{ day.weekday }}）</option>
+        </select>
+      </label>
+      <span class="tag green stay-nights">{{ nightsCount }} 晚</span>
+      <label class="dd-field">
+        <span class="dd-field-label">关键词</span>
+        <input v-model="keywordInput" class="stay-keyword" type="search" placeholder="酒店、商圈、地址或房型" />
+      </label>
+      <button type="submit" class="btn-primary stay-search-btn">搜索住宿</button>
+    </form>
+
+    <div class="promo-banner stay-promo mb-16" :class="{ 'stay-promo-collapsed': promoCollapsed }">
+      <div id="stay-promo-content" class="stay-promo-content" :inert="promoCollapsed">
+        <div class="stay-promo-copy">
+          <span class="stay-promo-house" aria-hidden="true">🏠</span>
+          <strong>{{ promotionMessage }}</strong>
+        </div>
+        <div class="stay-promo-actions">
+          <button
+            type="button"
+            class="btn-ghost"
+            @click="openActionModal({ type: 'inquiry', title: '预约房管局赛事安居看房专车', subtitle: '温泉世家 / 网球新城品质现房 · 凭网球赛事/订场凭证立减 ¥50,000', submitLabel: '预约免费看房专车' })"
+          >
+            预约看房专车
+          </button>
+          <button type="button" class="btn-orange" @click="claimHomeSubsidy">
+            {{ state.claimedHomeSubsidy ? '✅ 已领取5万元补贴券' : '领取5万元购房补贴券 →' }}
+          </button>
+          <button
+            ref="promoCloseButton"
+            type="button"
+            class="stay-promo-close"
+            aria-label="关闭购房补贴条幅"
+            @click="togglePromotion"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- 房管局网球公开赛购房减5万元 -->
-    <div class="promo-banner mb-16">
-      <div class="flex-row" style="gap: 12px">
-        <div
-          style="width: 46px; height: 46px; border-radius: 0; background: #ff5d2a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0"
-        >
-          🏠
-        </div>
-        <div style="font-size: 17.5px; font-weight: 900; color: #542600">
-          京山市房管局重磅活动：2026京山网球公开赛期间购房直减 ¥50,000！
-        </div>
-      </div>
-      <div class="flex-row">
+    <div class="stay-layout">
+      <aside class="stay-sidebar" aria-label="住宿筛选">
         <button
-          class="btn-ghost"
-          @click="openActionModal({ type: 'inquiry', title: '预约房管局赛事安居看房专车', subtitle: '温泉世家 / 网球新城品质现房 · 凭网球赛事/订场凭证立减 ¥50,000', submitLabel: '预约免费看房专车' })"
+          ref="mapTrigger"
+          type="button"
+          class="stay-map-entry"
+          :aria-pressed="showMap"
+          @click="toggleMap"
         >
-          预约看房专车
+          <span aria-hidden="true">◎</span> {{ showMap ? '返回列表' : '在地图上显示' }}
         </button>
-        <button class="btn-orange" @click="claimHomeSubsidy">
-          {{ state.claimedHomeSubsidy ? '✅ 已领取5万元补贴券' : '领取5万元购房补贴券 →' }}
-        </button>
-      </div>
-    </div>
 
-    <!-- 入住日期、价格区间与配套下拉筛选 -->
-    <div class="card card-pad mb-16 filter-workbench">
-      <div class="dd-filter-top">
-        <div class="search-bar" style="flex: 1; min-width: 240px; max-width: 400px; height: 42px">
-          <span>🔍</span>
-          <input v-model="stayKeyword" type="text" placeholder="搜索酒店、公寓、房型…" />
-          <button v-if="stayKeyword" class="btn-ghost" style="padding: 3px 9px; font-size: 12.5px" @click="stayKeyword = ''">清空</button>
-        </div>
-        <div class="flex-row" style="gap: 10px">
-          <span class="tag green">共住 {{ nightsCount }} 晚</span>
-          <button class="btn-ghost" style="border-radius: 6px" @click="resetStayFilters">重置筛选</button>
-          <span class="dd-count-pill">符合条件：{{ filteredHotels.length }} 家</span>
-        </div>
-      </div>
-
-      <div class="dd-filter-grid cols-5">
-        <label class="dd-field">
-          <span class="dd-field-label">入住日期</span>
-          <select v-model="checkInDate" class="dd-select active">
-            <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`in-${d.iso}`" :value="d.iso">
-              {{ d.shortDate }}（{{ d.weekday }}）
-            </option>
-          </select>
-        </label>
-
-        <label class="dd-field">
-          <span class="dd-field-label">离店日期</span>
-          <select v-model="checkOutDate" class="dd-select active">
-            <option v-for="d in BOOKING_DATES.slice(1)" :key="`out-${d.iso}`" :value="d.iso">
-              {{ d.shortDate }}（{{ d.weekday }}）
-            </option>
-          </select>
-        </label>
-
-        <label class="dd-field">
-          <span class="dd-field-label">价格区间</span>
-          <select v-model="stayPriceFilter" class="dd-select" :class="{ active: stayPriceFilter !== '全部' }">
-            <option value="全部">不限价格</option>
-            <option value="200以下">¥200 以下</option>
-            <option value="200-400">¥200 – ¥400</option>
-            <option value="400以上">¥400 以上</option>
-          </select>
-        </label>
-
-        <MultiSelectDropdown
-          v-model="stayFacilities"
-          label="设施配套"
-          :options="facilityOptions"
-          placeholder="全部不限"
-        />
-
-        <label class="dd-field">
-          <span class="dd-field-label">排序方式</span>
-          <select v-model="staySort" class="dd-select">
-            <option value="default">综合推荐</option>
-            <option value="price">按价格最低</option>
-            <option value="rating">按评分最高</option>
-          </select>
-        </label>
-      </div>
-    </div>
-
-    <!-- 精选酒店/公寓/民宿卡片（每页4家） -->
-    <div class="grid-2 mb-16">
-      <div
-        v-for="hotel in visibleCards"
-        :key="hotel.id"
-        class="card"
-        :style="hotel.category === '公寓' ? 'border: 2px solid var(--primary)' : ''"
-      >
-        <div
-          class="photo-box"
-          style="height: 185px"
-          @click="openHotelDetail(hotel.id)"
-        >
-          <img :src="hotel.photo" :alt="hotel.name" />
-          <span class="badge-tl" :style="hotel.category === '公寓' ? 'background: var(--primary)' : ''">
-            {{ hotel.badge }}
-          </span>
-        </div>
-
-        <div class="card-pad">
-          <div class="flex-between" style="margin-bottom: 6px">
-            <strong style="font-size: 17.5px; cursor: pointer" @click="openHotelDetail(hotel.id)">
-              {{ hotel.name }}
-            </strong>
-            <span class="rating-pill">★ {{ hotel.rating }}</span>
+        <div class="card stay-filter-panel">
+          <div class="stay-filter-heading">
+            <h2>热门筛选</h2>
+            <button type="button" class="stay-reset" @click="resetStayFilters">重置</button>
           </div>
-
-          <div class="coord-bar">
-            <span>📍 {{ hotel.distanceToCourt }} · {{ hotel.address.replace('湖北省荆门市京山市', '') }}</span>
-          </div>
-
-          <!-- 房型与透明价格预览（前2种房型 + 点击展开全部） -->
-          <div style="background: #f5f9f7; border: 1px solid #dfece6; border-radius: 0; padding: 10px 14px; margin: 10px 0">
-            <div
-              v-for="rm in hotel.rooms.slice(0, 2)"
-              :key="rm.id"
-              class="flex-between"
-              style="padding: 6px 0; border-bottom: 1px dashed #e1ece7; font-size: 13.5px"
-            >
-              <div>
-                <strong style="color: var(--ink)">{{ rm.name }}</strong>
-                <div style="font-size: 12.5px; color: var(--ink-3)">{{ rm.area }} · {{ rm.breakfast }}</div>
-              </div>
-              <div style="text-align: right; flex-shrink: 0">
-                <strong style="color: var(--accent); font-size: 15.5px">¥{{ rm.eventPrice }}{{ rm.leaseUnit }}</strong>
-                <div style="font-size: 12px; color: var(--primary)">余{{ rm.remaining }}间</div>
-              </div>
+          <fieldset class="stay-price-filter">
+            <legend>每晚起价</legend>
+            <div class="stay-price-values">
+              <span>¥{{ minPrice }}</span><span>¥{{ maxPrice }}</span>
             </div>
-            <div
-              style="font-size: 13.5px; color: var(--primary); font-weight: 800; padding-top: 8px; cursor: pointer; display: flex; justify-content: space-between"
-              @click="openHotelDetail(hotel.id)"
-            >
-              <span>{{ hotel.facilities.slice(0, 2).join(' · ') }}</span>
-              <span>查看全部 {{ hotel.rooms.length }} 种房型 →</span>
+            <div class="stay-price-slider">
+              <span class="stay-price-track" :style="priceTrack" />
+              <input type="range" aria-label="最低每晚起价" min="0" :max="priceLimit" :value="minPrice" :class="{ 'at-limit': minPrice === priceLimit }" @input="updatePrice($event, 'min')" />
+              <input type="range" aria-label="最高每晚起价" min="0" :max="priceLimit" :value="maxPrice" @input="updatePrice($event, 'max')" />
             </div>
-          </div>
+          </fieldset>
 
-          <div class="flex-between" style="margin-top: 14px">
-            <span class="price">
-              ¥{{ hotel.rooms[0]?.eventPrice }}
-              <small>{{ hotel.rooms[0]?.leaseUnit }}起</small>
-            </span>
-            <div class="flex-row" style="gap: 8px">
+          <label class="dd-field">
+            <span class="dd-field-label">住宿类型</span>
+            <select v-model="stayType" class="dd-select">
+              <option value="">全部住宿</option>
+              <option v-for="(label, value) in typeLabels" :key="value" :value="value">{{ label }}</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">住客评分</span>
+            <select v-model.number="minRating" class="dd-select">
+              <option :value="0">不限评分</option>
+              <option :value="4.8">4.8 分及以上</option>
+              <option :value="4.9">4.9 分及以上</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">点评数</span>
+            <select v-model.number="minReviews" class="dd-select">
+              <option :value="0">不限点评数</option>
+              <option :value="200">200 条及以上</option>
+              <option :value="400">400 条及以上</option>
+              <option :value="800">800 条及以上</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">早餐</span>
+            <select v-model="breakfast" class="dd-select">
+              <option value="">不限早餐</option>
+              <option value="included">含早餐</option>
+              <option value="excluded">不含早餐</option>
+            </select>
+          </label>
+          <MultiSelectDropdown v-model="stayFacilities" label="设施配套" :options="facilityOptions" />
+        </div>
+      </aside>
+
+      <div class="stay-results">
+        <div class="stay-results-heading">
+          <h2 ref="resultsHeading" tabindex="-1" aria-live="polite">京山住宿 <span>{{ filteredHotels.length }} 家</span></h2>
+          <div class="stay-results-actions">
+            <div
+              v-if="promoCollapsed"
+              class="stay-promo-reminder"
+              :class="{ 'stay-promo-hint-dismissed': promoHintDismissed }"
+              @pointerleave="promoHintDismissed = false"
+            >
               <button
-                class="btn-ghost"
-                @click="
-                  openNavigation({
-                    placeName: hotel.name,
-                    address: hotel.address,
-                    lng: hotel.lng,
-                    lat: hotel.lat,
-                    distance: hotel.distanceToCourt,
-                    driveMin: '约 5 分钟',
-                    tip: `${hotel.openYear} · 前台电话 ${hotel.phone}`,
-                  })
-                "
+                ref="promoReminderButton"
+                type="button"
+                class="stay-promo-info"
+                aria-label="展开购房补贴活动"
+                aria-controls="stay-promo-content"
+                aria-describedby="stay-promo-hint"
+                @click="togglePromotion"
+                @keydown.esc.stop="promoHintDismissed = true"
+                @blur="promoHintDismissed = false"
               >
-                🧭 导航
+                <span aria-hidden="true">i</span>
               </button>
-              <button class="btn-primary" @click="openHotelDetail(hotel.id)">
-                详情与选房
-              </button>
+              <p id="stay-promo-hint" class="stay-promo-hint" role="tooltip">{{ promotionMessage }}</p>
             </div>
+            <label class="stay-sort">
+              <span>排序</span>
+              <select v-model="staySort" class="dd-select">
+                <option value="default">综合推荐</option>
+                <option value="price">价格从低到高</option>
+                <option value="rating">评分最高</option>
+                <option value="reviews">点评最多</option>
+              </select>
+            </label>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="mb-16">
-      <PaginationBar
-        :total="filteredHotels.length"
-        :page="stayPage"
-        :page-size="PAGE_SIZE"
-        unit="家住宿"
-        @update:page="stayPage = $event"
-      />
-    </div>
 
-    <!-- 全部 6 家住宿房型与价格透明对照表 -->
-    <div class="card card-pad">
-      <strong style="font-size: 17.5px; display: block; margin-bottom: 12px">
-        📋 赛事合作住宿 & 网球公寓房型价格一览
-      </strong>
-      <table class="clean-table">
-        <thead>
-          <tr>
-            <th>住宿名称</th>
-            <th>类型</th>
-            <th>距赛场</th>
-            <th>主推房型</th>
-            <th>赛事/票根价</th>
-            <th>评分</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="h in HOTEL_PROFILES" :key="h.id">
-            <td>
-              <strong style="cursor: pointer; color: var(--primary-dark)" @click="openHotelDetail(h.id)">{{ h.name }}</strong>
-              <div style="font-size: 12.5px; color: var(--ink-3)">{{ h.address.replace('湖北省荆门市京山市', '') }}</div>
-            </td>
-            <td>
-              <span class="tag" :class="h.category === '公寓' ? 'green' : h.category === '民宿' ? 'orange' : 'blue'">
-                {{ h.category === '公寓' ? '网球公寓' : h.category === '民宿' ? '温泉民宿' : '联盟酒店' }}
-              </span>
-            </td>
-            <td>{{ h.distanceToCourt }}</td>
-            <td>
-              <div style="font-weight: 700">{{ h.rooms[0]?.name }}</div>
-              <div style="font-size: 12.5px; color: var(--ink-3)">共 {{ h.rooms.length }} 种房型</div>
-            </td>
-            <td>
-              <strong style="color: var(--accent); font-size: 15px">¥{{ h.rooms[0]?.eventPrice }}{{ h.rooms[0]?.leaseUnit }}</strong>
-            </td>
-            <td>★ {{ h.rating }}</td>
-            <td>
-              <div class="flex-row" style="gap: 6px">
-                <button class="btn-ghost" style="padding: 5px 10px; font-size: 13px" @click="openHotelDetail(h.id)">
-                  详情
-                </button>
-                <button
-                  class="btn-primary"
-                  style="padding: 5px 12px; font-size: 13px"
-                  @click="
-                    createQuickOrder(
-                      '住宿',
-                      `${h.name} · ${h.rooms[0]?.name ?? '标准房'}`,
-                      `已核销电子票根 ${state.ticketStubCode} · ${h.rooms[0]?.breakfast ?? ''}`,
-                      h.rooms[0]?.eventPrice ?? 298,
-                      60,
-                    )
-                  "
-                >
-                  预订
-                </button>
+        <StayResultsMap v-if="showMap" :listings="filteredHotels" @detail="openStayDetail" />
+        <template v-else-if="visibleCards.length">
+          <div class="stay-cards">
+            <article v-for="{ hotel, room } in visibleCards" :key="hotel.id" class="card stay-card">
+              <button type="button" class="stay-card-photo" :aria-label="`查看${hotel.name}详情`" @click="openStayDetail(hotel.id, room.id)">
+                <img :src="hotel.photo" alt="" />
+                <span class="stay-card-type">{{ typeLabels[hotel.category] }}</span>
+              </button>
+              <div class="stay-card-info">
+                <h3>{{ hotel.name }}</h3>
+                <div class="stay-card-meta">
+                  <span class="stay-score">{{ hotel.rating.toFixed(1) }} 分</span>
+                  <span>{{ hotel.reviewCount }} 条点评</span>
+                </div>
+                <p class="stay-location">
+                  {{ hotel.distanceToCourt }} · {{ hotel.address.replace('湖北省荆门市京山市', '') }}
+                  <button type="button" class="stay-reset" @click="navigateToHotel(hotel)">导航</button>
+                </p>
+                <div class="stay-offer">
+                  <div>
+                    <strong>{{ room.name }}</strong>
+                    <p>{{ room.area }} · {{ room.breakfast }}</p>
+                    <p class="stay-cancel">{{ room.cancelRule }}</p>
+                  </div>
+                  <div class="stay-offer-actions">
+                    <div class="stay-card-price">¥{{ room.eventPrice }} <small>{{ room.leaseUnit ?? '/晚' }}起</small></div>
+                    <button type="button" class="btn-primary" @click="openStayDetail(hotel.id, room.id)">详情与选房</button>
+                  </div>
+                </div>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </article>
+          </div>
+          <PaginationBar :total="filteredHotels.length" :page="stayPage" :page-size="PAGE_SIZE" unit="家住宿" @update:page="stayPage = $event" />
+          <details class="card stay-compare">
+            <summary>对比房型与价格</summary>
+            <table class="clean-table">
+              <thead>
+                <tr><th>住宿名称</th><th>房型</th><th>类型</th><th>赛事价</th><th>操作</th></tr>
+              </thead>
+              <tbody>
+                <tr v-for="{ hotel, room } in filteredHotels" :key="hotel.id">
+                  <td>{{ hotel.name }}</td>
+                  <td>{{ room.name }}</td>
+                  <td>{{ typeLabels[hotel.category] }}</td>
+                  <td>¥{{ room.eventPrice }}{{ room.leaseUnit ?? '/晚' }}</td>
+                  <td class="stay-compare-actions">
+                    <button type="button" class="btn-ghost" @click="openStayDetail(hotel.id, room.id)">详情</button>
+                    <button type="button" class="btn-primary" @click="bookStay(hotel, room)">预订</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </details>
+        </template>
+        <div v-else class="card stay-empty">
+          <strong>没有符合条件的住宿</strong>
+          <button type="button" class="btn-ghost" @click="resetStayFilters">重置筛选</button>
+        </div>
+      </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.stay-search {
+  display: grid;
+  grid-template-columns: minmax(115px, 0.7fr) repeat(2, minmax(150px, 1fr)) auto minmax(190px, 1.6fr) auto;
+  align-items: end;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.stay-destination { display: grid; gap: 3px; padding: 0 12px 5px; border-right: 1px solid var(--line); }
+.stay-destination span { color: var(--ink-2); font-size: 13px; font-weight: 700; }
+.stay-destination strong { font-size: 18px; }
+.stay-nights { margin-bottom: 8px; border-radius: 20px; }
+.stay-keyword { height: 42px; padding: 0 12px; border: 1.5px solid #cbdcd5; border-radius: 6px; color: var(--ink); font-size: 14px; }
+.stay-search-btn { height: 42px; padding: 0 20px; border-radius: 6px; }
+
+.stay-promo {
+  display: grid;
+  width: 100%;
+  height: 78px;
+  margin-left: auto;
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: width 280ms ease, height 280ms ease, border-radius 280ms ease, border-width 280ms ease, margin-bottom 280ms ease;
+}
+
+.stay-promo-collapsed { width: 36px; height: 0; margin-bottom: 0; border-width: 0; border-radius: 50%; }
+
+.stay-promo-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 18px 0 22px;
+  overflow: hidden;
+  transition: opacity 150ms ease;
+}
+
+.stay-promo-collapsed .stay-promo-content { opacity: 0; }
+.stay-promo-copy, .stay-promo-actions { display: flex; align-items: center; gap: 10px; }
+.stay-promo-copy { gap: 12px; color: #542600; font-size: 17.5px; }
+.stay-promo-actions { flex-shrink: 0; }
+.stay-promo-house {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 5px;
+  background: var(--accent);
+  font-size: 22px;
+}
+
+.stay-promo-close, .stay-promo-info {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #7f471f;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.stay-promo-close:hover, .stay-promo-info:hover { background: #f8dfc9; }
+.stay-promo-reminder { position: relative; z-index: 5; }
+.stay-promo-info {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #f7c799;
+  background: #fff7ee;
+  animation: stay-promo-info-in 280ms ease both;
+}
+.stay-promo-info span {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@keyframes stay-promo-info-in {
+  0%, 55% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: none; }
+}
+
+.stay-promo-hint {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 300px;
+  padding: 10px 12px;
+  border: 1px solid #f7c799;
+  border-radius: 7px;
+  background: #fff9f2;
+  box-shadow: var(--shadow-md);
+  color: #542600;
+  font-size: 13px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 150ms ease, visibility 150ms ease;
+}
+
+.stay-promo-reminder:not(.stay-promo-hint-dismissed):hover .stay-promo-hint,
+.stay-promo-reminder:not(.stay-promo-hint-dismissed) .stay-promo-info:focus-visible + .stay-promo-hint {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stay-promo, .stay-promo-content, .stay-promo-hint { transition: none; }
+  .stay-promo-info { animation: none; }
+}
+
+.stay-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: start; gap: 20px; }
+.stay-sidebar { display: grid; gap: 12px; }
+
+.stay-map-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid #bdd9cf;
+  border-radius: 8px;
+  background: linear-gradient(31deg, transparent 36%, #fff9 37%, #fff9 43%, transparent 44%), #e8f4ef;
+  color: var(--primary-dark);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.stay-map-entry:hover, .stay-map-entry[aria-pressed='true'] { border-color: var(--primary); background-color: #d6eee3; }
+.stay-map-entry span { font-size: 20px; }
+
+.stay-filter-panel { display: grid; gap: 15px; padding: 15px; border-radius: 8px; overflow: visible; }
+.stay-filter-heading, .stay-price-values, .stay-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.stay-filter-heading h2 { font-size: 17px; }
+.stay-reset { border: 0; background: transparent; color: var(--primary-dark); font-size: 13px; cursor: pointer; }
+.stay-reset:hover { text-decoration: underline; }
+.stay-price-filter { min-width: 0; padding: 0 1px 9px; border: 0; border-bottom: 1px solid var(--line); }
+.stay-price-filter legend { color: var(--ink-2); font-size: 13px; font-weight: 800; }
+.stay-price-values { margin: 4px 0; color: var(--primary-dark); font-size: 13px; font-weight: 700; }
+.stay-price-slider { position: relative; height: 24px; }
+.stay-price-slider::before, .stay-price-track { position: absolute; top: 10px; height: 4px; border-radius: 4px; }
+.stay-price-slider::before { content: ''; inset-inline: 0; background: var(--line); }
+.stay-price-track { background: var(--primary); }
+.stay-price-slider input { position: absolute; inset: 0; width: 100%; height: 24px; appearance: none; background: transparent; pointer-events: none; }
+.stay-price-slider input::-webkit-slider-thumb { width: 16px; height: 16px; appearance: none; border: 2px solid var(--primary); border-radius: 50%; background: white; cursor: ew-resize; pointer-events: auto; }
+.stay-price-slider input::-moz-range-thumb { width: 13px; height: 13px; border: 2px solid var(--primary); border-radius: 50%; background: white; cursor: ew-resize; pointer-events: auto; }
+.stay-price-slider input:focus { z-index: 1; }
+.stay-price-slider input.at-limit { z-index: 2; }
+
+.stay-results-heading { min-height: 44px; margin-bottom: 12px; }
+.stay-results-heading h2 { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+.stay-results-heading h2 span { color: var(--primary-dark); font-size: 14px; }
+.stay-results-actions { display: flex; align-items: center; gap: 10px; }
+.stay-sort { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 13px; }
+.stay-sort select { width: 145px; height: 36px; }
+.stay-cards { display: grid; gap: 12px; }
+.stay-card { display: grid; grid-template-columns: minmax(180px, 28%) minmax(0, 1fr); border-radius: 9px; overflow: hidden; }
+.stay-card-photo { position: relative; display: block; min-height: 178px; border: 0; background: var(--primary-light); cursor: pointer; }
+.stay-card-photo:focus-visible { outline-offset: -3px; }
+.stay-card-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.stay-card-type { position: absolute; top: 10px; left: 10px; padding: 2px 8px; border-radius: 4px; background: var(--surface); color: var(--primary-dark); font-size: 12px; font-weight: 800; }
+.stay-card-info { padding: 13px 15px; }
+.stay-card-info h3 { font-size: 18px; line-height: 1.4; }
+.stay-card-meta { display: flex; align-items: center; gap: 8px; margin: 5px 0; color: var(--ink-2); font-size: 13px; }
+.stay-score { padding: 1px 6px; border-radius: 4px; background: var(--primary); color: white; font-weight: 800; }
+.stay-location { color: var(--ink-2); font-size: 13px; }
+.stay-location button { margin-left: 6px; font-weight: 700; }
+.stay-offer { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-top: 9px; padding: 9px 11px; border-radius: 6px; background: #f2f8f5; font-size: 13px; }
+.stay-offer p { color: var(--ink-2); }
+.stay-offer .stay-cancel { color: var(--primary-dark); }
+.stay-offer-actions { flex-shrink: 0; text-align: right; }
+.stay-card-price { color: var(--primary-dark); font-size: 22px; font-weight: 900; line-height: 1.4; }
+.stay-card-price small { font-size: 12px; font-weight: 600; }
+.stay-offer-actions button { margin-top: 4px; padding: 5px 12px; border-radius: 5px; font-size: 13px; }
+.stay-empty { display: grid; justify-items: center; gap: 12px; padding: 36px; border-radius: 8px; }
+.stay-compare { margin-top: 14px; border-radius: 8px; }
+.stay-compare summary { padding: 10px 14px; font-weight: 800; cursor: pointer; }
+.stay-compare-actions { white-space: nowrap; }
+.stay-compare-actions button { margin-right: 5px; padding: 4px 8px; font-size: 12px; }
+</style>

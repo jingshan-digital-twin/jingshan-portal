@@ -25,6 +25,7 @@ let map: L.Map | null = null
 let baseLayer: L.TileLayer | null = null
 let labelLayer: L.TileLayer | null = null
 let markerLayer: L.LayerGroup | null = null
+let locationMarker: L.Marker | undefined
 
 function applyTileLayer(kind: 'vector' | 'satellite') {
   if (!map) return
@@ -80,7 +81,7 @@ function renderPin() {
     iconAnchor: [0, 0],
   })
 
-  L.marker([lat, lng], { icon: pinIcon })
+  locationMarker = L.marker([lat, lng], { icon: pinIcon, title: props.title })
     .bindPopup(
       `<div style="font-family:'Noto Sans SC',sans-serif;min-width:200px;padding:2px 0;">
         <strong style="font-size:14.5px;color:#10251f;">${props.title}</strong>
@@ -89,6 +90,14 @@ function renderPin() {
     )
     .addTo(markerLayer)
 }
+
+function showLocation() {
+  if (!locationMarker) return
+  map?.setView(locationMarker.getLatLng(), 15)
+  locationMarker.openPopup()
+}
+
+defineExpose({ showLocation })
 
 function zoomIn() {
   map?.zoomIn()

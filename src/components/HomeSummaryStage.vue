@@ -216,6 +216,7 @@ function openTourRouteDetail(route: (typeof TOUR_ROUTES)[number]) {
     priceUnit: ' / 人起',
     audioScript: route.script,
     audioDuration: route.duration,
+    actionKind: 'spot',
     address: route.address,
     lng: route.lng,
     lat: route.lat,

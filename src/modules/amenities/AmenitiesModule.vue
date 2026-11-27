@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import MapResultsLayout from '../../components/MapResultsLayout.vue'
+import MapViewToggle from '../../components/MapViewToggle.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type AmenityMapPoint } from '../../components/ServiceCircleMap.vue'
 import { usePortalStore } from '../../store/usePortalStore'
@@ -18,6 +20,9 @@ const amFilter = ref<'卫生间' | '医疗点' | '充电桩' | 'ATM' | '母婴�
 const amKeyword = ref('')
 const amPage = ref(1)
 const mapRadius = ref<RadiusOption>('1公里')
+const showAmenitiesMap = ref(false)
+const selectedAmenity = ref<string>()
+const amenitiesMap = ref<InstanceType<typeof ServiceCircleMap>>()
 
 // 按距您最近排序的网球场列表
 const nearestCourts = computed(() =>
@@ -75,12 +80,28 @@ const currentVenueAmenities = computed(
 
 const visibleAmenities = computed(() => {
   const q = amKeyword.value.trim().toLowerCase()
+  const radiusMeters = mapRadius.value === '500m' ? 500 : mapRadius.value === '1公里' ? 1000 : 2000
   return currentVenueAmenities.value.filter((a) => {
     const okCat = a.key === amFilter.value
     const okQ = !q || a.name.toLowerCase().includes(q) || a.address.toLowerCase().includes(q) || a.info.toLowerCase().includes(q)
-    return okCat && okQ
+    return okCat && okQ && Number.parseFloat(a.dist) <= radiusMeters
   })
 })
+
+const amenityMapItems = computed(() => visibleAmenities.value.map((amenity) => ({
+  id: amenity.name,
+  title: amenity.name,
+  photo: amenity.photo,
+  description: amenity.info,
+  location: amenity.address,
+  highlight: `距球场 ${amenity.dist}`,
+})))
+const activeAmenity = computed(() => visibleAmenities.value.find((amenity) => amenity.name === selectedAmenity.value))
+
+function selectAmenity(name: string) {
+  if (selectedAmenity.value === name) amenitiesMap.value?.openSelectedLocation()
+  else selectedAmenity.value = name
+}
 
 const pagedAmenities = computed(() => {
   const start = (amPage.value - 1) * PAGE_SIZE
@@ -89,6 +110,9 @@ const pagedAmenities = computed(() => {
 
 watch([visibleAmenities, selectedVenueId], () => {
   amPage.value = 1
+  if (!visibleAmenities.value.some((amenity) => amenity.name === selectedAmenity.value)) {
+    selectedAmenity.value = undefined
+  }
 })
 
 function openAmenityDetail(a: AmenityCardItem) {
@@ -196,14 +220,22 @@ function openAmenityDetail(a: AmenityCardItem) {
       </div>
     </div>
 
-    <div class="grid-split-rev">
-      <div style="display: flex; flex-direction: column; gap: 12px">
+    <div class="card card-pad flex-between mb-16">
         <div class="search-bar" style="max-width: 100%; height: 42px; background: #fff">
           <span>🔍</span>
           <input v-model="amKeyword" type="text" placeholder="搜索公厕、医疗点、充电桩、ATM、母婴室…" />
           <button v-if="amKeyword" class="btn-ghost" style="padding: 2px 8px; font-size: 12px" @click="amKeyword = ''">✕</button>
         </div>
+        <div class="flex-row">
+          <span class="tag green">共 {{ visibleAmenities.length }} 处设施</span>
+          <MapViewToggle v-model="showAmenitiesMap" />
+          <button class="btn-orange" @click="switchModule(11)">设施故障上报</button>
+        </div>
+    </div>
 
+    <template v-if="!showAmenitiesMap">
+      <div v-if="!visibleAmenities.length" class="card card-pad">当前筛选条件下暂无匹配设施</div>
+      <div v-else class="grid-2">
         <div
           v-for="a in pagedAmenities"
           :key="`${selectedVenue?.id}-${a.name}`"
@@ -248,16 +280,25 @@ function openAmenityDetail(a: AmenityCardItem) {
           </div>
         </div>
 
-        <PaginationBar
+      </div>
+      <PaginationBar
           :total="visibleAmenities.length"
           :page="amPage"
           :page-size="PAGE_SIZE"
           unit="处设施"
           @update:page="amPage = $event"
-        />
-      </div>
+      />
+    </template>
 
-      <div class="card">
+    <MapResultsLayout
+      v-else
+      :items="amenityMapItems"
+      :selected-id="selectedAmenity"
+      list-label="地图便民设施列表"
+      empty-text="当前筛选条件下暂无匹配设施"
+      @select="selectAmenity"
+    >
+      <div>
         <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 14px 18px">
           <div>
             <strong style="font-size: 16.5px">
@@ -282,20 +323,23 @@ function openAmenityDetail(a: AmenityCardItem) {
           </div>
         </div>
         <ServiceCircleMap
+          ref="amenitiesMap"
           mode="amenities"
           :radius="mapRadius"
           :selected-venue="selectedVenue"
           :venues="nearestCourts"
           :custom-amenities="visibleAmenities"
+          :selected-location-id="selectedAmenity"
           @select-venue="selectedVenueId = $event"
+          @select-location="selectedAmenity = $event"
         />
         <div class="card-pad flex-between" style="background: #fafdfc; padding: 13px 18px">
           <span style="font-size: 13.5px; color: var(--ink-2)">
             当前定位：<strong>{{ selectedVenue?.name.split('（')[0] }}</strong>（{{ selectedVenue?.address }}）
           </span>
-          <button class="btn-orange" @click="switchModule(11)">设施故障上报</button>
+          <button v-if="activeAmenity" type="button" class="btn-primary" @click="openAmenityDetail(activeAmenity)">查看设施详情</button>
         </div>
       </div>
-    </div>
+    </MapResultsLayout>
   </section>
 </template>

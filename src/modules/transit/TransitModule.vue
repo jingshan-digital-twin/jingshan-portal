@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import MapResultsLayout from '../../components/MapResultsLayout.vue'
+import MapViewToggle from '../../components/MapViewToggle.vue'
 import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
@@ -9,6 +11,25 @@ const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交�
 const parkDate = ref(BOOKING_DATES[0]!.shortDate)
 const parkSlot = ref('16:00-18:00')
 const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00']
+const showTrafficMap = ref(false)
+const selectedLotId = ref<string>()
+const trafficMap = ref<InstanceType<typeof ServiceCircleMap>>()
+const parkingLocations = computed(() => state.parkingLots.map((lot) => ({ ...lot })))
+const parkingMapItems = computed(() => parkingLocations.value.map((lot) => ({
+  id: lot.id,
+  title: lot.name,
+  description: lot.note,
+  location: lot.address,
+  highlight: `${lot.isCharger ? '闲置充电桩' : '剩余车位'} ${lot.remain}/${lot.total}`,
+})))
+const shownLots = computed(() => showTrafficMap.value && selectedLotId.value
+  ? state.parkingLots.filter((lot) => lot.id === selectedLotId.value)
+  : state.parkingLots)
+
+function selectLot(id: string) {
+  if (selectedLotId.value === id) trafficMap.value?.openSelectedLocation()
+  else selectedLotId.value = id
+}
 </script>
 
 <template>
@@ -22,17 +43,20 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
       </div>
     </div>
 
-    <div class="grid-split">
-      <div v-if="transitTab === '限行与车位'" class="card">
+    <div class="transit-layout" :class="{ 'grid-split': transitTab === '全部' && !showTrafficMap }">
+      <div v-if="transitTab === '限行与车位' || transitTab === '全部'" class="card">
         <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); background: #fff6f6">
           <div>
             <strong style="font-size: 17px; color: #a81721">
-              🚦 赛期交通管控实时图
+              🚦 赛期交通管控与停车充电
             </strong>
             <div style="font-size: 13.5px; color: #7d383d; margin-top: 3px">
               07:30–19:00 温泉大道国际网球中心段临时封闭，请按推荐点位停泊
             </div>
+            <div style="font-size: 13.5px; color: #7d383d">京山大道东段缓冲限行禁停，建议驶入 P1/P2 停车场</div>
           </div>
+          <div class="flex-row">
+          <MapViewToggle v-model="showTrafficMap" />
           <button
             class="btn-orange"
             @click="
@@ -49,9 +73,26 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
           >
             🗺️ 避堵导航
           </button>
+          </div>
         </div>
 
-        <ServiceCircleMap mode="traffic" />
+        <div v-if="showTrafficMap" class="card-pad">
+          <MapResultsLayout
+            :items="parkingMapItems"
+            :selected-id="selectedLotId"
+            list-label="地图停车充电列表"
+            empty-text="暂无停车充电点位"
+            @select="selectLot"
+          >
+            <ServiceCircleMap
+              ref="trafficMap"
+              mode="traffic"
+              :parking-locations="parkingLocations"
+              :selected-location-id="selectedLotId"
+              @select-location="selectedLotId = $event"
+            />
+          </MapResultsLayout>
+        </div>
 
         <div class="card-pad">
           <div class="filter-row mb-12" style="background: #f5faf8; padding: 10px 14px; border-radius: 0; border: 1px solid #d9ebe2">
@@ -72,7 +113,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
 
           <div class="grid-3" style="gap: 12px">
             <div
-              v-for="lot in state.parkingLots"
+              v-for="lot in shownLots"
               :key="lot.id"
               style="background: #f3faf6; border: 1px solid #c8e7d8; border-radius: 0; padding: 13px"
             >
@@ -195,3 +236,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
     </div>
   </section>
 </template>
+
+<style scoped>
+.transit-layout { display: grid; gap: 16px; }
+</style>

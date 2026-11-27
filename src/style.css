@@ -2201,16 +2201,7 @@ button {
   padding: 11px 14px;
 }
 
-/* Compact Venue List + Sticky Linked Amap Panel */
-.play-map-split {
-  display: grid;
-  grid-template-columns: 600px 1fr;
-  gap: 18px;
-  align-items: start;
-}
-.play-map-sticky {
-  position: static;
-}
+/* Compact venue results */
 .court-item-compact {
   display: grid;
   grid-template-columns: 184px 1fr;
