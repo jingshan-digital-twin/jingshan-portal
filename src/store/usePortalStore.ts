@@ -33,6 +33,7 @@ import type {
   LiveMatch,
   MatchmakingGame,
   ModuleId,
+  OrderSuccessModalPayload,
   PortalOrder,
   PrivateCoach,
   RadiusOption,
@@ -166,6 +167,7 @@ const state = reactive({
   activeDetail: null as DetailPagePayload | null,
   bookingDraft: null as BookingDraft | null,
   actionModal: null as ActionModalPayload | null,
+  orderSuccessModal: null as OrderSuccessModalPayload | null,
   toastMessage: '',
 })
 
@@ -464,6 +466,14 @@ export function usePortalStore() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function openOrderSuccess(payload: OrderSuccessModalPayload) {
+    state.orderSuccessModal = payload
+  }
+
+  function closeOrderSuccess() {
+    state.orderSuccessModal = null
+  }
+
   function openActionModal(payload: ActionModalPayload) {
     state.actionModal = payload
   }
@@ -605,7 +615,15 @@ export function usePortalStore() {
     }
     lot.reserved = true
     lot.reservedSlot = slotText
-    showToast(`预约成功！已为您锁定「${lot.name}」· ${slotText}（凭订场码核销）`)
+    openOrderSuccess({
+      headline: lot.isCharger ? '充电桩预约成功' : '车位锁位成功',
+      category: lot.isCharger ? '充电桩预约' : '车位预约',
+      title: lot.name,
+      subtitle: `${lot.address} · 凭订场码核销入场`,
+      time: slotText,
+      amount: 0,
+      note: '已为您锁定专属泊位，保留 30 分钟，到达后扫码核销即可',
+    })
   }
 
   async function confirmCourtBooking(opts: {
@@ -689,7 +707,18 @@ export function usePortalStore() {
       slot.remaining = Math.max(0, slot.remaining - 1)
     }
     state.bookingDraft = null
-    showToast(`订场成功！${dateLabel} ${slotSummary}，实付 ¥${finalPrice}，获赠 +${50 * picked.length} 积分`)
+    openOrderSuccess({
+      headline: '订场成功',
+      orderId: newOrder.id,
+      category: '场地预订',
+      title: newOrder.title,
+      subtitle: newOrder.subtitle,
+      time: newOrder.time,
+      amount: finalPrice,
+      pointsGain: 50 * picked.length,
+      pointsSpent: discountFromPoints > 0 ? 200 : 0,
+      note: '开场前 2 小时支持免费退改，到场出示订单号或电子票根即可入场',
+    })
   }
 
   function joinMatchmakingGame(gameId: string) {
@@ -709,7 +738,7 @@ export function usePortalStore() {
     g.currentPlayers += 1
     state.points += 30
     const dateLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date
-    state.orders.unshift({
+    const newOrder: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '场地',
       title: `约球：${g.title}`,
@@ -718,8 +747,19 @@ export function usePortalStore() {
       amount: g.feePerPerson,
       status: '待核销',
       cancellable: true,
+    }
+    state.orders.unshift(newOrder)
+    openOrderSuccess({
+      headline: '约球报名成功',
+      orderId: newOrder.id,
+      category: '同城约球',
+      title: g.title,
+      subtitle: newOrder.subtitle,
+      time: newOrder.time,
+      amount: g.feePerPerson,
+      pointsGain: 30,
+      note: '已成功加入本场球局，请按约定时间前往球场签到热身',
     })
-    showToast(`成功加入「${g.title}」（${dateLabel} ${g.startTime}-${g.endTime}），获赠 +30 积分！`)
   }
 
   function publishMatchmakingGame(payload: Omit<MatchmakingGame, 'id' | 'hostName' | 'hostOrigin' | 'currentPlayers' | 'joinedByMe'>) {
@@ -750,7 +790,7 @@ export function usePortalStore() {
     cls.bookedByMe = true
     cls.enrolled += 1
     const dateLabel = BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate ?? cls.date
-    state.orders.unshift({
+    const newOrder: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '课程',
       title: `团体课：${cls.title}`,
@@ -759,9 +799,20 @@ export function usePortalStore() {
       amount: cls.memberPrice,
       status: '待上课',
       cancellable: true,
-    })
+    }
+    state.orders.unshift(newOrder)
     state.points += 60
-    showToast(`预约成功！${dateLabel} ${cls.startTime}-${cls.endTime}「${cls.title}」（¥${cls.memberPrice}，+60分）`)
+    openOrderSuccess({
+      headline: '约课成功',
+      orderId: newOrder.id,
+      category: '团体课程',
+      title: cls.title,
+      subtitle: newOrder.subtitle,
+      time: newOrder.time,
+      amount: cls.memberPrice,
+      pointsGain: 60,
+      note: '课程席位已锁定，建议提前 15 分钟到达场馆热身签到',
+    })
   }
 
   function bookPrivateCoachSlot(coachId: string, dateIso: string, hour: string) {
@@ -775,7 +826,7 @@ export function usePortalStore() {
     state.bookedCoachKeys.push(key)
     const dateLabel = BOOKING_DATES.find((d) => d.iso === dateIso)?.shortDate ?? dateIso
     const range = formatHourRange(hour)
-    state.orders.unshift({
+    const newOrder: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '课程',
       title: `私教课：${coach.name}（${coach.specialty}）`,
@@ -784,9 +835,20 @@ export function usePortalStore() {
       amount: coach.memberPrice,
       status: '待上课',
       cancellable: true,
-    })
+    }
+    state.orders.unshift(newOrder)
     state.points += 80
-    showToast(`私教课预约成功！${coach.name} · ${dateLabel} ${range}（实付 ¥${coach.memberPrice}，+80分）`)
+    openOrderSuccess({
+      headline: '私教预约成功',
+      orderId: newOrder.id,
+      category: '私教 1对1',
+      title: `${coach.name} · ${coach.specialty}`,
+      subtitle: newOrder.subtitle,
+      time: newOrder.time,
+      amount: coach.memberPrice,
+      pointsGain: 80,
+      note: '教练已收到您的 1对1 约课通知，届时直接前往授课场馆即可',
+    })
   }
 
   async function createQuickOrder(
@@ -809,9 +871,56 @@ export function usePortalStore() {
     }
     await apiRequest('/orders', { method: 'POST', body: JSON.stringify(order) }, () => order)
     state.orders.unshift(order)
-    if (pointsSpent > 0 && state.points >= pointsSpent) state.points -= pointsSpent
+    const actualSpent = pointsSpent > 0 && state.points >= pointsSpent ? pointsSpent : 0
+    if (actualSpent > 0) state.points -= actualSpent
     state.points += pointsGain
-    showToast(`支付成功：「${title}」（¥${amount}）已同步至个人中心，获赠 +${pointsGain} 金网积分！`)
+
+    let headline = '预订成功'
+    let note = '订单已确认，凭订单号或电子票根即可享受对应服务'
+    if (category === '商品') {
+      headline = '购买成功'
+      note = '支付已完成，我们将尽快安排原产地打包发货并同步物流'
+    } else if (category === '住宿') {
+      headline = '预订成功'
+      note = '房源已为您锁定，入住前支持免费取消，凭订单号前台办理入住'
+    } else if (category === '课程') {
+      if (/训练营|研学|团建/.test(title)) {
+        headline = '报名成功'
+        note = '项目名额已确认，客服将在开营前与您核对行程与分组信息'
+      } else if (/康复|理疗|推拿|松解|肌贴|评估/.test(title + subtitle)) {
+        headline = '预约成功'
+        note = '运动康复绿色通道已登记，请按预约时段到院优先接诊'
+      } else {
+        headline = '购课成功'
+        note = '课程权益已生效，可直接联系俱乐部或到馆核销上课'
+      }
+    } else if (category === '门票') {
+      if (/赛|选拔/.test(title)) {
+        headline = '报名成功'
+        note = '参赛名额已确认，请留意赛前签表与检录通知'
+      } else if (/司机|约车/.test(title)) {
+        headline = '约车成功'
+        note = '已向认证司机发送接单通知，预计 5 分钟内致电确认上车点'
+      } else if (/订座|美食/.test(title)) {
+        headline = '订座成功'
+        note = '桌位已为您预留，到店出示电子票根即享联盟专属折扣'
+      } else {
+        headline = '预订成功'
+        note = '电子凭证已生成，请凭订单号或电子票根扫码核销入场'
+      }
+    }
+
+    openOrderSuccess({
+      headline,
+      orderId: order.id,
+      category,
+      title,
+      subtitle,
+      amount,
+      pointsGain,
+      pointsSpent: actualSpent,
+      note,
+    })
   }
 
   async function cancelOrder(orderId: string) {
@@ -1033,6 +1142,8 @@ export function usePortalStore() {
     openCinemaDetail,
     buildModuleUrl,
     openActionModal,
+    openOrderSuccess,
+    closeOrderSuccess,
     openNavigation,
     closeEventModal,
     openMatchRecap,

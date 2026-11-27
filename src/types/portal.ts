@@ -389,6 +389,19 @@ export interface MenuDish {
   tag?: string
 }
 
+export interface OrderSuccessModalPayload {
+  headline: string
+  orderId?: string
+  category: string
+  title: string
+  subtitle: string
+  time?: string
+  amount?: number
+  pointsGain?: number
+  pointsSpent?: number
+  note?: string
+}
+
 export type ActionModalPayload =
   | { type: 'video'; title: string; duration: string }
   | { type: 'livecam'; venueName: string; photo: string; viewers: number }

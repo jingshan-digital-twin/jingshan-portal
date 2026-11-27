@@ -283,6 +283,26 @@ const placeUnitPrice = computed(() => {
   return extractPriceNumber(place.value.priceInfo)
 })
 
+function bookPlaceHotItem(item: NonNullable<NonNullable<typeof place.value>['hotItems']>[number]) {
+  if (!place.value) return
+  const dLabel = BOOKING_DATES.find((d) => d.iso === placeDate.value)?.shortDate ?? placeDate.value
+  const priceNum = extractPriceNumber(item.price)
+  const kind = place.value.actionKind
+  const subtitle =
+    kind === 'club'
+      ? `${item.tag ?? '精品课程'} · 官方平台预订保障`
+      : kind === 'rehab'
+        ? `${dLabel} ${placeSlot.value} · ${item.tag ?? '专业理疗'} · 赛期绿通优先接诊`
+        : `${dLabel} · ${item.tag ?? '官方报名'} · 平台保障`
+  createQuickOrder(
+    place.value.orderCategory ?? '课程',
+    `${place.value.title.split('（')[0]} · ${item.name}`,
+    subtitle,
+    priceNum,
+    kind === 'club' ? 100 : kind === 'camp' ? 120 : 50,
+  )
+}
+
 function submitPlaceBooking() {
   if (!place.value) return
   const dLabel = BOOKING_DATES.find((d) => d.iso === placeDate.value)?.shortDate ?? placeDate.value
@@ -759,6 +779,8 @@ const optionsTabLabel = computed(() => {
   if (venue.value) return '选场预约'
   if (detail.value?.kind === 'cinema') return '排片选座'
   if (placeMenuDishes.value.length > 0) return '招牌菜单'
+  if (place.value?.actionKind === 'club') return '在售课程'
+  if (place.value?.actionKind === 'rehab') return '理疗项目'
   return '特色推荐'
 })
 
@@ -1266,12 +1288,23 @@ function triggerPrimaryNav() {
                 <h2 class="dp-h2" style="margin-bottom: 16px">{{ place.hotItemsTitle ?? '核心必体验项目' }}</h2>
                 <div class="dp-room-stack">
                   <div v-for="item in place.hotItems" :key="item.name" class="dp-hot-item-card">
-                    <div class="flex-between" style="margin-bottom: 6px">
-                      <div class="flex-row">
+                    <div class="flex-between" style="margin-bottom: 6px; gap: 12px">
+                      <div class="flex-row" style="flex-wrap: wrap">
                         <strong style="font-size: 16.5px; color: var(--ink)">{{ item.name }}</strong>
                         <span v-if="item.tag" class="tag orange">{{ item.tag }}</span>
                       </div>
-                      <strong v-if="item.price" style="font-size: 17px; color: var(--accent)">{{ item.price }}</strong>
+                      <div class="flex-row" style="gap: 10px; flex-shrink: 0">
+                        <strong v-if="item.price" style="font-size: 17px; color: var(--accent)">{{ item.price }}</strong>
+                        <button
+                          v-if="place.actionKind === 'club' || place.actionKind === 'rehab' || place.actionKind === 'camp'"
+                          type="button"
+                          class="btn-primary"
+                          style="padding: 6px 14px; font-size: 13px"
+                          @click="bookPlaceHotItem(item)"
+                        >
+                          {{ place.actionKind === 'camp' ? '立即报名' : place.actionKind === 'rehab' ? '立即预约' : '立即预订' }}
+                        </button>
+                      </div>
                     </div>
                     <p v-if="item.desc" style="font-size: 14px; color: var(--ink-2); line-height: 1.65">{{ item.desc }}</p>
                   </div>

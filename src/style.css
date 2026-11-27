@@ -3578,7 +3578,7 @@ button {
   white-space: nowrap;
 }
 
-/* ===== FULL-WIDTH TWO-SECTION MODE SWITCHER (TRANSIT) ===== */
+/* ===== FULL-WIDTH SECTION MODE SWITCHER (TRANSIT / SHOP / TRAINING) ===== */
 .transit-mode-bar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3587,6 +3587,9 @@ button {
   background: #e9f2ee;
   border: 1px solid #d5e4dd;
   border-radius: 10px;
+}
+.transit-mode-bar.cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .transit-mode-btn {
   display: inline-flex;
@@ -3614,6 +3617,127 @@ button {
   font-weight: 800;
   border-color: #cfe3da;
   box-shadow: 0 3px 10px rgba(13, 60, 46, 0.09);
+}
+
+/* ===== ORDER / BOOKING SUCCESS MODAL ===== */
+.order-success-backdrop {
+  z-index: 1150;
+}
+.order-success-card {
+  position: relative;
+  width: 460px;
+  max-width: 100%;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #d5e6df;
+  box-shadow: 0 28px 72px rgba(8, 30, 22, 0.3);
+  padding: 28px 26px 24px;
+  animation: orderSuccessPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes orderSuccessPop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.order-success-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #f6faf8;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.order-success-close:hover {
+  background: #e7f3ee;
+  color: var(--primary);
+}
+.order-success-hero {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.order-success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10926a, #0b6c4e);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 10px rgba(13, 122, 88, 0.12), 0 10px 24px rgba(13, 122, 88, 0.28);
+}
+.order-success-title {
+  font-size: 23px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.order-success-note {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
+}
+.order-success-receipt {
+  background: #f5faf8;
+  border: 1px solid #d7e9e1;
+  border-radius: 10px;
+  padding: 15px 17px;
+  margin-bottom: 20px;
+}
+.order-success-id {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.order-success-item-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+.order-success-item-sub {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.order-success-item-time {
+  font-size: 13px;
+  color: var(--primary);
+  font-weight: 700;
+  margin-top: 6px;
+}
+.order-success-divider {
+  border-top: 1px dashed #c8dfd5;
+  margin: 13px 0 12px;
+}
+.order-success-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.order-success-actions .btn-ghost,
+.order-success-actions .btn-primary {
+  height: 44px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
 }
 @media (max-width: 1120px) {
   .dd-filter-grid.cols-6,

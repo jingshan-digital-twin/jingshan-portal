@@ -6,7 +6,7 @@ import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, reserveParkingOrCharger, openActionModal, openNavigation, createQuickOrder, showToast } = usePortalStore()
+const { state, reserveParkingOrCharger, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
 
 // 主分区切换：自驾出行 / 便捷出行
 const transitView = ref<'drive' | 'easy'>('drive')
@@ -311,7 +311,6 @@ function bookDriver(drv: RecommendedDriver) {
     0,
     30,
   )
-  showToast(`已向${drv.name}（${drv.plate}）发送约车通知，预计 5 分钟内来电确认上车点`)
 }
 </script>
 

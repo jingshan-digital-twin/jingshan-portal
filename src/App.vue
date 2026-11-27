@@ -2,6 +2,7 @@
 import { computed, onMounted } from 'vue'
 import ActionDetailModal from './components/ActionDetailModal.vue'
 import EventPopupModal from './components/EventPopupModal.vue'
+import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import HeroSpotlightCarousel from './components/HeroSpotlightCarousel.vue'
 import HomeSummaryStage from './components/HomeSummaryStage.vue'
 import ListingDetailPage from './components/ListingDetailPage.vue'
@@ -88,6 +89,7 @@ onMounted(() => {
 
     <ActionDetailModal />
     <EventPopupModal />
+    <OrderSuccessModal />
 
     <div v-if="state.toastMessage" class="toast-banner">
       <span style="color: var(--lime)">✔</span>
