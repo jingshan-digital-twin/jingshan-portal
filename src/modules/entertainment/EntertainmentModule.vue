@@ -21,9 +21,6 @@ const visibleItems = computed(() =>
         <div class="mh-num">08</div>
         <div>
           <h1 class="mh-title">“娱”：休闲娱乐服务</h1>
-          <div class="mh-desc">
-            温泉、农庄、采摘、亲子与影城，打球之余的好去处，都能一键导航
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
@@ -90,7 +87,6 @@ const visibleItems = computed(() =>
 
           <div class="coord-bar">
             <span>📍 {{ e.address }}</span>
-            <span class="coord-mono">{{ e.lng.toFixed(4) }}°E, {{ e.lat.toFixed(4) }}°N</span>
           </div>
 
           <div style="font-size: 11.5px; color: var(--ink-3); margin: 4px 0">{{ e.desc }}</div>

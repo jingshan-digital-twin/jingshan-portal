@@ -23,9 +23,6 @@ const filteredOrders = computed(() =>
         <div class="mh-num">13</div>
         <div>
           <h1 class="mh-title">个人中心（会员积分 · 五维网球能力 · 订单票根）</h1>
-          <div class="mh-desc">
-            会员等级、积分权益、五维能力档案与我的订单，一页掌握
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

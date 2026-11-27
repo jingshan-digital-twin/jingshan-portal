@@ -574,8 +574,9 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 9px 4px 8px;
+  padding: 10px 4px 11px;
   border-radius: 0;
   border: 1.5px solid transparent;
   background: transparent;
@@ -601,14 +602,6 @@ button {
   color: var(--primary);
   transform: translate(1px, -1px);
 }
-.kk-pill-ext {
-  font-size: 11px;
-  opacity: 0.65;
-}
-.kk-pill:hover .kk-pill-ext {
-  opacity: 1;
-  color: var(--primary);
-}
 .kk-btn.active {
   background: #ecf9f3;
   border-color: var(--primary);
@@ -617,7 +610,7 @@ button {
 .kk-btn.active::after {
   content: '';
   position: absolute;
-  bottom: -13px;
+  bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
   width: 28px;
@@ -626,8 +619,8 @@ button {
   background: var(--primary);
 }
 .kk-icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 0;
   display: flex;
   align-items: center;
@@ -648,7 +641,7 @@ button {
   white-space: nowrap;
 }
 .kk-label {
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--ink);
   line-height: 1.2;
@@ -656,49 +649,6 @@ button {
 }
 .kk-btn.active .kk-label {
   color: var(--primary);
-}
-.kk-sub {
-  font-size: 10px;
-  color: var(--ink-3);
-  margin-top: 2px;
-  white-space: nowrap;
-}
-.kk-row-sub {
-  padding-top: 11px;
-}
-.kk-sub-pills {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-}
-.kk-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 0;
-  background: #f4f8f6;
-  border: 1.5px solid #e0eae5;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--ink-2);
-  transition: all 0.16s ease;
-  white-space: nowrap;
-}
-.kk-pill-ico {
-  font-size: 13px;
-  line-height: 1;
-}
-.kk-pill:hover {
-  background: #eaf5f0;
-  border-color: #c3e2d5;
-  color: var(--primary);
-}
-.kk-pill.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(13, 122, 88, 0.22);
 }
 
 /* ===== MODULE STAGE & COMMON ===== */
@@ -737,11 +687,6 @@ button {
   font-weight: 900;
   color: var(--ink);
   line-height: 1.2;
-}
-.mh-desc {
-  font-size: 12.5px;
-  color: var(--ink-3);
-  margin-top: 2px;
 }
 .mh-tabs {
   display: flex;
@@ -1877,7 +1822,7 @@ button {
 .summary-fact-grid > div {
   background: #f4faf7;
   border: 1px solid #e2efe9;
-  border-radius: 10px;
+  border-radius: 0;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -1900,7 +1845,7 @@ button {
   border-color: #d6e7df;
 }
 .tag {
-  border-radius: 7px;
+  border-radius: 0;
   letter-spacing: 0.1px;
 }
 .hero-eyebrow,

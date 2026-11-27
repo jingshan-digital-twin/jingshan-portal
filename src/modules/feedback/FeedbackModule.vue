@@ -29,9 +29,6 @@ async function onSubmit() {
         <div class="mh-num">11</div>
         <div>
           <h1 class="mh-title">互动反馈</h1>
-          <div class="mh-desc">
-            真实打卡评价、12345 投诉分办与商户信用红黑榜，一起把服务做得更好
-          </div>
         </div>
       </div>
       <div class="mh-tabs">

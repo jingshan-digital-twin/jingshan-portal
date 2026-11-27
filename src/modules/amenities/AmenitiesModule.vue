@@ -84,7 +84,7 @@ const visibleAmenities = computed(() =>
         <div>
           <h1 class="mh-title">便民配套服务</h1>
           <div class="mh-desc">
-            先选择离你最近的网球场，实时查看该球场周边的卫生间、医疗点、充电桩、母婴室与 ATM，地图自动同步定位
+            卫生间、医疗点、充电桩、母婴室与 ATM，随时找到离你最近的一处
           </div>
         </div>
       </div>

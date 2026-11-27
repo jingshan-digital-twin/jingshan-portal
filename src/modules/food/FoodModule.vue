@@ -184,9 +184,6 @@ function reserveTable(shop: (typeof restaurants)[number]) {
         <div class="mh-num">04</div>
         <div>
           <h1 class="mh-title">“吃”：美食服务</h1>
-          <div class="mh-desc">
-            京山味道：桥米、土鸡与夜市烟火，凭球票根享 79 家联盟商户 85 折
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
@@ -284,7 +281,6 @@ function reserveTable(shop: (typeof restaurants)[number]) {
           </div>
           <div class="coord-bar">
             <span>📍 {{ shop.address }}</span>
-            <span class="coord-mono">{{ shop.lng.toFixed(4) }}°E, {{ shop.lat.toFixed(4) }}°N</span>
           </div>
           <div style="font-size: 11.5px; color: var(--ink-2); background: #f4faf7; padding: 7px 9px; border-radius: 0; margin: 6px 0">
             <strong>📖 招牌菜单：</strong>{{ shop.menu }}

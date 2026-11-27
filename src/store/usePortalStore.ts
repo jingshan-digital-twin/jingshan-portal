@@ -44,23 +44,22 @@ export interface ModuleMeta {
   code: string
   shortName: string
   title: string
-  subtitle: string
 }
 
 export const MODULE_META_LIST: ModuleMeta[] = [
-  { id: 1, code: '01', shortName: '首页总览', title: '首页总览与全城热门精选', subtitle: '城市名片 / 热门精选 / 快捷入口' },
-  { id: 2, code: '02', shortName: '打 · 场地', title: '“打”：网球场地服务', subtitle: '全市356片球场地图 / 订场 / 实时比分 / 陪练' },
-  { id: 3, code: '03', shortName: '游 · 旅游', title: '“游”：旅游游览服务', subtitle: '京山/荆门/湖北全域延伸线与语音导览' },
-  { id: 4, code: '04', shortName: '吃 · 美食', title: '“吃”：美食服务', subtitle: '联盟85折餐厅 / 招牌菜单 / 赛事团餐' },
-  { id: 5, code: '05', shortName: '住 · 住宿', title: '“住”：住宿服务', subtitle: '短长租网球公寓 / 联盟酒店 / 购房减5万' },
-  { id: 6, code: '06', shortName: '行 · 出行', title: '“行”：出行服务', subtitle: '赛期封闭限行图 / 车位充电桩预约 / 优质司机' },
-  { id: 7, code: '07', shortName: '购 · 商品', title: '“购”：特色商品服务', subtitle: '京山农特产 / 李宁装备 / 非遗文创商城' },
-  { id: 8, code: '08', shortName: '娱 · 娱乐', title: '“娱”：休闲娱乐服务', subtitle: '温泉康养 / 农庄采摘 / 影城选座 / KTV' },
-  { id: 9, code: '09', shortName: '训 · 培训', title: '“训”：培训研学服务', subtitle: '湖北省网球学校 / 五维能力评测与晋升' },
-  { id: 10, code: '10', shortName: '便民配套', title: '便民配套服务', subtitle: '公厕 / 医疗急救 / 母婴室 / 天气路况' },
-  { id: 11, code: '11', shortName: '互动反馈', title: '互动反馈', subtitle: '球友打卡评价 / 12345投诉分办 / 信用预警' },
-  { id: 12, code: '12', shortName: '小程序互通', title: '小程序互联互通', subtitle: '政务 / 文旅 / 支付 / 打车一键直连' },
-  { id: 13, code: '13', shortName: '个人中心', title: '个人中心', subtitle: '我的订单 / 电子票根 / 会员积分 / 五维雷达图' },
+  { id: 1, code: '01', shortName: '首页总览', title: '首页总览与全城热门精选' },
+  { id: 2, code: '02', shortName: '打 · 场地', title: '“打”：网球场地服务' },
+  { id: 3, code: '03', shortName: '游 · 旅游', title: '“游”：旅游游览服务' },
+  { id: 4, code: '04', shortName: '吃 · 美食', title: '“吃”：美食服务' },
+  { id: 5, code: '05', shortName: '住 · 住宿', title: '“住”：住宿服务' },
+  { id: 6, code: '06', shortName: '行 · 出行', title: '“行”：出行服务' },
+  { id: 7, code: '07', shortName: '购 · 商品', title: '“购”：特色商品服务' },
+  { id: 8, code: '08', shortName: '娱 · 娱乐', title: '“娱”：休闲娱乐服务' },
+  { id: 9, code: '09', shortName: '训 · 培训', title: '“训”：培训研学服务' },
+  { id: 10, code: '10', shortName: '便民配套', title: '便民配套服务' },
+  { id: 11, code: '11', shortName: '互动反馈', title: '互动反馈' },
+  { id: 12, code: '12', shortName: '小程序互通', title: '小程序互联互通' },
+  { id: 13, code: '13', shortName: '个人中心', title: '个人中心' },
 ]
 
 export function getModuleMeta(id: ModuleId): ModuleMeta {

@@ -97,9 +97,6 @@ function submitCoachSlot(coachId: string) {
         <div class="mh-num">09</div>
         <div>
           <h1 class="mh-title">“训”：课程预约与培训研学服务</h1>
-          <div class="mh-desc">
-            湖北省网球学校招生咨询、五维能力评测与晋升测试、训练营研学与康复
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
