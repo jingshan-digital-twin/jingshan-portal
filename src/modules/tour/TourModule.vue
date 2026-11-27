@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { BOOKING_DATES } from '../../mock/schedules'
 import {
   OUTDOOR_TRAILS,
@@ -16,17 +17,32 @@ const { state, openPhoto, openActionModal, openNavigation, createQuickOrder, tog
 // 模块顶部主视图切换
 const activeSection = ref<'all' | 'spots' | 'packages' | 'audio' | 'lines'>('all')
 
-// 1. 景区 / 乡村 / 网红 / 夜市 筛选与门票预约参数
+// 1. 景区 / 乡村 / 网红 / 夜市 筛选、搜索与分页（每页4项）
+const PAGE_SIZE = 4
 const spotCategory = ref<'全部' | TourSpotCategory>('全部')
+const spotKeyword = ref('')
+const spotPage = ref(1)
 const visitDate = ref(BOOKING_DATES[0]!.iso)
 const visitSlot = ref<'上午 08:30-12:00' | '下午 13:00-17:00' | '夜游 17:30-22:00'>('下午 13:00-17:00')
 const ticketCount = ref(2)
 
-const visibleSpots = computed(() =>
-  spotCategory.value === '全部'
-    ? TOUR_SPOTS
-    : TOUR_SPOTS.filter((s) => s.category === spotCategory.value),
-)
+const visibleSpots = computed(() => {
+  const q = spotKeyword.value.trim().toLowerCase()
+  return TOUR_SPOTS.filter((s) => {
+    const okCat = spotCategory.value === '全部' || s.category === spotCategory.value
+    const okQ = !q || s.name.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q))
+    return okCat && okQ
+  })
+})
+
+const pagedSpots = computed(() => {
+  const start = (spotPage.value - 1) * PAGE_SIZE
+  return visibleSpots.value.slice(start, start + PAGE_SIZE)
+})
+
+watch([spotCategory, spotKeyword], () => {
+  spotPage.value = 1
+})
 
 const visitDateLabel = computed(
   () => BOOKING_DATES.find((d) => d.iso === visitDate.value)?.shortDate ?? visitDate.value,
@@ -44,16 +60,30 @@ function bookSpotTicket(spot: (typeof TOUR_SPOTS)[number]) {
   )
 }
 
-// 2. 网旅产品专区筛选与预订参数
+// 2. 网旅产品专区筛选、搜索与分页（每页4项）
 const pkgScope = ref<'全部' | '京山本地' | '荆门周边' | '湖北省内'>('全部')
+const pkgKeyword = ref('')
+const pkgPage = ref(1)
 const pkgDate = ref(BOOKING_DATES[1]!.iso)
 const pkgPeople = ref(2)
 
-const visiblePackages = computed(() =>
-  pkgScope.value === '全部'
-    ? TOUR_PACKAGES
-    : TOUR_PACKAGES.filter((p) => p.scope === pkgScope.value),
-)
+const visiblePackages = computed(() => {
+  const q = pkgKeyword.value.trim().toLowerCase()
+  return TOUR_PACKAGES.filter((p) => {
+    const okScope = pkgScope.value === '全部' || p.scope === pkgScope.value
+    const okQ = !q || p.title.toLowerCase().includes(q) || p.subtitle.toLowerCase().includes(q)
+    return okScope && okQ
+  })
+})
+
+const pagedPackages = computed(() => {
+  const start = (pkgPage.value - 1) * PAGE_SIZE
+  return visiblePackages.value.slice(start, start + PAGE_SIZE)
+})
+
+watch([pkgScope, pkgKeyword], () => {
+  pkgPage.value = 1
+})
 
 function bookTourPackage(pkg: (typeof TOUR_PACKAGES)[number]) {
   const dLabel = BOOKING_DATES.find((d) => d.iso === pkgDate.value)?.shortDate ?? pkgDate.value
@@ -131,6 +161,11 @@ const visibleTrails = computed(() =>
             <div style="font-size: 11.5px; color: var(--ink-3)">支持按场景分类筛选、查看游玩时长与语音导览、一键导航及选定日期时段预约门票/消费券</div>
           </div>
           <div class="flex-row" style="gap: 6px">
+            <div class="search-bar" style="width: 240px; height: 34px">
+              <span>🔍</span>
+              <input v-model="spotKeyword" type="text" placeholder="搜索景区/乡村/网红/夜市…" />
+              <button v-if="spotKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="spotKeyword = ''">✕</button>
+            </div>
             <button
               v-for="cat in (['全部', '景区', '乡村景点', '网红打卡点', '夜市消费'] as const)"
               :key="cat"
@@ -171,13 +206,19 @@ const visibleTrails = computed(() =>
         </div>
       </div>
 
-      <div class="grid-4" style="gap: 14px">
-        <div
-          v-for="spot in visibleSpots"
-          :key="spot.id"
-          class="card"
-          style="display: flex; flex-direction: column; justify-content: space-between"
-        >
+      <div v-if="pagedSpots.length === 0" class="card card-pad" style="text-align: center; padding: 36px 20px">
+        <strong style="font-size: 14px; display: block; margin-bottom: 8px">未查询到匹配的景点或夜市</strong>
+        <button class="btn-primary" @click="spotKeyword = ''; spotCategory = '全部'">重置查询条件</button>
+      </div>
+
+      <div v-else>
+        <div class="grid-4" style="gap: 14px">
+          <div
+            v-for="spot in pagedSpots"
+            :key="spot.id"
+            class="card"
+            style="display: flex; flex-direction: column; justify-content: space-between"
+          >
           <div>
             <div
               class="photo-box"
@@ -266,6 +307,14 @@ const visibleTrails = computed(() =>
             </button>
           </div>
         </div>
+        </div>
+        <PaginationBar
+          :total="visibleSpots.length"
+          :page="spotPage"
+          :page-size="PAGE_SIZE"
+          unit="处场景"
+          @update:page="spotPage = $event"
+        />
       </div>
     </div>
 
@@ -278,6 +327,10 @@ const visibleTrails = computed(() =>
             <div style="font-size: 11.5px; color: var(--ink-3)">持证旅行社品质保障，覆盖京山本地、荆门世遗延伸与湖北省内大环线</div>
           </div>
           <div class="flex-row" style="gap: 8px">
+            <div class="search-bar" style="width: 210px; height: 34px">
+              <span>🔍</span>
+              <input v-model="pkgKeyword" type="text" placeholder="搜网旅套餐关键词…" />
+            </div>
             <button
               v-for="sc in (['全部', '京山本地', '荆门周边', '湖北省内'] as const)"
               :key="sc"
@@ -302,7 +355,7 @@ const visibleTrails = computed(() =>
 
       <div class="grid-2">
         <div
-          v-for="pkg in visiblePackages"
+          v-for="pkg in pagedPackages"
           :key="pkg.id"
           class="card"
           style="display: grid; grid-template-columns: 210px 1fr; overflow: hidden"
@@ -346,6 +399,13 @@ const visibleTrails = computed(() =>
           </div>
         </div>
       </div>
+      <PaginationBar
+        :total="visiblePackages.length"
+        :page="pkgPage"
+        :page-size="PAGE_SIZE"
+        unit="款套餐"
+        @update:page="pkgPage = $event"
+      />
     </div>
 
     <!-- ===== 模块三：语音导览与游玩时长建议 ===== -->

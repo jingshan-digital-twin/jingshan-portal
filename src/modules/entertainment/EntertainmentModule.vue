@@ -1,17 +1,33 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { ENTERTAINMENT_ITEMS } from '../../mock/data'
 import { CINEMA_MOVIES } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openPhoto, openNavigation, showToast } = usePortalStore()
+const PAGE_SIZE = 4
 const entTab = ref<'全部' | '农庄' | '采摘' | '亲子' | '康养' | 'KTV/电影'>('全部')
+const entKeyword = ref('')
+const entPage = ref(1)
 
-const visibleItems = computed(() =>
-  entTab.value === '全部'
-    ? ENTERTAINMENT_ITEMS
-    : ENTERTAINMENT_ITEMS.filter((i) => i.catKey === entTab.value),
-)
+const visibleItems = computed(() => {
+  const q = entKeyword.value.trim().toLowerCase()
+  return ENTERTAINMENT_ITEMS.filter((i) => {
+    const okTab = entTab.value === '全部' || i.catKey === entTab.value
+    const okQ = !q || i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q) || i.address.toLowerCase().includes(q)
+    return okTab && okQ
+  })
+})
+
+const pagedItems = computed(() => {
+  const start = (entPage.value - 1) * PAGE_SIZE
+  return visibleItems.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(visibleItems, () => {
+  entPage.value = 1
+})
 </script>
 
 <template>
@@ -36,9 +52,20 @@ const visibleItems = computed(() =>
       </div>
     </div>
 
-    <div class="grid-3">
+    <div class="card card-pad mb-16 filter-workbench flex-between">
+      <div class="search-bar" style="width: 300px; height: 36px">
+        <span>🔍</span>
+        <input v-model="entKeyword" type="text" placeholder="搜索天沐温泉、农庄、采摘、影城、KTV…" />
+        <button v-if="entKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="entKeyword = ''">✕</button>
+      </div>
+      <span style="font-size: 12px; font-weight: 800; color: var(--primary)">
+        共找到 {{ visibleItems.length }} 处休闲娱乐点位
+      </span>
+    </div>
+
+    <div class="grid-2">
       <div
-        v-for="e in visibleItems"
+        v-for="e in pagedItems"
         :key="e.id"
         class="card"
         :style="e.id === 'ent-6' ? 'border: 2px solid #6f42c1' : ''"
@@ -140,5 +167,12 @@ const visibleItems = computed(() =>
         </div>
       </div>
     </div>
+    <PaginationBar
+      :total="visibleItems.length"
+      :page="entPage"
+      :page-size="PAGE_SIZE"
+      unit="处点位"
+      @update:page="entPage = $event"
+    />
   </section>
 </template>

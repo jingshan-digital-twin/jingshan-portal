@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AbilityRadarChart from '../../components/AbilityRadarChart.vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { BOOKING_DATES, formatHourRange } from '../../mock/schedules'
 import {
   CAMP_PROGRAMS,
@@ -52,15 +53,31 @@ function matchPeriod(startTime: string, period: '全天' | '上午' | '下午' |
   return true
 }
 
-const filteredGroupClasses = computed(() =>
-  state.groupClasses.filter((cls) => {
+const PAGE_SIZE = 4
+const groupKeyword = ref('')
+const groupPage = ref(1)
+const campPage = ref(1)
+
+const filteredGroupClasses = computed(() => {
+  const q = groupKeyword.value.trim().toLowerCase()
+  return state.groupClasses.filter((cls) => {
     const okDate = showAllDatesForGroup.value || cls.date === selectedDate.value
     const okCat = groupCat.value === '全部' || cls.category === groupCat.value
     const okLevel = groupLevel.value === '全部' || cls.level === groupLevel.value
     const okPeriod = matchPeriod(cls.startTime, groupPeriod.value)
-    return okDate && okCat && okLevel && okPeriod
-  }),
-)
+    const okQ = !q || cls.title.toLowerCase().includes(q) || cls.coachName.toLowerCase().includes(q) || cls.venueName.toLowerCase().includes(q)
+    return okDate && okCat && okLevel && okPeriod && okQ
+  })
+})
+
+const pagedGroupClasses = computed(() => {
+  const start = (groupPage.value - 1) * PAGE_SIZE
+  return filteredGroupClasses.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(filteredGroupClasses, () => {
+  groupPage.value = 1
+})
 
 const coachVenues = computed(() => [
   '全部',
@@ -108,6 +125,15 @@ const visibleCamps = computed(() => {
     const okQ = !q || c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q) || c.targetAudience.toLowerCase().includes(q)
     return okCat && okQ
   })
+})
+
+const pagedCamps = computed(() => {
+  const start = (campPage.value - 1) * PAGE_SIZE
+  return visibleCamps.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(visibleCamps, () => {
+  campPage.value = 1
 })
 
 function enrollCamp(item: (typeof CAMP_PROGRAMS)[number]) {
@@ -441,9 +467,9 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
         </div>
       </div>
 
-      <div class="grid-3">
+      <div class="grid-2">
         <div
-          v-for="item in visibleCamps"
+          v-for="item in pagedCamps"
           :key="item.id"
           class="card"
           style="display: flex; flex-direction: column; justify-content: space-between"
@@ -502,6 +528,13 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
           </div>
         </div>
       </div>
+      <PaginationBar
+        :total="visibleCamps.length"
+        :page="campPage"
+        :page-size="PAGE_SIZE"
+        unit="个项目"
+        @update:page="campPage = $event"
+      />
     </div>
 
     <!-- ===== 三、认证网球俱乐部：介绍 · 课程销售 · 学员真实评价 ===== -->
@@ -666,6 +699,10 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             >
               {{ lv }}
             </button>
+            <div class="search-bar" style="width: 200px; height: 32px; margin-left: auto">
+              <span>🔍</span>
+              <input v-model="groupKeyword" type="text" placeholder="搜课程/教练/场馆…" />
+            </div>
           </div>
         </div>
 
@@ -715,36 +752,45 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             查看近7日全部团体课
           </button>
         </div>
-        <div v-else class="grid-2">
-          <div
-            v-for="cls in filteredGroupClasses"
-            :key="cls.id"
-            class="card card-pad"
-            style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px"
-          >
-            <div>
-              <div class="flex-between" style="margin-bottom: 5px">
-                <div class="flex-row" style="gap: 5px">
-                  <span class="tag green">🕒 {{ BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate }} {{ cls.startTime }}-{{ cls.endTime }}</span>
-                  <span class="tag blue">{{ cls.category }}</span>
-                  <span class="tag gold">{{ cls.level }}</span>
+        <div v-else>
+          <div class="grid-2">
+            <div
+              v-for="cls in pagedGroupClasses"
+              :key="cls.id"
+              class="card card-pad"
+              style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px"
+            >
+              <div>
+                <div class="flex-between" style="margin-bottom: 5px">
+                  <div class="flex-row" style="gap: 5px">
+                    <span class="tag green">🕒 {{ BOOKING_DATES.find((d) => d.iso === cls.date)?.shortDate }} {{ cls.startTime }}-{{ cls.endTime }}</span>
+                    <span class="tag blue">{{ cls.category }}</span>
+                    <span class="tag gold">{{ cls.level }}</span>
+                  </div>
+                  <span class="tag orange">余 {{ cls.capacity - cls.enrolled }}/{{ cls.capacity }} 位</span>
                 </div>
-                <span class="tag orange">余 {{ cls.capacity - cls.enrolled }}/{{ cls.capacity }} 位</span>
+                <strong style="font-size: 15px; display: block; margin-bottom: 4px">{{ cls.title }}</strong>
+                <div style="font-size: 12px; color: var(--ink-2)">👨‍🏫 {{ cls.coachName }} ｜ 📍 {{ cls.venueName }}</div>
               </div>
-              <strong style="font-size: 15px; display: block; margin-bottom: 4px">{{ cls.title }}</strong>
-              <div style="font-size: 12px; color: var(--ink-2)">👨‍🏫 {{ cls.coachName }} ｜ 📍 {{ cls.venueName }}</div>
-            </div>
-            <div class="flex-between" style="padding-top: 8px; border-top: 1px dashed var(--line)">
-              <span class="price" style="font-size: 18px">¥{{ cls.memberPrice }}<small>会员价</small></span>
-              <button
-                :class="cls.bookedByMe ? 'btn-ghost' : 'btn-orange'"
-                :disabled="cls.bookedByMe || cls.enrolled >= cls.capacity"
-                @click="bookGroupClass(cls.id)"
-              >
-                {{ cls.bookedByMe ? '✅ 已预约' : '预约本节课程' }}
-              </button>
+              <div class="flex-between" style="padding-top: 8px; border-top: 1px dashed var(--line)">
+                <span class="price" style="font-size: 18px">¥{{ cls.memberPrice }}<small>会员价</small></span>
+                <button
+                  :class="cls.bookedByMe ? 'btn-ghost' : 'btn-orange'"
+                  :disabled="cls.bookedByMe || cls.enrolled >= cls.capacity"
+                  @click="bookGroupClass(cls.id)"
+                >
+                  {{ cls.bookedByMe ? '✅ 已预约' : '预约本节课程' }}
+                </button>
+              </div>
             </div>
           </div>
+          <PaginationBar
+            :total="filteredGroupClasses.length"
+            :page="groupPage"
+            :page-size="PAGE_SIZE"
+            unit="节课程"
+            @update:page="groupPage = $event"
+          />
         </div>
       </div>
 

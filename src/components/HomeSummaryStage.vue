@@ -331,7 +331,11 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
             <div class="flex-row">
               <span class="tag" style="background: var(--lime); color: #0b251d">📊 网球记实时比分</span>
               <span style="font-size: 11.5px; color: rgba(255, 255, 255, 0.85)">
-                {{ state.courtSurfaceFilter }} · {{ state.courtRegionFilter }}
+                {{
+                  state.courtSurfaceFilter === state.courtRegionFilter
+                    ? state.courtSurfaceFilter
+                    : [state.courtSurfaceFilter, state.courtRegionFilter].filter((v) => v !== '全部').join(' · ')
+                }}
               </span>
             </div>
             <button class="home-live-jump" @click="openCurrentFullPage">查看全部赛况与技术统计 ↗</button>
@@ -400,13 +404,8 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
 
       <!-- 03 游 · 旅游游览摘要 -->
       <div v-else-if="state.activeModule === 3" class="summary-view-col">
-        <div class="ticket-stub-banner" style="padding: 11px 16px; flex-shrink: 0">
-          <div>
-            <strong style="font-size: 14px">🌿 全域网旅推荐 · 依据来源地「{{ state.origin }}」定制</strong>
-            <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">
-              以京山打球为核心起点，辐射本地 4A 景区、荆门明显陵与湖北省内大环线，持证旅行社保障
-            </div>
-          </div>
+        <div class="ticket-stub-banner" style="padding: 12px 16px; flex-shrink: 0">
+          <strong style="font-size: 14.5px">🌿 为您推荐您的专属游玩路线</strong>
           <span class="tag" style="background: var(--lime); color: #0b251d">三圈层精选 3 条热卖线</span>
         </div>
 

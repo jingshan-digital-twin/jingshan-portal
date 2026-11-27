@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { RESTAURANT_MENUS } from '../../mock/data'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openPhoto, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
+const PAGE_SIZE = 4
 const foodTab = ref<'全部' | '联盟85折' | '农家菜' | '夜市' | '团餐'>('全部')
+const foodKeyword = ref('')
+const foodPage = ref(1)
 const dineDate = ref(BOOKING_DATES[0]!.iso)
 const dinePeriod = ref<'午市 11:30-13:30' | '晚市 17:30-20:00' | '夜宵 20:30-23:30'>('晚市 17:30-20:00')
 const dineGuests = ref('4人桌')
@@ -154,15 +158,26 @@ const groupVenues = [
 ]
 
 const visibleShops = computed(() => {
-  const list =
-    foodTab.value === '全部' || foodTab.value === '团餐'
-      ? restaurants
-      : restaurants.filter((r) => r.cat === foodTab.value)
+  const q = foodKeyword.value.trim().toLowerCase()
+  const list = restaurants.filter((r) => {
+    const okTab = foodTab.value === '全部' || foodTab.value === '团餐' || r.cat === foodTab.value
+    const okQ = !q || r.name.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q) || r.address.toLowerCase().includes(q)
+    return okTab && okQ
+  })
   return [...list].sort((a, b) => {
     if (foodSort.value === 'price') return a.avg - b.avg
     if (foodSort.value === 'rating') return b.rating - a.rating
     return 0
   })
+})
+
+const pagedShops = computed(() => {
+  const start = (foodPage.value - 1) * PAGE_SIZE
+  return visibleShops.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(visibleShops, () => {
+  foodPage.value = 1
 })
 
 function reserveTable(shop: (typeof restaurants)[number]) {
@@ -215,6 +230,10 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     <!-- 用餐日期、时段与排序筛选条 -->
     <div class="card card-pad mb-16 filter-workbench">
       <div class="filter-row">
+        <div class="search-bar" style="width: 210px; height: 34px">
+          <span>🔍</span>
+          <input v-model="foodKeyword" type="text" placeholder="搜餐厅、招牌菜、地址…" />
+        </div>
         <span class="filter-label">📅 订座日期：</span>
         <select v-model="dineDate" class="f-input" style="width: 140px; padding: 5px 9px">
           <option v-for="d in BOOKING_DATES" :key="d.iso" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
@@ -243,8 +262,9 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       </div>
     </div>
 
-    <div v-if="foodTab !== '团餐'" class="grid-3 mb-16">
-      <div v-for="shop in visibleShops" :key="shop.name" class="card">
+    <div v-if="foodTab !== '团餐'" class="mb-16">
+      <div class="grid-3">
+        <div v-for="shop in pagedShops" :key="shop.name" class="card">
         <div
           class="photo-box"
           style="height: 165px"
@@ -328,6 +348,14 @@ function reserveTable(shop: (typeof restaurants)[number]) {
           </div>
         </div>
       </div>
+      </div>
+      <PaginationBar
+        :total="visibleShops.length"
+        :page="foodPage"
+        :page-size="PAGE_SIZE"
+        unit="家餐厅"
+        @update:page="foodPage = $event"
+      />
     </div>
 
     <div class="card card-pad" style="background: #fffbf2; border-color: #f2d59b">

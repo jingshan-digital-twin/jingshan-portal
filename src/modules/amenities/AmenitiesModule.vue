@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type AmenityMapPoint } from '../../components/ServiceCircleMap.vue'
 import { usePortalStore } from '../../store/usePortalStore'
 import type { RadiusOption } from '../../types/portal'
@@ -12,7 +13,10 @@ interface AmenityCardItem extends AmenityMapPoint {
 }
 
 const { state, switchModule, openPhoto, openNavigation } = usePortalStore()
+const PAGE_SIZE = 4
 const amFilter = ref<'全部' | '卫生间' | '医疗点' | '充电桩' | 'ATM' | '母婴室'>('全部')
+const amKeyword = ref('')
+const amPage = ref(1)
 const mapRadius = ref<RadiusOption>('1公里')
 
 // 按距您最近排序的网球场列表
@@ -69,11 +73,23 @@ const currentVenueAmenities = computed(
   () => VENUE_AMENITIES[selectedVenue.value?.id ?? 'venue-wenfeng'] ?? VENUE_AMENITIES['venue-wenfeng']!,
 )
 
-const visibleAmenities = computed(() =>
-  amFilter.value === '全部'
-    ? currentVenueAmenities.value
-    : currentVenueAmenities.value.filter((a) => a.key === amFilter.value),
-)
+const visibleAmenities = computed(() => {
+  const q = amKeyword.value.trim().toLowerCase()
+  return currentVenueAmenities.value.filter((a) => {
+    const okCat = amFilter.value === '全部' || a.key === amFilter.value
+    const okQ = !q || a.name.toLowerCase().includes(q) || a.address.toLowerCase().includes(q) || a.info.toLowerCase().includes(q)
+    return okCat && okQ
+  })
+})
+
+const pagedAmenities = computed(() => {
+  const start = (amPage.value - 1) * PAGE_SIZE
+  return visibleAmenities.value.slice(start, start + PAGE_SIZE)
+})
+
+watch([visibleAmenities, selectedVenueId], () => {
+  amPage.value = 1
+})
 </script>
 
 <template>
@@ -172,8 +188,14 @@ const visibleAmenities = computed(() =>
 
     <div class="grid-split-rev">
       <div style="display: flex; flex-direction: column; gap: 10px">
+        <div class="search-bar" style="max-width: 100%; height: 36px; background: #fff">
+          <span>🔍</span>
+          <input v-model="amKeyword" type="text" placeholder="搜索公厕、AED医疗、快充桩、ATM、母婴室…" />
+          <button v-if="amKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="amKeyword = ''">✕</button>
+        </div>
+
         <div
-          v-for="a in visibleAmenities"
+          v-for="a in pagedAmenities"
           :key="`${selectedVenue?.id}-${a.name}`"
           class="card"
           style="display: grid; grid-template-columns: 82px 1fr; gap: 12px; padding: 10px 12px; align-items: center"
@@ -233,6 +255,14 @@ const visibleAmenities = computed(() =>
             </div>
           </div>
         </div>
+
+        <PaginationBar
+          :total="visibleAmenities.length"
+          :page="amPage"
+          :page-size="PAGE_SIZE"
+          unit="处设施"
+          @update:page="amPage = $event"
+        />
       </div>
 
       <div class="card">

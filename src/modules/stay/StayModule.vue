@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { HOTEL_PROFILES } from '../../mock/details'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
+const PAGE_SIZE = 4
 const stayTab = ref<'全部' | '公寓' | '赛事优惠' | '民宿'>('全部')
+const stayKeyword = ref('')
+const stayPage = ref(1)
 const checkInDate = ref(BOOKING_DATES[0]!.iso)
 const checkOutDate = ref(BOOKING_DATES[2]!.iso)
 const stayPriceFilter = ref<'全部' | '200以下' | '200-400' | '400以上'>('全部')
@@ -26,8 +30,10 @@ const nightsCount = computed(() => {
 })
 
 const filteredHotels = computed(() => {
+  const q = stayKeyword.value.trim().toLowerCase()
   const list = HOTEL_PROFILES.filter((h) => {
     const okTab = stayTab.value === '全部' || h.category === stayTab.value
+    const okQ = !q || h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q) || h.rooms.some((r) => r.name.toLowerCase().includes(q))
     const minP = h.rooms[0]?.eventPrice ?? 0
     const okPrice =
       stayPriceFilter.value === '全部' ||
@@ -35,7 +41,7 @@ const filteredHotels = computed(() => {
       (stayPriceFilter.value === '200-400' && minP >= 200 && minP <= 400) ||
       (stayPriceFilter.value === '400以上' && minP > 400)
     const okFac = stayFacilities.value.every((f) => h.facilities.some((hf) => hf.includes(f.slice(0, 4))))
-    return okTab && okPrice && okFac
+    return okTab && okQ && okPrice && okFac
   })
   return [...list].sort((a, b) => {
     if (staySort.value === 'price') return (a.rooms[0]?.eventPrice ?? 0) - (b.rooms[0]?.eventPrice ?? 0)
@@ -44,7 +50,14 @@ const filteredHotels = computed(() => {
   })
 })
 
-const visibleCards = computed(() => filteredHotels.value)
+const visibleCards = computed(() => {
+  const start = (stayPage.value - 1) * PAGE_SIZE
+  return filteredHotels.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(filteredHotels, () => {
+  stayPage.value = 1
+})
 
 function openHotelDetail(id: string) {
   state.activeHotelId = id
@@ -129,6 +142,10 @@ function openHotelDetail(id: string) {
           </select>
         </div>
         <div class="filter-row">
+          <div class="search-bar" style="width: 230px; height: 34px">
+            <span>🔍</span>
+            <input v-model="stayKeyword" type="text" placeholder="搜索酒店/公寓/房型/地址…" />
+          </div>
           <span class="filter-label">设施筛选：</span>
           <button
             v-for="f in facilityOptions"
@@ -140,14 +157,14 @@ function openHotelDetail(id: string) {
             {{ f }}
           </button>
           <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-            符合条件：{{ visibleCards.length }} 家精选住宿
+            符合条件：{{ filteredHotels.length }} 家精选住宿
           </span>
         </div>
       </div>
     </div>
 
-    <!-- 精选酒店/公寓/民宿卡片（含完整房型与价格、坐标导航、点击查看完整详情） -->
-    <div class="grid-3 mb-16">
+    <!-- 精选酒店/公寓/民宿卡片（每页4家） -->
+    <div class="grid-2 mb-16">
       <div
         v-for="hotel in visibleCards"
         :key="hotel.id"
@@ -237,6 +254,15 @@ function openHotelDetail(id: string) {
           </div>
         </div>
       </div>
+    </div>
+    <div class="mb-16">
+      <PaginationBar
+        :total="filteredHotels.length"
+        :page="stayPage"
+        :page-size="PAGE_SIZE"
+        unit="家住宿"
+        @update:page="stayPage = $event"
+      />
     </div>
 
     <!-- 全部 6 家住宿房型与价格透明对照表 -->

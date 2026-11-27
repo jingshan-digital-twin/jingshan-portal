@@ -101,11 +101,6 @@ function submitQuickPackage() {
     <div class="container hero-carousel-inner">
       <!-- Left Rotating Spotlight Content -->
       <div class="hero-left">
-        <div class="hero-eyebrow">
-          <span class="hero-lime-tag">{{ currentSlide.eyebrow }}</span>
-          <span>{{ currentSlide.eyebrowSub }}</span>
-        </div>
-
         <h1 class="hero-main-title">
           {{ currentSlide.titlePrefix }}<em>{{ currentSlide.titleHighlight }}</em>
         </h1>

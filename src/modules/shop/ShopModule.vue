@@ -1,16 +1,32 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import { PRODUCT_CATALOG } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openActionModal, openNavigation } = usePortalStore()
+const PAGE_SIZE = 4
 const shopTab = ref<'全部' | '农特' | '装备' | '文创'>('全部')
+const shopKeyword = ref('')
+const shopPage = ref(1)
 
-const visibleProducts = computed(() =>
-  shopTab.value === '全部'
-    ? PRODUCT_CATALOG
-    : PRODUCT_CATALOG.filter((p) => p.cat === shopTab.value),
-)
+const visibleProducts = computed(() => {
+  const q = shopKeyword.value.trim().toLowerCase()
+  return PRODUCT_CATALOG.filter((p) => {
+    const okTab = shopTab.value === '全部' || p.cat === shopTab.value
+    const okQ = !q || p.name.toLowerCase().includes(q) || p.originPlace.toLowerCase().includes(q) || p.badge.toLowerCase().includes(q)
+    return okTab && okQ
+  })
+})
+
+const pagedProducts = computed(() => {
+  const start = (shopPage.value - 1) * PAGE_SIZE
+  return visibleProducts.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(visibleProducts, () => {
+  shopPage.value = 1
+})
 
 function openProduct(id: string) {
   state.activeProductId = id
@@ -51,8 +67,19 @@ function openProduct(id: string) {
       </button>
     </div>
 
-    <div class="grid-4 mb-16">
-      <div v-for="item in visibleProducts" :key="item.id" class="card" style="display: flex; flex-direction: column">
+    <div class="card card-pad mb-16 filter-workbench flex-between">
+      <div class="search-bar" style="width: 300px; height: 36px">
+        <span>🔍</span>
+        <input v-model="shopKeyword" type="text" placeholder="搜索京山桥米、李宁球拍、葛粉、文创…" />
+        <button v-if="shopKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="shopKeyword = ''">✕</button>
+      </div>
+      <span style="font-size: 12px; font-weight: 800; color: var(--primary)">
+        共找到 {{ visibleProducts.length }} 款特色好物
+      </span>
+    </div>
+
+    <div class="grid-4">
+      <div v-for="item in pagedProducts" :key="item.id" class="card" style="display: flex; flex-direction: column">
         <div
           class="photo-box"
           style="height: 185px"
@@ -86,6 +113,15 @@ function openProduct(id: string) {
           </div>
         </div>
       </div>
+    </div>
+    <div class="mb-16">
+      <PaginationBar
+        :total="visibleProducts.length"
+        :page="shopPage"
+        :page-size="PAGE_SIZE"
+        unit="件商品"
+        @update:page="shopPage = $event"
+      />
     </div>
 
     <div class="card card-pad flex-between">

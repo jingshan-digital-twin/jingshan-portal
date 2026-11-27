@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
@@ -118,18 +119,33 @@ function resetCourtFilters() {
   onlyBookable.value = true
 }
 
+const PAGE_SIZE = 4
+const courtPage = ref(1)
+const gamePage = ref(1)
+
+const pagedCourts = computed(() => {
+  const start = (courtPage.value - 1) * PAGE_SIZE
+  return filteredCourts.value.slice(start, start + PAGE_SIZE)
+})
+
 const selectedVenue = computed(
   () =>
     filteredCourts.value.find((c) => c.id === activeVenueId.value) ??
-    filteredCourts.value[0] ??
+    pagedCourts.value[0] ??
     state.courts[0] ??
     null,
 )
 
 watch(filteredCourts, (list) => {
+  courtPage.value = 1
   if (list.length > 0 && !list.some((v) => v.id === activeVenueId.value)) {
     activeVenueId.value = list[0]!.id
   }
+})
+
+watch(courtPage, () => {
+  const firstOnPage = pagedCourts.value[0]
+  if (firstOnPage) activeVenueId.value = firstOnPage.id
 })
 
 // ===== 同城约球多维筛选（参照图1） =====
@@ -197,6 +213,15 @@ const filteredGames = computed(() => {
     if (mgSort.value === 'time') return `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)
     return (b.maxPlayers - b.currentPlayers) - (a.maxPlayers - a.currentPlayers)
   })
+})
+
+const pagedGames = computed(() => {
+  const start = (gamePage.value - 1) * PAGE_SIZE
+  return filteredGames.value.slice(start, start + PAGE_SIZE)
+})
+
+watch(filteredGames, () => {
+  gamePage.value = 1
 })
 
 const publishForm = reactive({
@@ -438,7 +463,7 @@ function submitNewGame() {
           </div>
 
           <div
-            v-for="venue in filteredCourts"
+            v-for="venue in pagedCourts"
             :key="venue.id"
             class="court-item-compact"
             :class="{ selected: selectedVenue?.id === venue.id }"
@@ -551,6 +576,14 @@ function submitNewGame() {
               </div>
             </div>
           </div>
+
+          <PaginationBar
+            :total="filteredCourts.length"
+            :page="courtPage"
+            :page-size="PAGE_SIZE"
+            unit="家场馆"
+            @update:page="courtPage = $event"
+          />
         </div>
 
         <!-- 右侧固定悬浮地图（点击左侧球馆自动联动定位并高亮周边标注） -->
@@ -836,8 +869,9 @@ function submitNewGame() {
         </div>
       </div>
 
-      <div v-else class="grid-3">
-        <div v-for="g in filteredGames" :key="g.id" class="card card-pad" style="display: flex; flex-direction: column; justify-content: space-between; background: #fcfefd">
+      <div v-else>
+        <div class="grid-2">
+          <div v-for="g in pagedGames" :key="g.id" class="card card-pad" style="display: flex; flex-direction: column; justify-content: space-between; background: #fcfefd">
           <div>
             <div class="flex-between" style="margin-bottom: 6px">
               <span class="tag green">CUTR {{ g.cutrBand }}</span>
@@ -869,6 +903,14 @@ function submitNewGame() {
             </button>
           </div>
         </div>
+        </div>
+        <PaginationBar
+          :total="filteredGames.length"
+          :page="gamePage"
+          :page-size="PAGE_SIZE"
+          unit="场球局"
+          @update:page="gamePage = $event"
+        />
       </div>
     </div>
 
