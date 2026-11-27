@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { HERO_SLIDES } from '../mock/data'
+import { isBookingQuantity } from '../store/reservationFlow'
 import { usePortalStore } from '../store/usePortalStore'
 
 const {
@@ -58,7 +59,7 @@ const eventChoice = ref('京山周末分级赛（匹配当前等级）')
 const eventGroup = ref('单打/双打积分组')
 
 const pkgChoice = ref('京山网旅四天三晚尊享套餐 · ¥2,999/人')
-const pkgPeople = ref(2)
+const pkgPeople = ref<number | ''>(2)
 
 function submitCourtQuery() {
   state.courtSurfaceFilter = courtSurface.value
@@ -84,10 +85,12 @@ function submitQuickEvent() {
 }
 
 function submitQuickPackage() {
+  const people = pkgPeople.value
+  if (!isBookingQuantity(people)) return
   const unitPrice = pkgChoice.value.includes('2,999') ? 2999 : pkgChoice.value.includes('688') ? 688 : 498
-  createQuickOrder('门票', pkgChoice.value, `${pkgPeople.value} 人 · 持证旅行社保障 · 含电子票根`, unitPrice * pkgPeople.value, 180, 0, {
+  createQuickOrder('门票', pkgChoice.value, `${people} 人 · 持证旅行社保障 · 含电子票根`, unitPrice * people, 180, 0, {
     fields: [
-      { label: '出行人数', value: `${pkgPeople.value} 人` },
+      { label: '出行人数', value: `${people} 人` },
       { label: '游客来源地', value: state.origin },
     ],
   })
@@ -213,10 +216,8 @@ function submitQuickPackage() {
               </select>
             </div>
             <div class="hw-field">
-              <label>能力等级</label>
-              <select disabled>
-                <option>{{ state.abilityLevel }} 官方认证</option>
-              </select>
+              <label for="hero-ability-level">能力等级</label>
+              <output id="hero-ability-level">{{ state.abilityLevel }} 官方认证</output>
             </div>
             <div class="hw-field">
               <label>参赛组别</label>
@@ -242,21 +243,17 @@ function submitQuickPackage() {
               </select>
             </div>
             <div class="hw-field">
-              <label>游客来源地</label>
-              <select disabled>
-                <option>{{ state.origin }}</option>
-              </select>
+              <label for="hero-visitor-origin">游客来源地</label>
+              <output id="hero-visitor-origin">{{ state.origin }}</output>
             </div>
             <div class="hw-field">
-              <label>出行人数</label>
-              <select v-model="pkgPeople">
-                <option :value="1">1人独享</option>
-                <option :value="2">2人同行</option>
-                <option :value="3">家庭3人团</option>
-              </select>
+              <label for="hero-package-people">出行人数</label>
+              <input id="hero-package-people" v-model.number="pkgPeople" type="number" min="1" step="1" />
             </div>
           </div>
-          <button class="hw-cta" @click="submitQuickPackage">立即预订网旅套餐</button>
+          <button class="hw-cta" :disabled="!isBookingQuantity(pkgPeople)" @click="submitQuickPackage">
+            {{ isBookingQuantity(pkgPeople) ? '立即预订网旅套餐' : '请输入有效的出行人数' }}
+          </button>
         </template>
 
         <div class="hw-quick-row">

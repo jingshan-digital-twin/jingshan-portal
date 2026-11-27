@@ -872,6 +872,10 @@ export function usePortalStore() {
     pointsSpent = 0,
     reservation?: Partial<Pick<ReservationSummary, 'fields' | 'successTitle' | 'successMessage'>>,
   ) {
+    if (category !== '商品' && (!Number.isFinite(amount) || amount < 0 || amount > Number.MAX_SAFE_INTEGER / 100)) {
+      showToast('预约金额超出可处理范围，请调整数量。')
+      return false
+    }
     const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category,

@@ -510,7 +510,10 @@ button {
   color: var(--ink-2);
   margin-bottom: 4px;
 }
-.hw-field select {
+.hw-field select,
+.hw-field input,
+.hw-field output {
+  display: block;
   width: 100%;
   border: none;
   background: transparent;
@@ -518,7 +521,13 @@ button {
   font-weight: 800;
   color: var(--ink);
   outline: none;
+}
+.hw-field select {
   cursor: pointer;
+}
+.hw-field input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .hw-cta {
   width: 100%;
@@ -531,6 +540,11 @@ button {
   border: none;
   box-shadow: 0 8px 20px rgba(236, 75, 28, 0.3);
   margin-bottom: 12px;
+}
+.hw-cta:disabled,
+.booking-count-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .hw-quick-row {
   display: grid;
@@ -3017,86 +3031,6 @@ button {
   height: 100%;
   z-index: 1;
 }
-.dp-map-pin {
-  background: transparent;
-  border: none;
-}
-.dp-map-float-tl {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 400;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 99px;
-  padding: 9px 16px;
-  box-shadow: 0 4px 16px rgba(16, 37, 31, 0.16);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--ink);
-}
-.dp-map-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--primary);
-}
-.dp-map-float-tr {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  z-index: 400;
-  display: inline-flex;
-  background: rgba(255, 255, 255, 0.96);
-  border-radius: 10px;
-  padding: 4px;
-  box-shadow: 0 4px 16px rgba(16, 37, 31, 0.16);
-  gap: 4px;
-}
-.dp-map-ctrl-btn {
-  border: none;
-  background: transparent;
-  padding: 6px 12px;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
-}
-.dp-map-ctrl-btn.active {
-  background: var(--primary);
-  color: #ffffff;
-}
-.dp-map-float-br {
-  position: absolute;
-  right: 16px;
-  bottom: 18px;
-  z-index: 400;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(16, 37, 31, 0.18);
-}
-.dp-map-zoom-btn {
-  width: 38px;
-  height: 36px;
-  border: none;
-  border-bottom: 1px solid #e6efeb;
-  background: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-}
-.dp-map-zoom-btn:last-child {
-  border-bottom: none;
-}
-.dp-map-zoom-btn:hover {
-  background: #f2f8f5;
-}
-
 .dp-transit-box {
   margin-top: 24px;
 }
@@ -3405,6 +3339,10 @@ button {
   color: var(--ink-2);
   line-height: 1.2;
 }
+.dd-field .booking-count-input {
+  height: 42px;
+  border-radius: 6px;
+}
 .dd-select {
   width: 100%;
   height: 42px;
@@ -3578,17 +3516,18 @@ button {
   white-space: nowrap;
 }
 
-/* ===== FULL-WIDTH TWO-SECTION MODE SWITCHER (TRANSIT) ===== */
-.transit-mode-bar {
+/* ===== FULL-WIDTH MODULE MODE SWITCHER ===== */
+.module-mode-bar {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 6px;
   padding: 5px;
   background: #e9f2ee;
   border: 1px solid #d5e4dd;
   border-radius: 10px;
 }
-.transit-mode-btn {
+.module-mode-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3604,11 +3543,11 @@ button {
   letter-spacing: 1.5px;
   transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
-.transit-mode-btn:hover {
+.module-mode-btn:hover {
   color: var(--primary-dark);
   background: rgba(255, 255, 255, 0.55);
 }
-.transit-mode-btn.active {
+.module-mode-btn[aria-pressed='true'] {
   background: #ffffff;
   color: var(--primary);
   font-weight: 800;

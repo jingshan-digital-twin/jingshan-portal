@@ -1,94 +1,53 @@
 <script setup lang="ts">
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import MapBasemapSwitch from './MapBasemapSwitch.vue'
+import { addPortalMapMarker, createPortalMap, JINGSHAN_MAP_CENTER, MAP_ICONS, setPortalMapTiles, type MapBasemap } from './portalMap'
 
-const props = withDefaults(
-  defineProps<{
-    title: string
-    address: string
-    lat?: number
-    lng?: number
-    subtitle?: string
-  }>(),
-  {
-    lat: 31.0218,
-    lng: 113.1195,
-    subtitle: '',
-  },
-)
+const props = defineProps<{
+  title: string
+  address: string
+  lat?: number
+  lng?: number
+  icon?: string
+  photo?: string
+}>()
 
-const mapEl = ref<HTMLDivElement | null>(null)
-const baseType = ref<'vector' | 'satellite'>('vector')
+const emit = defineEmits<{ navigate: [] }>()
+const mapEl = ref<HTMLDivElement>()
+const baseType = ref<MapBasemap>('vector')
+const basemapUnavailable = ref(false)
+const center = computed<L.LatLngTuple>(() => [
+  props.lat ?? JINGSHAN_MAP_CENTER[0],
+  props.lng ?? JINGSHAN_MAP_CENTER[1],
+])
 
-let map: L.Map | null = null
-let baseLayer: L.TileLayer | null = null
-let labelLayer: L.TileLayer | null = null
-let markerLayer: L.LayerGroup | null = null
+let map: L.Map | undefined
+let tileLayers: L.LayerGroup | undefined
+let markerLayer: L.LayerGroup | undefined
 let locationMarker: L.Marker | undefined
-
-function applyTileLayer(kind: 'vector' | 'satellite') {
-  if (!map) return
-  if (baseLayer) {
-    map.removeLayer(baseLayer)
-    baseLayer = null
-  }
-  if (labelLayer) {
-    map.removeLayer(labelLayer)
-    labelLayer = null
-  }
-  if (kind === 'vector') {
-    baseLayer = L.tileLayer(
-      'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
-      { subdomains: ['1', '2', '3', '4'], maxZoom: 18, attribution: '高德地图 · 京山网球' },
-    ).addTo(map)
-  } else {
-    baseLayer = L.tileLayer(
-      'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
-      { subdomains: ['1', '2', '3', '4'], maxZoom: 18, attribution: '高德影像' },
-    ).addTo(map)
-    labelLayer = L.tileLayer(
-      'https://webst0{s}.is.autonavi.com/appmaptile?style=8&x={x}&y={y}&z={z}',
-      { subdomains: ['1', '2', '3', '4'], maxZoom: 18 },
-    ).addTo(map)
-  }
-}
 
 function renderPin() {
   if (!map || !markerLayer) return
   markerLayer.clearLayers()
-  const lat = props.lat ?? 31.0218
-  const lng = props.lng ?? 113.1195
+  map.setView(center.value, 15)
 
-  map.setView([lat, lng], 15)
-
-  L.circle([lat, lng], {
+  L.circle(center.value, {
     radius: 320,
     color: '#0d7a58',
     weight: 1.5,
-    fillColor: '#0d7a58',
     fillOpacity: 0.1,
+    interactive: false,
   }).addTo(markerLayer)
 
-  const pinIcon = L.divIcon({
-    className: 'dp-map-pin',
-    html: `<div style="transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;">
-      <div style="width:46px;height:46px;border-radius:50%;background:#10251f;border:3px solid #ffffff;box-shadow:0 8px 24px rgba(16,37,31,0.38);display:flex;align-items:center;justify-content:center;">
-        <div style="width:14px;height:14px;border-radius:50%;background:#c4f63d;"></div>
-      </div>
-    </div>`,
-    iconSize: [0, 0],
-    iconAnchor: [0, 0],
+  locationMarker = addPortalMapMarker(markerLayer, center.value, {
+    title: props.title,
+    label: props.title,
+    icon: props.icon ?? MAP_ICONS.location,
+    photo: props.photo,
+    description: props.address,
+    actions: [{ label: '导航前往', run: () => emit('navigate') }],
   })
-
-  locationMarker = L.marker([lat, lng], { icon: pinIcon, title: props.title })
-    .bindPopup(
-      `<div style="font-family:'Noto Sans SC',sans-serif;min-width:200px;padding:2px 0;">
-        <strong style="font-size:14.5px;color:#10251f;">${props.title}</strong>
-        <div style="font-size:12.5px;color:#415750;margin-top:4px;">${props.address}</div>
-      </div>`,
-    )
-    .addTo(markerLayer)
 }
 
 function showLocation() {
@@ -99,77 +58,36 @@ function showLocation() {
 
 defineExpose({ showLocation })
 
-function zoomIn() {
-  map?.zoomIn()
-}
-function zoomOut() {
-  map?.zoomOut()
-}
 function recenter() {
-  map?.flyTo([props.lat ?? 31.0218, props.lng ?? 113.1195], 15, { duration: 0.45 })
+  map?.flyTo(center.value, 15, { duration: 0.45 })
+}
+
+function updateBasemap() {
+  if (tileLayers) {
+    setPortalMapTiles(tileLayers, baseType.value, (unavailable) => { basemapUnavailable.value = unavailable })
+  }
 }
 
 onMounted(() => {
   if (!mapEl.value) return
-  map = L.map(mapEl.value, {
-    center: [props.lat ?? 31.0218, props.lng ?? 113.1195],
-    zoom: 15,
-    zoomControl: false,
-    scrollWheelZoom: false,
-  })
+  map = createPortalMap(mapEl.value, center.value, 15)
+  tileLayers = L.layerGroup().addTo(map)
   markerLayer = L.layerGroup().addTo(map)
-  applyTileLayer(baseType.value)
+  updateBasemap()
   renderPin()
-  window.setTimeout(() => map?.invalidateSize(), 120)
 })
 
-watch(baseType, (next) => applyTileLayer(next))
-watch(
-  () => [props.lat, props.lng, props.title, props.address],
-  () => renderPin(),
-)
-
-onUnmounted(() => {
-  map?.remove()
-  map = null
-})
+watch(baseType, updateBasemap)
+watch(() => [center.value, props.title, props.address, props.icon, props.photo], renderPin)
+onUnmounted(() => map?.remove())
 </script>
 
 <template>
   <div class="dp-map-shell">
-    <div ref="mapEl" class="dp-map-canvas" />
-
-    <!-- Top-left pill (Airbnb-inspired floating context chip) -->
-    <div class="dp-map-float-tl">
-      <span class="dp-map-dot" />
-      <span>{{ title }}</span>
-    </div>
-
-    <!-- Top-right map style toggle -->
-    <div class="dp-map-float-tr">
-      <button
-        type="button"
-        class="dp-map-ctrl-btn"
-        :class="{ active: baseType === 'vector' }"
-        @click="baseType = 'vector'"
-      >
-        标准地图
-      </button>
-      <button
-        type="button"
-        class="dp-map-ctrl-btn"
-        :class="{ active: baseType === 'satellite' }"
-        @click="baseType = 'satellite'"
-      >
-        卫星影像
-      </button>
-    </div>
-
-    <!-- Bottom-right zoom controls -->
-    <div class="dp-map-float-br">
-      <button type="button" class="dp-map-zoom-btn" title="放大" @click="zoomIn">+</button>
-      <button type="button" class="dp-map-zoom-btn" title="缩小" @click="zoomOut">−</button>
-      <button type="button" class="dp-map-zoom-btn" title="回到中心" @click="recenter">◎</button>
-    </div>
+    <div ref="mapEl" class="dp-map-canvas" :aria-label="`${title}位置地图`" />
+    <MapBasemapSwitch v-model="baseType">
+      <button type="button" class="btn-ghost" @click="recenter">回到中心</button>
+    </MapBasemapSwitch>
+    <p v-if="basemapUnavailable" class="portal-map-notice" role="status">暂时无法加载地图底图</p>
   </div>
 </template>

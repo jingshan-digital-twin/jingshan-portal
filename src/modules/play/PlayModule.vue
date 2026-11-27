@@ -12,22 +12,26 @@ import type { CutrBand, RadiusOption } from '../../types/portal'
 const {
   state,
   memberTier,
-  switchModule,
   openVenueDetail,
   openBookingModal,
   openNavigation,
   refreshLiveScores,
   joinMatchmakingGame,
   publishMatchmakingGame,
-  createQuickOrder,
   showToast,
 } = usePortalStore()
 
-const subView = ref<'courts' | 'matchmaking' | 'scores'>('courts')
+const playTabs = [
+  { id: 'courts', label: '场地预约', icon: 'M5 4h14v16H5zM5 12h14M8 8h8v8H8z' },
+  { id: 'matchmaking', label: '同城约球', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z' },
+  { id: 'scores', label: '实时概况', icon: 'M4 19h16M7 15v-4m5 4V5m5 10V8' },
+] as const
+const subView = ref<(typeof playTabs)[number]['id']>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
 const showCourtMap = ref(false)
+const courtMap = ref<InstanceType<typeof ServiceCircleMap>>()
 
 // ===== 场地预约多维筛选 =====
 const venueKeyword = ref('')
@@ -281,12 +285,20 @@ function submitNewGame() {
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>
-        <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">同城约球（CUTR分级）</button>
-        <button class="m-tab" :class="{ active: subView === 'scores' }" @click="subView = 'scores'">网球记实时赛况</button>
-      </div>
+    <div class="module-mode-bar mb-16" role="group" aria-label="网球场地服务">
+      <button
+        v-for="tab in playTabs"
+        :key="tab.id"
+        type="button"
+        class="module-mode-btn"
+        :aria-pressed="subView === tab.id"
+        @click="subView = tab.id"
+      >
+        <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path :d="tab.icon" />
+        </svg>
+        <span>{{ tab.label }}</span>
+      </button>
     </div>
 
     <!-- 网球记实时赛事比分看板 -->
@@ -307,19 +319,6 @@ function submitNewGame() {
             @click="refreshLiveScores"
           >
             🔄 刷新比分
-          </button>
-          <button
-            class="btn-ghost"
-            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.3)"
-            @click="switchModule(6)"
-          >
-            🚦 赛期限行
-          </button>
-          <button
-            class="btn-orange"
-            @click="createQuickOrder('门票', `京山周末分级赛（${state.abilityLevel}组）报名`, '完赛积+120分 · 赠联盟票根券', 120, 120)"
-          >
-            立即报名参赛
           </button>
         </div>
       </div>
@@ -587,7 +586,7 @@ function submitNewGame() {
         :selected-id="selectedVenue?.id"
         list-label="地图场馆列表"
         empty-text="当前筛选条件下暂无匹配场馆"
-        @select="activeVenueId = $event"
+        @select="courtMap?.openVenueLocation($event)"
       >
         <div>
           <div class="card-pad" style="border-bottom: 1px solid var(--line); background: #fafdfc; padding: 14px 16px">
@@ -624,6 +623,7 @@ function submitNewGame() {
           </div>
 
           <ServiceCircleMap
+            ref="courtMap"
             mode="courts"
             :radius="state.radius"
             :selected-venue="selectedVenue"
@@ -688,7 +688,7 @@ function submitNewGame() {
     <div v-if="subView === 'matchmaking'" class="card card-pad filter-workbench">
       <div class="dd-filter-top" style="padding-bottom: 14px; border-bottom: 1px solid var(--line)">
         <div class="flex-row" style="gap: 12px">
-          <strong style="font-size: 19px">🤝 同城约球大厅（CUTR 分级匹配）</strong>
+          <strong style="font-size: 19px">🤝 同城约球大厅</strong>
           <div class="search-bar" style="width: 240px; height: 40px">
             <span>🔍</span>
             <input v-model="mgSearch" type="text" placeholder="搜场馆/球局…" />

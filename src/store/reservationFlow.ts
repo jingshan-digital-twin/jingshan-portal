@@ -25,6 +25,10 @@ type Commit = () => string | void | Promise<string | void>
 export const reservationView = shallowRef<ReservationView | null>(null)
 let pending: { commit: Commit; resolve: (confirmed: boolean) => void } | null = null
 
+export function isBookingQuantity(value: number | '', max = Number.MAX_SAFE_INTEGER): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 1 && value <= max
+}
+
 export function requestReservation(summary: ReservationSummary, commit: Commit): Promise<boolean> {
   if (reservationView.value) return Promise.resolve(false)
   return new Promise((resolve) => {

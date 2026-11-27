@@ -332,14 +332,14 @@ function bookDriver(drv: RecommendedDriver) {
 <template>
   <section style="display: flex; flex-direction: column; gap: 18px">
     <!-- 满宽分段切换：自驾出行 / 便捷出行 -->
-    <div class="transit-mode-bar">
+    <div class="module-mode-bar" role="group" aria-label="出行方式">
       <button
         type="button"
-        class="transit-mode-btn"
-        :class="{ active: transitView === 'drive' }"
+        class="module-mode-btn"
+        :aria-pressed="transitView === 'drive'"
         @click="transitView = 'drive'"
       >
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M5 17h14v-5l-2-5H7l-2 5v5z" />
           <circle cx="7.5" cy="17.5" r="1.5" />
           <circle cx="16.5" cy="17.5" r="1.5" />
@@ -350,11 +350,11 @@ function bookDriver(drv: RecommendedDriver) {
 
       <button
         type="button"
-        class="transit-mode-btn"
-        :class="{ active: transitView === 'easy' }"
+        class="module-mode-btn"
+        :aria-pressed="transitView === 'easy'"
         @click="transitView = 'easy'"
       >
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="4" y="4" width="16" height="14" rx="2" />
           <path d="M4 11h16" />
           <circle cx="8" cy="18.5" r="1.5" />

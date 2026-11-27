@@ -12,7 +12,7 @@ import {
   type YouthTournament,
 } from '../../mock/trainingData'
 import { usePortalStore } from '../../store/usePortalStore'
-import { requestReservation } from '../../store/reservationFlow'
+import { isBookingQuantity, requestReservation } from '../../store/reservationFlow'
 
 const {
   state,
@@ -116,7 +116,7 @@ async function submitCoachSlot(coachId: string) {
 const campFilter = ref<'全部' | '训练营' | '研学课程' | '团建活动'>('全部')
 const campKeyword = ref('')
 const campDate = ref(BOOKING_DATES[1]!.shortDate)
-const campPeople = ref(1)
+const campPeople = ref<number | ''>(1)
 
 const visibleCamps = computed(() => {
   const q = campKeyword.value.trim().toLowerCase()
@@ -137,11 +137,13 @@ watch(visibleCamps, () => {
 })
 
 function enrollCamp(item: (typeof CAMP_PROGRAMS)[number]) {
+  const people = campPeople.value
+  if (!isBookingQuantity(people, item.remaining)) return
   createQuickOrder(
     '课程',
     `${item.category}：${item.title}`,
-    `${campDate.value}批次 · ${campPeople.value}人报名 · ${item.duration}`,
-    item.price * campPeople.value,
+    `${campDate.value}批次 · ${people}人报名 · ${item.duration}`,
+    item.price * people,
     item.category === '训练营' ? 200 : 120,
   )
 }
@@ -181,9 +183,9 @@ const selectedOrg = ref('湖北省网球学校评测中心')
 const schoolForm = reactive({
   track: '小学/初中网球特长生招生',
   studentName: '',
-  age: '11岁',
-  level: '已有1年基础',
-  visitDate: BOOKING_DATES[1]!.shortDate,
+  age: '' as number | '',
+  level: '',
+  visitDate: BOOKING_DATES[1]!.iso,
   phone: '',
 })
 const schoolInquiryHistory = ref<{ id: string; track: string; studentName: string; visitDate: string }[]>([])
@@ -193,14 +195,22 @@ function submitSchoolInquiry() {
     showToast('请填写学员姓名和家长联系电话，方便省网校招生老师联系您')
     return
   }
+  if (schoolForm.age !== '' && !isBookingQuantity(schoolForm.age)) {
+    showToast('请输入有效的学员年龄')
+    return
+  }
+  if (!schoolForm.visitDate || schoolForm.visitDate < BOOKING_DATES[0]!.iso) {
+    showToast('请选择有效的意向到访日期')
+    return
+  }
   const application = { ...schoolForm, studentName: schoolForm.studentName.trim(), phone: schoolForm.phone.trim() }
   return requestReservation({
     title: '湖北省网球学校招生咨询',
     fields: [
       { label: '咨询项目', value: application.track },
       { label: '学员姓名', value: application.studentName },
-      { label: '年龄', value: application.age },
-      { label: '网球基础', value: application.level },
+      ...(application.age ? [{ label: '年龄', value: `${application.age} 岁` }] : []),
+      ...(application.level ? [{ label: '网球基础', value: application.level }] : []),
       { label: '到访日期', value: application.visitDate },
       { label: '联系电话', value: application.phone },
     ],
@@ -216,6 +226,8 @@ function submitSchoolInquiry() {
     })
     schoolForm.studentName = ''
     schoolForm.phone = ''
+    schoolForm.age = ''
+    schoolForm.level = ''
   })
 }
 
@@ -383,24 +395,25 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
             </div>
 
             <div class="grid-2" style="gap: 10px; margin-bottom: 10px">
-              <select v-model="schoolForm.track" class="f-input">
-                <option>小学/初中网球特长生招生</option>
-                <option>高中体教融合单招冲刺班</option>
-                <option>寒暑假 7 天体验营插班咨询</option>
-                <option>家长实地探校与试训预约</option>
-              </select>
-              <select v-model="schoolForm.visitDate" class="f-input">
-                <option v-for="d in BOOKING_DATES" :key="`sc-${d.iso}`" :value="d.shortDate">意向探校：{{ d.shortDate }} {{ d.weekday }}</option>
-              </select>
+              <label class="dd-field">
+                <span class="dd-field-label">咨询项目</span>
+                <select v-model="schoolForm.track" class="f-input">
+                  <option>小学/初中网球特长生招生</option>
+                  <option>高中体教融合单招冲刺班</option>
+                  <option>寒暑假 7 天体验营插班咨询</option>
+                  <option>家长实地探校与试训预约</option>
+                </select>
+              </label>
+              <label class="dd-field">
+                <span class="dd-field-label">意向探校日期</span>
+                <input v-model="schoolForm.visitDate" type="date" :min="BOOKING_DATES[0]!.iso" class="f-input" />
+              </label>
             </div>
-            <div class="grid-3" style="gap: 10px; margin-bottom: 14px">
-              <input v-model="schoolForm.studentName" class="f-input" placeholder="学员姓名 *" />
-              <select v-model="schoolForm.level" class="f-input">
-                <option>零基础启蒙</option>
-                <option>已有1年基础</option>
-                <option>有省级参赛经历</option>
-              </select>
-              <input v-model="schoolForm.phone" class="f-input" placeholder="家长电话 *" />
+            <div class="grid-2" style="gap: 10px; margin-bottom: 14px">
+              <input v-model="schoolForm.studentName" class="f-input" placeholder="学员姓名 *" aria-label="学员姓名" />
+              <input v-model.number="schoolForm.age" type="number" min="1" step="1" class="f-input" placeholder="年龄（选填）" aria-label="学员年龄" />
+              <input v-model.trim="schoolForm.level" class="f-input" placeholder="网球基础（选填）" aria-label="网球基础" />
+              <input v-model="schoolForm.phone" type="tel" class="f-input" placeholder="家长电话 *" aria-label="家长电话" />
             </div>
 
             <div class="flex-between">
@@ -544,12 +557,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
 
           <label class="dd-field">
             <span class="dd-field-label">报名人数</span>
-            <select v-model.number="campPeople" class="dd-select">
-              <option :value="1">1人报名</option>
-              <option :value="2">2人同行</option>
-              <option :value="5">5人小团</option>
-              <option :value="20">20人团建</option>
-            </select>
+            <input v-model.number="campPeople" type="number" min="1" step="1" class="f-input booking-count-input" />
           </label>
         </div>
       </div>
@@ -592,8 +600,8 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
               >
                 定制方案
               </button>
-              <button class="btn-primary" @click="enrollCamp(item)">
-                立即报名 ({{ campPeople }}人)
+              <button class="btn-primary booking-count-submit" :disabled="!isBookingQuantity(campPeople, item.remaining)" @click="enrollCamp(item)">
+                {{ !isBookingQuantity(campPeople) ? '请输入有效的报名人数' : campPeople > item.remaining ? `余 ${item.remaining} 名，请修改人数` : `立即报名（${campPeople} 人）` }}
               </button>
             </div>
           </div>

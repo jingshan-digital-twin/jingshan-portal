@@ -2,13 +2,15 @@
 import { computed, ref } from 'vue'
 import { HOTEL_PROFILES } from '../mock/details'
 import { BOOKING_DATES } from '../mock/schedules'
+import { isBookingQuantity } from '../store/reservationFlow'
 import { usePortalStore } from '../store/usePortalStore'
 
 const { state, createQuickOrder, openNavigation, toggleFavorite } = usePortalStore()
 
 const checkIn = ref(BOOKING_DATES[0]!.iso)
 const checkOut = ref(BOOKING_DATES[2]!.iso)
-const roomCount = ref(1)
+const roomCount = ref<number | ''>(1)
+const roomQuantity = computed(() => isBookingQuantity(roomCount.value) ? roomCount.value : 0)
 
 const nights = computed(() => {
   const s = new Date(checkIn.value).getTime()
@@ -26,19 +28,21 @@ function close() {
 
 async function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) {
   if (!hotel.value) return
+  const count = roomCount.value
+  if (!isBookingQuantity(count, room.remaining)) return
   const isLongTerm = room.leaseUnit === '/月' || room.leaseUnit === '/周'
-  const total = isLongTerm ? room.eventPrice * roomCount.value : room.eventPrice * nights.value * roomCount.value
+  const total = room.eventPrice * count * (isLongTerm ? 1 : nights.value)
   const inLabel = BOOKING_DATES.find((d) => d.iso === checkIn.value)?.shortDate ?? checkIn.value
   const outLabel = BOOKING_DATES.find((d) => d.iso === checkOut.value)?.shortDate ?? checkOut.value
   const periodDesc = isLongTerm
-    ? `${inLabel}起租 · ${roomCount.value}套`
-    : `${inLabel}入住 - ${outLabel}离店（共${nights.value}晚 × ${roomCount.value}间）`
+    ? `${inLabel}起租 · ${count}套`
+    : `${inLabel}入住 - ${outLabel}离店（共${nights.value}晚 × ${count}间）`
   const booked = await createQuickOrder(
     '住宿',
     `${hotel.value.name} · ${room.name}`,
     `${periodDesc} · ${room.breakfast} · 票根专享价`,
     total,
-    60 * roomCount.value,
+    60 * count,
   )
   if (booked) close()
 }
@@ -98,11 +102,7 @@ async function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) 
               <select v-model="checkOut" class="f-input" style="width: 142px; padding: 6px 10px">
                 <option v-for="d in BOOKING_DATES.slice(1)" :key="`mo-${d.iso}`" :value="d.iso">离店 {{ d.shortDate }}</option>
               </select>
-              <select v-model.number="roomCount" class="f-input" style="width: 88px; padding: 6px 10px">
-                <option :value="1">1 间</option>
-                <option :value="2">2 间</option>
-                <option :value="3">3 间</option>
-              </select>
+              <input v-model.number="roomCount" type="number" min="1" step="1" aria-label="房间数量" class="f-input" style="width: 88px; padding: 6px 10px" />
               <span class="tag green">共 {{ nights }} 晚</span>
             </div>
           </div>
@@ -124,13 +124,13 @@ async function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) 
               <div class="flex-row" style="gap: 14px">
                 <div style="text-align: right">
                   <div class="price" style="font-size: 21px">
-                    ¥{{ room.leaseUnit === '/月' || room.leaseUnit === '/周' ? room.eventPrice * roomCount : room.eventPrice * nights * roomCount }}
+                    {{ roomQuantity ? `¥${room.eventPrice * roomQuantity * (room.leaseUnit === '/月' || room.leaseUnit === '/周' ? 1 : nights)}` : '—' }}
                     <small>{{ room.leaseUnit === '/月' || room.leaseUnit === '/周' ? room.leaseUnit : `/${nights}晚` }}</small>
                   </div>
                   <div style="font-size: 13px; color: var(--ink-3)">单价 ¥{{ room.eventPrice }}{{ room.leaseUnit ?? '/晚' }}</div>
                 </div>
-                <button class="btn-orange" @click="bookRoom(room)">
-                  立即预订
+                <button class="btn-orange booking-count-submit" :disabled="!isBookingQuantity(roomCount, room.remaining)" @click="bookRoom(room)">
+                  {{ isBookingQuantity(roomCount, room.remaining) ? '立即预订' : '请调整预订数量' }}
                 </button>
               </div>
             </div>

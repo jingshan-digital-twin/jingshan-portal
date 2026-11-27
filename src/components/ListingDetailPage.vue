@@ -3,11 +3,13 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RESTAURANT_MENUS } from '../mock/data'
 import { CINEMA_MOVIES, HOTEL_PROFILES, PRODUCT_CATALOG } from '../mock/details'
 import { BOOKING_DATES, COURT_HOURS, formatHourRange } from '../mock/schedules'
+import { isBookingQuantity } from '../store/reservationFlow'
 import { getModuleMeta, usePortalStore } from '../store/usePortalStore'
 import type { CourtUnit, LightboxReview, MenuDish } from '../types/portal'
 import DetailLocationMap from './DetailLocationMap.vue'
 import MapResultsLayout from './MapResultsLayout.vue'
 import MapViewToggle from './MapViewToggle.vue'
+import { MAP_ICONS } from './portalMap'
 
 const {
   state,
@@ -90,7 +92,8 @@ const hotelCheckOutOptions = computed(() => BOOKING_DATES.filter((day) => day.is
 watch(hotelCheckOutOptions, (options) => {
   if (checkOut.value <= checkIn.value && options[0]) checkOut.value = options[0].iso
 })
-const roomCount = ref(1)
+const roomCount = ref<number | ''>(1)
+const roomQuantity = computed(() => isBookingQuantity(roomCount.value) ? roomCount.value : 0)
 const selectedRoomId = ref<string>('')
 const showAllRooms = ref(false)
 
@@ -106,30 +109,36 @@ const selectedRoom = computed(() => {
 })
 
 const selectedRoomIsLongStay = computed(() => selectedRoom.value?.leaseUnit === '/月' || selectedRoom.value?.leaseUnit === '/周')
+const canBookSelectedRoom = computed(() => selectedRoom.value && isBookingQuantity(roomCount.value, selectedRoom.value.remaining))
 
 const hotelTotalPrice = computed(() => {
   if (!selectedRoom.value) return 0
   return selectedRoomIsLongStay.value
-    ? selectedRoom.value.eventPrice * roomCount.value
-    : selectedRoom.value.eventPrice * hotelNights.value * roomCount.value
+    ? selectedRoom.value.eventPrice * roomQuantity.value
+    : selectedRoom.value.eventPrice * hotelNights.value * roomQuantity.value
 })
 
 function submitHotelBooking(targetRoom?: NonNullable<typeof hotel.value>['rooms'][number]) {
   if (!hotel.value) return
   const rm = targetRoom ?? selectedRoom.value ?? hotel.value.rooms[0]!
+  const count = roomCount.value
+  if (!isBookingQuantity(count, rm.remaining)) {
+    showToast(rm.remaining > 0 ? `请输入 1 至 ${rm.remaining} 的整数作为预订数量` : '该房型已订满')
+    return
+  }
   const isLong = rm.leaseUnit === '/月' || rm.leaseUnit === '/周'
-  const total = isLong ? rm.eventPrice * roomCount.value : rm.eventPrice * hotelNights.value * roomCount.value
+  const total = rm.eventPrice * count * (isLong ? 1 : hotelNights.value)
   const inLabel = BOOKING_DATES.find((d) => d.iso === checkIn.value)?.shortDate ?? checkIn.value
   const outLabel = BOOKING_DATES.find((d) => d.iso === checkOut.value)?.shortDate ?? checkOut.value
   const periodDesc = isLong
-    ? `${inLabel}起租 · ${roomCount.value}套`
-    : `${inLabel}入住 - ${outLabel}离店（共${hotelNights.value}晚 × ${roomCount.value}间）`
+    ? `${inLabel}起租 · ${count}套`
+    : `${inLabel}入住 - ${outLabel}离店（共${hotelNights.value}晚 × ${count}间）`
   createQuickOrder(
     '住宿',
     `${hotel.value.name} · ${rm.name}`,
     `${periodDesc} · ${rm.breakfast} · 票根专享价`,
     total,
-    60 * roomCount.value,
+    60 * count,
     0,
     {
       fields: [
@@ -138,7 +147,7 @@ function submitHotelBooking(targetRoom?: NonNullable<typeof hotel.value>['rooms'
         ...(isLong
           ? [{ label: '租赁周期', value: rm.leaseUnit === '/月' ? '1 个月' : '1 周' }]
           : [{ label: '退房日期', value: outLabel }, { label: '住宿晚数', value: `${hotelNights.value} 晚` }]),
-        { label: '房间数量', value: `${roomCount.value} ${isLong ? '套' : '间'}` },
+        { label: '房间数量', value: `${count} ${isLong ? '套' : '间'}` },
         { label: '房型权益', value: rm.breakfast },
       ],
     },
@@ -280,7 +289,7 @@ async function submitCinemaOrder() {
 // 5. Place generic reservation state
 const placeDate = ref(BOOKING_DATES[0]!.iso)
 const placeSlot = ref('下午 14:00-17:00')
-const placeQty = ref(2)
+const placeQty = ref<number | ''>(2)
 const audioPlaying = ref(false)
 const audioProgress = ref(28)
 
@@ -288,6 +297,8 @@ const placeMenuDishes = computed<MenuDish[]>(() => {
   if (!place.value) return []
   return RESTAURANT_MENUS[place.value.title] ?? []
 })
+const isRestaurantBooking = computed(() => placeMenuDishes.value.length > 0 || place.value?.actionKind === 'restaurant')
+const canBookPlace = computed(() => isBookingQuantity(placeQty.value))
 
 function extractPriceNumber(priceText?: string): number {
   if (!priceText) return 0
@@ -300,24 +311,26 @@ const placeUnitPrice = computed(() => {
   if (typeof place.value.priceNum === 'number') return place.value.priceNum
   return extractPriceNumber(place.value.priceInfo)
 })
+const placeTotal = computed(() => isBookingQuantity(placeQty.value) ? placeUnitPrice.value * placeQty.value : 0)
 
 function submitPlaceBooking() {
   if (!place.value) return
+  const count = placeQty.value
+  if (!isBookingQuantity(count)) return
   const dLabel = BOOKING_DATES.find((d) => d.iso === placeDate.value)?.shortDate ?? placeDate.value
   const cat = place.value.orderCategory ?? '门票'
-  const isRestaurant = placeMenuDishes.value.length > 0 || place.value.actionKind === 'restaurant'
-  if (isRestaurant) {
+  if (isRestaurantBooking.value) {
     createQuickOrder(
       '门票',
       `美食订座：${place.value.title}`,
-      `${dLabel} ${placeSlot.value} · ${placeQty.value}人桌 · 凭电子票根 ${state.ticketStubCode} 享优惠`,
+      `${dLabel} ${placeSlot.value} · ${count}人桌 · 凭电子票根 ${state.ticketStubCode} 享优惠`,
       0,
       60,
       0,
       { fields: [
         { label: '用餐日期', value: dLabel },
         { label: '用餐时段', value: placeSlot.value },
-        { label: '桌型', value: `${placeQty.value} 人桌` },
+        { label: '用餐人数', value: `${count} 人` },
         { label: '电子票根', value: state.ticketStubCode },
       ] },
     )
@@ -326,15 +339,15 @@ function submitPlaceBooking() {
   const unit = placeUnitPrice.value
   createQuickOrder(
     cat,
-    `${place.value.title}（${placeQty.value}份）`,
+    `${place.value.title}（${count}份）`,
     `${dLabel} ${placeSlot.value} · 官方平台预订保障`,
-    unit * placeQty.value,
+    unit * count,
     unit > 0 ? 80 : 30,
     0,
     { fields: [
       { label: '预约日期', value: dLabel },
       { label: '预约时段', value: placeSlot.value },
-      { label: '预约数量', value: `${placeQty.value} 份` },
+      { label: '预约数量', value: `${count} 份` },
     ] },
   )
 }
@@ -450,6 +463,19 @@ const detailMapItems = computed(() => [{
   location: displayAddress.value,
 }])
 
+const detailLocationIcon = computed(() => {
+  switch (detail.value?.kind) {
+    case 'hotel': return MAP_ICONS.hotel
+    case 'venue': return MAP_ICONS.court
+    case 'cinema': return MAP_ICONS.cinema
+    case 'product': return MAP_ICONS.shop
+    default:
+      if (place.value?.actionKind === 'restaurant') return MAP_ICONS.food
+      if (isTourDetail.value) return MAP_ICONS.scenic
+      return MAP_ICONS.location
+  }
+})
+
 const displayIntro = computed(() => {
   if (hotel.value) return hotel.value.intro
   if (product.value) return `${product.value.name}由京山原产地官方直供（${product.value.originPlace}），${product.value.highlights.join('；')}。支持会员折扣、电子票根满减与积分抵现，全国快递包邮到家。`
@@ -496,8 +522,7 @@ const galleryPhotos = computed<string[]>(() => {
   return result
 })
 
-// 4-Row Airbnb Feature Highlights
-const featureHighlights = computed<{ icon: string; title: string; desc: string }[]>(() => {
+const featureHighlights = computed<{ icon: string; title: string; desc?: string }[]>(() => {
   if (hotel.value) {
     return [
       { icon: '🎾', title: `${hotel.value.distanceToCourt}`, desc: '赛事合作优选地段，步行或短途直达核心网球场馆' },
@@ -516,10 +541,10 @@ const featureHighlights = computed<{ icon: string; title: string; desc: string }
   }
   if (venue.value) {
     return [
-      { icon: '🏟️', title: `${venue.value.courts.length} 片专业网球场地`, desc: `覆盖 ${venue.value.surfaces.join(' / ')} · ${venue.value.envs.join(' / ')}` },
-      { icon: '🅿️', title: `联动锁位 · ${venue.value.parkingName}`, desc: `当前余 ${venue.value.parkingRemain} 车位，${venue.value.chargerName} 闲 ${venue.value.chargerRemain} 桩` },
-      { icon: '🕒', title: `每日开放 ${venue.value.openHours}`, desc: '精确到场地编号与小时时段预约，支持连续多时段复选' },
-      { icon: '🛡️', title: '开场前 2 小时免费退改', desc: '极速原路退款，完场自动获赠 +50 金网积分/小时' },
+      { icon: '🏟️', title: `${venue.value.courts.length} 片专业网球场地` },
+      { icon: '🅿️', title: `联动锁位 · ${venue.value.parkingName}` },
+      { icon: '🕒', title: `每日开放 ${venue.value.openHours}` },
+      { icon: '🛡️', title: '开场前 2 小时免费退改' },
     ]
   }
   if (detail.value?.kind === 'cinema') {
@@ -762,6 +787,7 @@ function submitLocalReview() {
 // Price headline for sticky nav & right card
 const headlinePriceText = computed(() => {
   if (hotel.value && selectedRoom.value) {
+    if (!roomQuantity.value) return { main: `¥${selectedRoom.value.eventPrice}`, sub: selectedRoom.value.leaseUnit ?? ' / 晚' }
     const unit = selectedRoomIsLongStay.value ? selectedRoom.value.leaseUnit : ` / ${hotelNights.value} 晚`
     return { main: `¥${hotelTotalPrice.value}`, sub: unit }
   }
@@ -987,14 +1013,13 @@ function triggerPrimaryNav() {
             </div>
           </div>
 
-          <!-- 4-Row Feature Highlights -->
           <div v-if="!isTourDetail" class="dp-section-block">
-            <div class="dp-highlights-list">
+            <div class="dp-highlights-list" :class="{ 'dp-highlights-compact': venue }">
               <div v-for="hl in featureHighlights" :key="hl.title" class="dp-highlight-row">
                 <div class="dp-hl-icon">{{ hl.icon }}</div>
                 <div>
                   <h3 class="dp-hl-title">{{ hl.title }}</h3>
-                  <p class="dp-hl-desc">{{ hl.desc }}</p>
+                  <p v-if="hl.desc" class="dp-hl-desc">{{ hl.desc }}</p>
                 </div>
               </div>
             </div>
@@ -1031,7 +1056,7 @@ function triggerPrimaryNav() {
                     <div class="flex-between" style="margin-top: 10px">
                       <div>
                         <strong class="dp-room-price">
-                          ¥{{ rm.leaseUnit === '/月' || rm.leaseUnit === '/周' ? rm.eventPrice * roomCount : rm.eventPrice * hotelNights * roomCount }}
+                          {{ roomQuantity ? `¥${rm.eventPrice * roomQuantity * (rm.leaseUnit === '/月' || rm.leaseUnit === '/周' ? 1 : hotelNights)}` : '—' }}
                         </strong>
                         <span class="dp-room-unit">
                           {{ rm.leaseUnit ? rm.leaseUnit : ` / ${hotelNights} 晚` }}
@@ -1311,8 +1336,7 @@ function triggerPrimaryNav() {
             </template>
           </section>
 
-          <!-- Official Price Protection & Guarantee Strip (matches Airbnb's price protection box) -->
-          <div class="dp-section-block">
+          <div v-if="!venue" class="dp-section-block">
             <div class="dp-guarantee-strip">
               <div class="flex-row" style="gap: 12px">
                 <span style="font-size: 22px">🛡️</span>
@@ -1390,22 +1414,32 @@ function triggerPrimaryNav() {
                     </select>
                   </div>
                 </div>
-                <div class="dp-ub-cell dp-ub-full">
-                  <label>房间数量与已选房型</label>
-                  <select v-model.number="roomCount">
-                    <option :value="1">1 间 · {{ selectedRoom?.name }}</option>
-                    <option :value="2">2 间 · {{ selectedRoom?.name }}</option>
-                    <option :value="3">3 间 · {{ selectedRoom?.name }}</option>
-                  </select>
+                <div class="dp-ub-row-2">
+                  <div class="dp-ub-cell">
+                    <label for="hotel-room-count">{{ selectedRoomIsLongStay ? '预订套数' : '房间数量' }}</label>
+                    <input
+                      id="hotel-room-count"
+                      v-model.number="roomCount"
+                      class="dp-ub-input booking-quantity"
+                      type="number"
+                      min="1"
+                      :max="selectedRoom?.remaining"
+                      step="1"
+                    />
+                  </div>
+                  <div class="dp-ub-cell">
+                    <label>已选房型</label>
+                    <div class="dp-ub-static" :title="selectedRoom?.name">{{ selectedRoom?.name }}</div>
+                  </div>
                 </div>
               </div>
 
-              <button type="button" class="dp-bc-cta" @click="submitHotelBooking()">
-                立即预订（¥{{ hotelTotalPrice }}）
+              <button type="button" class="dp-bc-cta" :disabled="!canBookSelectedRoom" @click="submitHotelBooking()">
+                {{ canBookSelectedRoom ? `立即预订（¥${hotelTotalPrice}）` : selectedRoom?.remaining ? `请输入 1 至 ${selectedRoom.remaining} 的预订数量` : '该房型已订满' }}
               </button>
               <div class="dp-bc-note">官方担保预订 · 入住前支持免费取消</div>
 
-              <div class="dp-bc-breakdown">
+              <div v-if="canBookSelectedRoom" class="dp-bc-breakdown">
                 <div class="flex-between">
                   <span>单价 ¥{{ selectedRoom?.eventPrice }} × {{ selectedRoomIsLongStay ? `${roomCount}套` : `${hotelNights}晚 × ${roomCount}间` }}</span>
                   <span>¥{{ hotelTotalPrice }}</span>
@@ -1567,13 +1601,15 @@ function triggerPrimaryNav() {
                     </select>
                   </div>
                   <div class="dp-ub-cell">
-                    <label>人数 / 份数</label>
-                    <select v-model.number="placeQty">
-                      <option :value="1">1 人 / 份</option>
-                      <option :value="2">2 人 / 份</option>
-                      <option :value="4">4 人 / 份</option>
-                      <option :value="6">6 人同行</option>
-                    </select>
+                    <label for="place-booking-count">{{ isRestaurantBooking ? '用餐人数' : '预约数量' }}</label>
+                    <input
+                      id="place-booking-count"
+                      v-model.number="placeQty"
+                      class="dp-ub-input booking-quantity"
+                      type="number"
+                      min="1"
+                      step="1"
+                    />
                   </div>
                 </div>
                 <div class="dp-ub-cell dp-ub-full">
@@ -1586,8 +1622,8 @@ function triggerPrimaryNav() {
                 </div>
               </div>
 
-              <button type="button" class="dp-bc-cta" @click="submitPlaceBooking">
-                {{ placeMenuDishes.length > 0 ? '免费预约桌位并绑定票根' : placeUnitPrice > 0 ? `立即预约（¥${placeUnitPrice * placeQty}）` : '免费预约体验' }}
+              <button type="button" class="dp-bc-cta" :disabled="!canBookPlace" @click="submitPlaceBooking">
+                {{ !canBookPlace ? '请输入有效的预约数量' : isRestaurantBooking ? '免费预约桌位并绑定票根' : placeTotal > 0 ? `立即预约（¥${placeTotal}）` : '免费预约体验' }}
               </button>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
                 <button type="button" class="btn-ghost" @click="triggerPrimaryNav">🧭 导航前往</button>
@@ -1639,6 +1675,9 @@ function triggerPrimaryNav() {
             :address="displayAddress"
             :lat="displayCoords.lat"
             :lng="displayCoords.lng"
+            :icon="detailLocationIcon"
+            :photo="detailMapItems[0]?.photo"
+            @navigate="triggerPrimaryNav"
           />
         </MapResultsLayout>
         <div v-else class="dp-location-address">
@@ -1894,6 +1933,18 @@ function triggerPrimaryNav() {
 </template>
 
 <style scoped>
+.booking-quantity { cursor: text; }
+.booking-quantity:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dp-bc-cta:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.dp-highlights-compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+.dp-highlights-compact .dp-highlight-row { align-items: center; gap: 12px; }
+.dp-highlights-compact .dp-hl-title { margin-bottom: 0; }
+
 .dp-location-results :deep(.dp-map-shell) { margin: 0; border: 0; border-radius: 0; }
 .dp-location-address {
   display: flex;
