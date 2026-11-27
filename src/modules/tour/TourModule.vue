@@ -21,7 +21,7 @@ const visibleRoutes = computed(() =>
         <div>
           <h1 class="mh-title">“游”：旅游游览服务</h1>
           <div class="mh-desc">
-            以京山打网球为起点延伸全域旅游（京山温泉景区 → 荆门周边 → 湖北省内），根据用户来源地智能推荐，配语音导览、游玩时长、网红打卡与骑行徒步线
+            打完球顺路游：温泉、山林与世界遗产串成一条路，配语音导览与行程时长参考
           </div>
         </div>
       </div>
@@ -41,7 +41,7 @@ const visibleRoutes = computed(() =>
     <div class="ticket-stub-banner mb-16">
       <div>
         <div style="font-size: 15px; font-weight: 900">
-          🧭 已识别您的来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 为您定制「打完网球顺路游」全域线路
+          🧭 您的来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 为您定制「打完网球顺路游」全域线路
         </div>
         <div style="font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 3px">
           以京山打网球为起点，辐射带动本地温泉景区、荆门钟祥明显陵/漳河、以及湖北省内襄阳/宜昌/武当山旅游资源！

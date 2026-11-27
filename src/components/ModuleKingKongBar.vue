@@ -86,31 +86,30 @@ const mainTiles: MainTile[] = [
         </div>
 
         <div class="kk-row-sub">
-          <div class="kk-sub-left">
-            <span class="tag green">👆 先看摘要 · 再进专区</span>
-            <span>点击任意板块先在下方固定容器预览热门摘要，点击容器底部入口即可新窗口查看全部数据</span>
-          </div>
           <div class="kk-sub-pills">
             <button
               class="kk-pill"
               :class="{ active: state.activeModule === 11 }"
               @click="switchModule(11)"
             >
-              ⑪ 互动反馈（评价 / 投诉 / 信用预警）
+              <span class="kk-pill-ico">💬</span>
+              <span>互动反馈 · 评价投诉</span>
             </button>
             <button
               class="kk-pill"
               :class="{ active: state.activeModule === 12 }"
               @click="switchModule(12)"
             >
-              ⑫ 小程序互联互通（政务 / 文旅 / 支付 / 打车）
+              <span class="kk-pill-ico">🔗</span>
+              <span>小程序互联互通</span>
             </button>
             <button
               class="kk-pill"
               :class="{ active: state.activeModule === 13 }"
               @click="switchModule(13)"
             >
-              ⑬ 个人中心（{{ activeOrdersCount }}笔订单 / 会员积分 / 五维图）
+              <span class="kk-pill-ico">👤</span>
+              <span>个人中心 · {{ activeOrdersCount }} 笔订单</span>
             </button>
           </div>
         </div>

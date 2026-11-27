@@ -25,7 +25,7 @@ function openProduct(id: string) {
         <div>
           <h1 class="mh-title">“购”：特色商品服务</h1>
           <div class="mh-desc">
-            京山农特产品、李宁网球装备与非遗文创实拍展示，点击任意商品查看完整规格详情、买家真实评价与在线支付（支持积分抵现 + 票根满减）
+            京山农特产品、李宁网球装备与非遗文创，产地直发 · 支持积分抵现与票根满减
           </div>
         </div>
       </div>

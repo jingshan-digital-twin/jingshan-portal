@@ -34,7 +34,6 @@ function onOriginChange(event: Event) {
       <div class="top-right">
         <span class="top-link" @click="switchModule(12)">📱 小程序互通</span>
         <span class="top-link" @click="switchModule(11)">📢 投诉/评价/预警</span>
-        <span class="top-link" style="color: #8ee6c6">{{ state.dataMode }}</span>
         <span class="top-link hl" @click="showToast('政务监管端由管理驾驶舱提供，此处保持管用分离')">
           🏛️ 政务监管端入口 →
         </span>

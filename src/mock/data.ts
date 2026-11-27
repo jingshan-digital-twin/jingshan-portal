@@ -11,8 +11,8 @@ import type {
 export const HERO_SLIDES = [
   {
     id: 'slide-1',
-    eyebrow: '政府背书 · 官方直连',
-    eyebrowSub: '数智京山网球文旅公众服务门户 · 手机/PC数据实时同步',
+    eyebrow: '官方平台 · 权威发布',
+    eyebrowSub: '球场、住宿、美食与温泉，一个平台全搞定',
     titlePrefix: '一网游京山，',
     titleHighlight: '打球泡泉全搞定',
     desc: '以球场为中心链接全市吃住行游购娱训打：实时查看 356 片球场空闲与实况画面、联动预约车位充电桩、畅享79家网球联盟商家电子票根优惠。',

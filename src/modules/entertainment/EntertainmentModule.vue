@@ -22,7 +22,7 @@ const visibleItems = computed(() =>
         <div>
           <h1 class="mh-title">“娱”：休闲娱乐服务</h1>
           <div class="mh-desc">
-            全面覆盖休闲农庄、生态采摘、亲子游乐、康养休闲、KTV、电影院六大休闲娱乐点位，每处均标明精确地址与经纬度坐标、支持导航跳转；电影院支持查看热映影片与在线选座预订
+            温泉、农庄、采摘、亲子与影城，打球之余的好去处，都能一键导航
           </div>
         </div>
       </div>
@@ -74,7 +74,7 @@ const visibleItems = computed(() =>
           <img :src="e.photo" :alt="e.name" />
           <span class="badge-tl" :style="e.id === 'ent-6' ? 'background: #6f42c1' : ''">{{ e.cat }}</span>
           <span class="badge-bl">
-            {{ e.id === 'ent-6' ? `热映 ${CINEMA_MOVIES.length} 部 · 点击看排片选座` : e.dist }}
+            {{ e.id === 'ent-6' ? `热映 ${CINEMA_MOVIES.length} 部 · 支持在线选座` : e.dist }}
           </span>
         </div>
         <div class="card-pad">

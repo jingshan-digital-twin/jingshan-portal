@@ -1,5 +1,5 @@
 import { computed, reactive, watch } from 'vue'
-import { apiRequest, USE_MOCK } from '../api/client'
+import { apiRequest } from '../api/client'
 import {
   INITIAL_ABILITY,
   INITIAL_COMPLAINTS,
@@ -58,7 +58,7 @@ export const MODULE_META_LIST: ModuleMeta[] = [
   { id: 8, code: '08', shortName: '娱 · 娱乐', title: '“娱”：休闲娱乐服务', subtitle: '温泉康养 / 农庄采摘 / 影城选座 / KTV' },
   { id: 9, code: '09', shortName: '训 · 培训', title: '“训”：培训研学服务', subtitle: '湖北省网球学校 / 五维能力评测与晋升' },
   { id: 10, code: '10', shortName: '便民配套', title: '便民配套服务', subtitle: '公厕 / 医疗急救 / 母婴室 / 天气路况' },
-  { id: 11, code: '11', shortName: '互动反馈', title: '互动反馈模块', subtitle: '球友打卡评价 / 12345投诉分办 / 信用预警' },
+  { id: 11, code: '11', shortName: '互动反馈', title: '互动反馈', subtitle: '球友打卡评价 / 12345投诉分办 / 信用预警' },
   { id: 12, code: '12', shortName: '小程序互通', title: '小程序互联互通', subtitle: '政务 / 文旅 / 支付 / 打车一键直连' },
   { id: 13, code: '13', shortName: '个人中心', title: '个人中心', subtitle: '我的订单 / 电子票根 / 会员积分 / 五维雷达图' },
 ]
@@ -165,7 +165,6 @@ const state = reactive({
   bookingDraft: null as BookingDraft | null,
   actionModal: null as ActionModalPayload | null,
   toastMessage: '',
-  dataMode: USE_MOCK ? '前端 Mock 演示模式' : 'Spring Boot 联调模式',
 })
 
 function getPersistSnapshot(): PersistedState {
@@ -217,8 +216,8 @@ function applySavedSnapshot(next: Partial<PersistedState>) {
 function updateDocumentTitle(moduleId: ModuleId, standalone: boolean) {
   const meta = getModuleMeta(moduleId)
   document.title = standalone
-    ? `${meta.title} - 京山网球公众端`
-    : '京山网球 · 公众端（游客服务版）'
+    ? `${meta.title} - 京山网球`
+    : '京山网球 · 中国网球之城'
 }
 
 export function buildModuleUrl(
@@ -287,7 +286,7 @@ export function usePortalStore() {
       return
     }
     if (!silent) {
-      showToast(`已在新窗口打开「${meta.title}」完整专区`)
+      showToast(`正在为您打开「${meta.title}」`)
     }
   }
 
@@ -428,8 +427,8 @@ export function usePortalStore() {
     }
     showToast(
       state.isStandalonePage
-        ? `已为您精准定位与「${q}」相关的业务模块：${meta.title}`
-        : `已在下方概览区切换至「${meta.title}」，点击底部入口可新窗口查看全部数据`,
+        ? `已为您找到相关服务：${meta.title}`
+        : `已为您切换至「${meta.title}」`,
     )
   }
 

@@ -21,8 +21,7 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
           </svg>
         </div>
         <div>
-          <div class="brand-name">京山网球 <span class="brand-tag">公众端 · 游客服务版</span></div>
-          <div class="brand-sub">吃住行游购娱训打 · 查约付评一站式官方平台</div>
+          <div class="brand-name">京山网球 <span class="brand-tag">官方服务平台</span></div>
         </div>
       </div>
 
@@ -46,7 +45,7 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
           style="background: #fff3eb; border-color: #f9c8ae; color: #c93f14"
           @click="state.showEventModal = true"
         >
-          🏆 赛事弹窗
+          🏆 赛事福利
         </span>
         <span class="hdr-pill" :class="{ active: state.activeModule === 11 }" @click="switchModule(11)">
           💬 互动反馈

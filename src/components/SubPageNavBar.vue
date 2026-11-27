@@ -27,7 +27,6 @@ function closeOrReturnHome() {
           <span class="subpage-sep">/</span>
           <span class="subpage-code">{{ currentMeta.code }}</span>
           <strong class="subpage-current">{{ currentMeta.title }}</strong>
-          <span class="subpage-hint">独立详情专区 · 完整数据与在线办理</span>
         </div>
 
         <div class="flex-row">

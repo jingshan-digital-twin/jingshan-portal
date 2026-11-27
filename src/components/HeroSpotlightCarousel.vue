@@ -69,7 +69,7 @@ function submitCourtQuery() {
   })
   const stageEl = document.getElementById('moduleStageAnchor')
   stageEl?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  showToast(`已按「${courtDate.value} / ${courtSurface.value} / ${courtRegion.value}」切换下方热门球场概览`)
+  showToast(`已为您筛选「${courtDate.value} / ${courtSurface.value} / ${courtRegion.value}」的空闲球场`)
 }
 
 function submitQuickEvent() {
