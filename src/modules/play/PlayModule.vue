@@ -24,7 +24,7 @@ const {
 const playTabs = [
   { id: 'courts', label: '场地预约', icon: 'M5 4h14v16H5zM5 12h14M8 8h8v8H8z' },
   { id: 'matchmaking', label: '同城约球', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z' },
-  { id: 'scores', label: '实时概况', icon: 'M4 19h16M7 15v-4m5 4V5m5 10V8' },
+  { id: 'scores', label: '实时比分', icon: 'M4 19h16M7 15v-4m5 4V5m5 10V8' },
 ] as const
 const subView = ref<(typeof playTabs)[number]['id']>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']

@@ -366,7 +366,10 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
       <p v-if="!visibleShops.length" class="card card-pad food-empty" role="status">没有符合条件的餐厅</p>
       <div v-else class="grid-2 food-grid">
         <article v-for="shop in pagedShops" :key="shop.name" class="card food-card">
-          <img class="food-card-photo" :src="shop.photo" alt="" />
+          <div class="food-card-media">
+            <img class="food-card-photo" :src="shop.photo" alt="" />
+            <span v-if="shop.cat === '联盟85折'" class="badge-tl">票根85折</span>
+          </div>
           <div class="food-card-content">
             <h2 class="food-card-heading">
               <button type="button" class="food-card-title" @click="openShopDetail(shop)">
@@ -424,6 +427,10 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
   gap: 18px;
   padding: 12px;
   border-radius: 8px;
+}
+
+.food-card-media {
+  position: relative;
 }
 
 .food-card-photo {
