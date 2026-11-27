@@ -19,13 +19,7 @@ const visibleGroups = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">12</div>
-        <div>
-          <h1 class="mh-title">小程序互联互通</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="t in (['全部', '政务', '文旅', '支付', '打车'] as const)"

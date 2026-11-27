@@ -19,13 +19,7 @@ function openProduct(id: string) {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">07</div>
-        <div>
-          <h1 class="mh-title">“购”：特色商品服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="t in (['全部', '农特', '装备', '文创'] as const)"
@@ -92,7 +86,7 @@ function openProduct(id: string) {
       <div>
         <strong style="font-size: 14.5px">🏪 线下纪念品与特产认证店铺展示（支持到店体验 + 快递代寄）</strong>
         <div style="font-size: 12px; color: var(--ink-3); margin-top: 3px">
-          ① 国际网球中心文创旗舰店（温泉街道网球大道1号 · 113.1198°E, 31.0216°N · ★4.9） ｜ ② 文峰广场京山桥米体验馆（新市街道文峰路22号 · ★4.8）
+          ① 国际网球中心文创旗舰店（温泉街道网球大道1号 · ★4.9） ｜ ② 文峰广场京山桥米体验馆（新市街道文峰路22号 · ★4.8）
         </div>
       </div>
       <button

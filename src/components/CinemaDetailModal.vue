@@ -56,7 +56,7 @@ function confirmCinemaOrder() {
         <div>
           <strong style="font-size: 17px">🎬 京山国际影城（IMAX / 杜比激光厅）· 在线选座购票</strong>
           <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82); margin-top: 2px">
-            📍 京山市新市街道京源大道88号文峰广场4F ｜ 🌐 113.1162°E, 31.0195°N ｜ 距文峰公园球场 500m
+            📍 京山市新市街道京源大道88号文峰广场4F ｜ 距文峰公园球场 500m
           </div>
         </div>
         <div class="flex-row">

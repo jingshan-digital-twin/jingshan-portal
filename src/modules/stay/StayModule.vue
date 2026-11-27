@@ -53,13 +53,7 @@ function openHotelDetail(id: string) {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">05</div>
-        <div>
-          <h1 class="mh-title">“住”：住宿服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: stayTab === '全部' }" @click="stayTab = '全部'">全部住宿 (6家)</button>
         <button class="m-tab" :class="{ active: stayTab === '公寓' }" @click="stayTab = '公寓'">短/长租网球公寓</button>

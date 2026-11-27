@@ -24,13 +24,7 @@ async function onSubmit() {
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">11</div>
-        <div>
-          <h1 class="mh-title">互动反馈</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: formMode === 'complaint' }" @click="formMode = 'complaint'">12345 投诉上报</button>
         <button class="m-tab" :class="{ active: formMode === 'review' }" @click="formMode = 'review'">发布打卡点评 (+20分)</button>

@@ -61,7 +61,7 @@ function bookRoom(room: NonNullable<typeof hotel.value>['rooms'][number]) {
             </div>
             <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.86); line-height: 1.7">
               📍 地址：{{ hotel.address }}<br />
-              🌐 坐标：{{ hotel.lng.toFixed(4) }}°E, {{ hotel.lat.toFixed(4) }}°N ｜ 📞 {{ hotel.phone }} ｜ {{ hotel.openYear }}<br />
+              📞 {{ hotel.phone }} ｜ {{ hotel.openYear }}<br />
               🎾 球场距离：{{ hotel.distanceToCourt }}
             </div>
           </div>

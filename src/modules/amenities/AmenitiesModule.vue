@@ -78,13 +78,7 @@ const visibleAmenities = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">10</div>
-        <div>
-          <h1 class="mh-title">便民配套服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="t in (['全部', '卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"

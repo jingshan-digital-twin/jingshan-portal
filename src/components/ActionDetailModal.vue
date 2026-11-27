@@ -189,9 +189,6 @@ function redeemStubAtMerchant() {
       <div class="card-pad" style="display: flex; flex-direction: column; gap: 11px">
         <div style="background: #f5f9f7; border: 1px solid var(--line); border-radius: 0; padding: 10px 12px; font-size: 12px; color: var(--ink-2)">
           <div><strong>📍 详细地址：</strong>{{ state.actionModal.address }}</div>
-          <div style="margin-top: 4px">
-            <strong>🌐 经纬度坐标：</strong>{{ state.actionModal.lng.toFixed(4) }}°E, {{ state.actionModal.lat.toFixed(4) }}°N
-          </div>
         </div>
         <div style="background: #fff5f5; border: 1px solid #f7c5c8; color: #a81c26; padding: 10px 12px; border-radius: 0; font-size: 12px; font-weight: 700">
           🚦 实时避堵与到达提示：{{ state.actionModal.tip }}

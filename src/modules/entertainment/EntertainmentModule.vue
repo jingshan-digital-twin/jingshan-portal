@@ -16,13 +16,7 @@ const visibleItems = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">08</div>
-        <div>
-          <h1 class="mh-title">“娱”：休闲娱乐服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button
           v-for="t in (['全部', '农庄', '采摘', '亲子', '康养', 'KTV/电影'] as const)"

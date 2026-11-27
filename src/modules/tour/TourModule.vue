@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { BOOKING_DATES } from '../../mock/schedules'
 import {
   OUTDOOR_TRAILS,
@@ -27,6 +27,30 @@ const visibleSpots = computed(() =>
     ? TOUR_SPOTS
     : TOUR_SPOTS.filter((s) => s.category === spotCategory.value),
 )
+
+// 景点分页（每页 8 个，4 列 × 2 行）
+const SPOT_PAGE_SIZE = 8
+const spotPage = ref(1)
+const spotPageCount = computed(() => Math.max(1, Math.ceil(visibleSpots.value.length / SPOT_PAGE_SIZE)))
+const pagedSpots = computed(() =>
+  visibleSpots.value.slice((spotPage.value - 1) * SPOT_PAGE_SIZE, spotPage.value * SPOT_PAGE_SIZE),
+)
+const spotPageList = computed<(number | '...')[]>(() => {
+  const total = spotPageCount.value
+  const cur = spotPage.value
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages = new Set<number>([1, total, cur, cur - 1, cur + 1])
+  const list = [...pages].filter((n) => n >= 1 && n <= total).sort((a, b) => a - b)
+  const result: (number | '...')[] = []
+  list.forEach((n, i) => {
+    if (i > 0 && n - list[i - 1]! > 1) result.push('...')
+    result.push(n)
+  })
+  return result
+})
+watch(spotCategory, () => {
+  spotPage.value = 1
+})
 
 const visitDateLabel = computed(
   () => BOOKING_DATES.find((d) => d.iso === visitDate.value)?.shortDate ?? visitDate.value,
@@ -86,13 +110,7 @@ const visibleTrails = computed(() =>
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">03</div>
-        <div>
-          <h1 class="mh-title">“游”：旅游游览服务与网旅专区</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: activeSection === 'all' }" @click="activeSection = 'all'">全部总览</button>
         <button class="m-tab" :class="{ active: activeSection === 'spots' }" @click="activeSection = 'spots'">景区/乡村/网红/夜市</button>
@@ -110,8 +128,8 @@ const visibleTrails = computed(() =>
         </div>
       </div>
       <div class="flex-row">
-        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ 8大特色场景</button>
-        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 4大网旅套餐</button>
+        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ {{ TOUR_SPOTS.length }} 处热门场景</button>
+        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 {{ TOUR_PACKAGES.length }} 大网旅套餐</button>
         <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'lines'">🚌 专线与绿道</button>
       </div>
     </div>
@@ -121,7 +139,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div>
-            <strong style="font-size: 16px">🏔️ 景区 · 乡村景点 · 网红打卡点 · 夜市消费场景</strong>
+            <strong style="font-size: 16px">🏔️ 热门景区与打卡点</strong>
           </div>
           <div class="flex-row" style="gap: 6px">
             <button
@@ -158,15 +176,12 @@ const visibleTrails = computed(() =>
             <option :value="3">3 份</option>
             <option :value="4">4 份</option>
           </select>
-          <span style="margin-left: auto; font-size: 12px; font-weight: 800; color: var(--primary)">
-            当前展示 {{ visibleSpots.length }} 处打卡点
-          </span>
         </div>
       </div>
 
       <div class="grid-4" style="gap: 14px">
         <div
-          v-for="spot in visibleSpots"
+          v-for="spot in pagedSpots"
           :key="spot.id"
           class="card"
           style="display: flex; flex-direction: column; justify-content: space-between"
@@ -260,6 +275,18 @@ const visibleTrails = computed(() =>
           </div>
         </div>
       </div>
+
+      <div v-if="spotPageCount > 1" class="pager">
+        <button class="pager-btn" :disabled="spotPage === 1" @click="spotPage--">上一页</button>
+        <template v-for="(p, i) in spotPageList" :key="`pg-${i}`">
+          <span v-if="p === '...'" class="pager-ellipsis">…</span>
+          <button v-else class="pager-btn num" :class="{ active: p === spotPage }" @click="spotPage = p">
+            {{ p }}
+          </button>
+        </template>
+        <button class="pager-btn" :disabled="spotPage === spotPageCount" @click="spotPage++">下一页</button>
+        <span class="pager-total">共 {{ visibleSpots.length }} 处 · 第 {{ spotPage }}/{{ spotPageCount }} 页</span>
+      </div>
     </div>
 
     <!-- ===== 模块二：“游”网旅产品专区（官方打球+吃住游打包套餐） ===== -->
@@ -267,7 +294,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between">
           <div>
-            <strong style="font-size: 16px">🌿 网旅产品专区 · 官方「打球 + 吃住游」一站式打包套餐</strong>
+            <strong style="font-size: 16px">🌿 网旅产品专区</strong>
           </div>
           <div class="flex-row" style="gap: 8px">
             <button
@@ -344,7 +371,7 @@ const visibleTrails = computed(() =>
     <div v-if="activeSection === 'all' || activeSection === 'audio'" class="card card-pad mb-24">
       <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
         <div>
-          <strong style="font-size: 16.5px">🎧 智能语音导览 & 分时长游玩路线建议</strong>
+          <strong style="font-size: 16.5px">🎧 智能语音导览</strong>
         </div>
         <div class="seg-group">
           <button
@@ -411,7 +438,7 @@ const visibleTrails = computed(() =>
       <div class="card card-pad">
         <div class="flex-between mb-12" style="padding-bottom: 10px; border-bottom: 1px solid var(--line)">
           <div>
-            <strong style="font-size: 16px">🚌 网球主题文旅专线（高铁 → 球场 → 景区 → 夜市）</strong>
+            <strong style="font-size: 16px">🚌 网球主题文旅专线</strong>
           </div>
         </div>
 

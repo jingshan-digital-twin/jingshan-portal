@@ -250,7 +250,7 @@ function popupHtml(title: string, desc: string, lat: number, lng: number) {
   const baidu = `https://api.map.baidu.com/marker?location=${lat},${lng}&title=${encodeURIComponent(title)}&content=${encodeURIComponent(desc)}&output=html`
   return `<div style="font-family:'Noto Sans SC',sans-serif;min-width:190px;">
     <strong style="font-size:13px;color:#10251F;">${title}</strong>
-    <div style="font-size:11.5px;color:#526861;margin:4px 0 8px;">${desc}<br/><span style="color:#859B93;">坐标：${lng.toFixed(4)}°E, ${lat.toFixed(4)}°N</span></div>
+    <div style="font-size:11.5px;color:#526861;margin:4px 0 8px;">${desc}</div>
     <div style="display:flex;gap:6px;">
       <a href="${amap}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;background:#0D7A58;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">高德导航</a>
       <a href="${baidu}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:4px 8px;background:#1C73E8;color:#fff;font-size:11px;font-weight:700;text-decoration:none;">百度导航</a>

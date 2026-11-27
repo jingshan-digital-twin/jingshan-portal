@@ -13,13 +13,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
 
 <template>
   <section>
-    <div class="module-header">
-      <div class="mh-left">
-        <div class="mh-num">06</div>
-        <div>
-          <h1 class="mh-title">“行”：出行服务</h1>
-        </div>
-      </div>
+    <div class="module-toolbar">
       <div class="mh-tabs">
         <button class="m-tab" :class="{ active: transitTab === '全部' }" @click="transitTab = '全部'">全部出行</button>
         <button class="m-tab" :class="{ active: transitTab === '限行与车位' }" @click="transitTab = '限行与车位'">限行图与车位/充电</button>
@@ -90,7 +84,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
               </div>
               <div style="font-size: 11px; color: var(--ink-3); margin: 4px 0">★ {{ lot.rating }} · {{ lot.note }}</div>
               <div style="font-size: 10.5px; color: var(--ink-2); margin-bottom: 6px">
-                📍 {{ lot.address }}（{{ lot.lng.toFixed(4) }}, {{ lot.lat.toFixed(4) }}）
+                📍 {{ lot.address }}
               </div>
               <div v-if="lot.reservedSlot" style="font-size: 10.5px; color: var(--primary); font-weight: 800; margin-bottom: 6px">
                 ✔ 已锁时段：{{ lot.reservedSlot }}

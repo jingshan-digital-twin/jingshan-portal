@@ -656,17 +656,33 @@ button {
   min-height: 700px;
   padding-bottom: 34px;
 }
-.module-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: 18px;
-  gap: 16px;
-}
-.mh-left {
+.module-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  margin-bottom: 16px;
+}
+.module-toolbar .mh-tabs {
+  width: 100%;
+  gap: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.module-toolbar .m-tab {
+  padding: 7px 0 9px;
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.module-toolbar .m-tab:hover {
+  color: var(--primary);
+}
+.module-toolbar .m-tab.active {
+  background: transparent;
+  color: var(--primary);
+  border-bottom-color: var(--primary);
 }
 .mh-num {
   width: 38px;
@@ -682,16 +698,60 @@ button {
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px rgba(196, 246, 61, 0.28), 0 6px 14px rgba(13, 122, 88, 0.22);
 }
-.mh-title {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--ink);
-  line-height: 1.2;
-}
 .mh-tabs {
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+.pager-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 13px;
+  border: 1px solid #d9e7e1;
+  background: #fff;
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pager-btn.num {
+  padding: 0;
+}
+.pager-btn:hover:not(:disabled):not(.active) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.pager-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  cursor: default;
+}
+.pager-btn:disabled {
+  color: #b3c2bc;
+  background: #f6f9f8;
+  border-color: #e6efeb;
+  cursor: not-allowed;
+}
+.pager-ellipsis {
+  min-width: 20px;
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.pager-total {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--ink-3);
 }
 .m-tab {
   padding: 6px 13px;
