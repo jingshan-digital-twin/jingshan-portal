@@ -29,11 +29,9 @@ function closeOrReturnHome() {
           <strong class="subpage-current">{{ currentMeta.title }}</strong>
         </div>
 
-        <div class="flex-row">
-          <button class="btn-ghost" style="padding: 5px 11px; font-size: 11.5px" @click="closeOrReturnHome">
-            返回门户主页
-          </button>
-        </div>
+        <button class="subpage-close-btn" @click="closeOrReturnHome">
+          ✕ 返回/关闭当前页
+        </button>
       </div>
 
       <div class="subpage-pills">
@@ -45,7 +43,7 @@ function closeOrReturnHome() {
           @click="switchModule(m.id)"
         >
           <span class="subpage-pill-num">{{ m.code }}</span>
-          <span>{{ m.shortName }}</span>
+          <span class="subpage-pill-name">{{ m.shortName }}</span>
         </button>
       </div>
     </div>
