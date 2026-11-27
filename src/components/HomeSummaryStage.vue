@@ -20,22 +20,6 @@ const {
 
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
 
-const fullPageHintMap: Record<ModuleId, string> = {
-  1: '点击上方任意模块卡片先切换预览对应热门摘要，或直接新窗口打开核心业务专区',
-  2: '完整专区包含全市 356 片球场互动地图、周边 500m/1km/2km 服务圈、全时段订场、详细比分统计与陪练约球',
-  3: '完整专区包含三圈层全部精品线路、行程安排、实时定位坐标导航、全段语音导览与一键预订套餐',
-  4: '完整专区包含联盟餐厅筛选、全部招牌菜明码标价菜单、赛事团餐宴会预订与电子票根核销说明',
-  5: '完整专区包含全部 6 家精选公寓/酒店/民宿完整房型比价、真实住客点评与房管局购房减 5 万专车预约',
-  6: '完整专区包含赛期封闭限行可视化地图、全部停车场/超充桩锁位、京网优质司机名录与公交旅游专线班次',
-  7: '完整专区包含农特/装备/文创全部分类筛选、完整规格参数与买家评价、积分抵现与线上商城直连',
-  8: '完整专区包含 6 大休闲娱乐品类筛选、农庄/采摘/亲子/温泉详情与京山国际影城在线实时选座',
-  9: '完整专区包含湖北省网球学校招生探校通道、五维能力雷达图晋升复测录入、俱乐部课程与运动康复机构',
-  10: '完整专区包含全城公厕/急救站/母婴室/ATM 点位定位导航、实时气象空气与设施故障一键上报',
-  11: '完整专区包含球友真实打卡墙发布点赞、12345 投诉自动分办追踪与商户信用动态预警红黑榜',
-  12: '完整专区包含政务、文旅、网球记、微信支付、网约车等 12+ 官方及第三方小程序一站式直连接口',
-  13: '完整专区包含全部历史/待核销订单管理、电子票根与卡券核销、金网积分兑换与五维能力档案管理',
-}
-
 const kpiPillsMap = computed<Record<ModuleId, string[]>>(() => ({
   1: ['356片标准球场', '79家联盟商家', `来源地：${state.origin.slice(0, 3)}`],
   2: ['全市356片球场', '今日84片可约', `实时${state.liveMatches.length}场焦点赛`],
@@ -155,28 +139,28 @@ const miniPrograms = [
     tag: '赛事直连',
     icon: '📊',
     desc: '同步中青赛及京山各品牌赛事实时比分、签表与每片场地占用动态。',
-    bullets: ['实时局分/破发点同步', '完整赛后技术统计'],
+    bullets: ['实时局分 / 破发点同步', '完整赛后技术统计', '关注球员开赛提醒'],
   },
   {
     name: '游湖北 · 京山文旅',
     tag: '门票导览',
     icon: '🌿',
     desc: '直连绿林山、空山洞、明显陵门票预订与景区多语种电子语音导览。',
-    bullets: ['景区预约码一键核销', '省内延伸线联票优惠'],
+    bullets: ['景区预约码一键核销', '省内延伸线联票优惠', '实时客流与错峰提示'],
   },
   {
     name: '鄂汇办 · 政务便民',
     tag: '政务服务',
     icon: '🏛️',
     desc: '打通 12345 投诉自动分办、文旅消费券申领与公共服务在线查询。',
-    bullets: ['实名认证免重复登录', '投诉处理进度实时追踪'],
+    bullets: ['实名认证免重复登录', '投诉处理进度实时追踪', '电子证照亮证即用'],
   },
   {
     name: '打车 / 充电 / 支付',
     tag: '出行支付',
     icon: '🚕',
     desc: '整合高德/滴滴一键叫车、超充桩扫码启动与微信电子票根核销。',
-    bullets: ['赛场定位免输上车点', '79家联盟商户扫码立减'],
+    bullets: ['赛场定位免输上车点', '79家联盟商户扫码立减', '多平台比价一键叫车'],
   },
 ]
 
@@ -213,9 +197,8 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
         <div>
           <div class="flex-row" style="gap: 8px">
             <h1 class="summary-stage-title">{{ currentMeta.title }}</h1>
-            <span class="tag green">热门摘要概览</span>
+            <span class="tag green">官方精选</span>
           </div>
-          <div class="mh-desc">{{ currentMeta.subtitle }}</div>
         </div>
       </div>
 
@@ -233,14 +216,14 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
           style="border-color: #f9c8ae; background: #fff3eb; color: #c93f14"
           @click="state.showEventModal = true"
         >
-          🏆 赛事重磅弹窗
+          🏆 赛事重磅福利
         </button>
         <button
           v-else
           class="home-jump-btn sm"
           @click="openCurrentFullPage"
         >
-          打开完整专区 ↗
+          查看全部 ↗
         </button>
       </div>
     </div>
@@ -294,7 +277,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
             <div class="popup-preview" style="padding: 10px 14px">
               <div class="flex-between" style="margin-bottom: 3px">
                 <span class="tag orange">🎉 市房管局赛事特惠</span>
-                <button class="home-more-link" @click="switchModule(5)">看住宿摘要 →</button>
+                <button class="home-more-link" @click="switchModule(5)">看住宿精选 →</button>
               </div>
               <div style="font-size: 14.5px; font-weight: 900; color: #472500; margin-bottom: 2px">
                 🏠 网球公开赛期间购房直减 ¥50,000！
@@ -346,9 +329,9 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
         <div class="home-live-strip" style="padding: 11px 14px; flex-shrink: 0">
           <div class="flex-between" style="margin-bottom: 8px">
             <div class="flex-row">
-              <span class="tag" style="background: var(--lime); color: #0b251d">📊 网球记实时比分摘要</span>
+              <span class="tag" style="background: var(--lime); color: #0b251d">📊 网球记实时比分</span>
               <span style="font-size: 11.5px; color: rgba(255, 255, 255, 0.85)">
-                当前筛选：{{ state.courtSurfaceFilter }} / {{ state.courtRegionFilter }}
+                {{ state.courtSurfaceFilter }} · {{ state.courtRegionFilter }}
               </span>
             </div>
             <button class="home-live-jump" @click="openCurrentFullPage">查看全部赛况与技术统计 ↗</button>
@@ -419,7 +402,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
       <div v-else-if="state.activeModule === 3" class="summary-view-col">
         <div class="ticket-stub-banner" style="padding: 11px 16px; flex-shrink: 0">
           <div>
-            <strong style="font-size: 14px">🌿 全域网旅智能推荐 · 已识别来源地「{{ state.origin }}」</strong>
+            <strong style="font-size: 14px">🌿 全域网旅推荐 · 依据来源地「{{ state.origin }}」定制</strong>
             <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">
               以京山打球为核心起点，辐射本地 4A 景区、荆门明显陵与湖北省内大环线，持证旅行社保障
             </div>
@@ -484,7 +467,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
           <div>
             <strong style="font-size: 14px">🎫 打球电子票根（{{ state.ticketStubCode }}）· 吃美食直享 85 折</strong>
             <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">
-              全市 79 家网球联盟餐饮支持票根核销满减，完整专区另含赛事球队团餐与包厢预订
+              全市 79 家网球联盟餐饮支持票根核销满减，赛事球队团餐与包厢可在线预订
             </div>
           </div>
           <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">出示电子票根</button>
@@ -780,6 +763,10 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
                 覆盖国际网球中心、训练基地与市人民医院绿色运动损伤急救通道，赛期驻场医护全天值守。
               </div>
             </div>
+            <div class="summary-fact-grid">
+                <div><strong>3 处</strong><span>AED 除颤设备</span></div>
+                <div><strong>5 分钟</strong><span>急救响应时间</span></div>
+            </div>
             <div class="summary-mini-tile" style="padding: 8px 10px">
               <strong>急救电话：120 / 场馆医务室</strong>
             </div>
@@ -792,6 +779,10 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
               <div style="font-size: 12px; color: var(--ink-2); line-height: 1.6">
                 全部配备无障碍通道、冷暖空调与母婴护理台，支持按 500m 距离实时定位找最近点位。
               </div>
+            </div>
+            <div class="summary-fact-grid">
+                <div><strong>24 处</strong><span>星级洁具点位</span></div>
+                <div><strong>100%</strong><span>无障碍覆盖</span></div>
             </div>
             <div class="summary-mini-tile" style="padding: 8px 10px">
               <strong>平均步行距离 ≤ 200m</strong>
@@ -806,6 +797,10 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
                 国际网球中心与文峰公园配恒温直饮水机、智能扫码储物柜及运动员赛后淋浴间。
               </div>
             </div>
+            <div class="summary-fact-grid">
+                <div><strong>18 台</strong><span>恒温直饮水机</span></div>
+                <div><strong>40 个</strong><span>淋浴与储物位</span></div>
+            </div>
             <div class="summary-mini-tile" style="padding: 8px 10px">
               <strong>免费提供冰敷袋与饮水</strong>
             </div>
@@ -818,6 +813,10 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
               <div style="font-size: 12px; color: var(--ink-2); line-height: 1.6">
                 支持球拍失物招领登记、场馆设施故障一键拍照上报，联动 12345 城运中心快速处置。
               </div>
+            </div>
+            <div class="summary-fact-grid">
+                <div><strong>10 分钟</strong><span>平均响应时长</span></div>
+                <div><strong>24h</strong><span>在线值守热线</span></div>
             </div>
             <div class="summary-mini-tile" style="padding: 8px 10px">
               <strong>服务热线：0724-12345</strong>
@@ -878,12 +877,12 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
       <div v-else-if="state.activeModule === 12" class="summary-view-col">
         <div class="ticket-stub-banner" style="padding: 11px 16px; flex-shrink: 0">
           <div>
-            <strong style="font-size: 14px">🔗 政务 / 文旅 / 赛事 / 出行 / 支付 小程序一站式互联互通</strong>
+            <strong style="font-size: 14px">🔗 政务 / 文旅 / 赛事 / 出行 / 支付 一站式服务</strong>
             <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">
-              已打通统一身份认证与电子票根权益，点击任意卡片即可预览拉起，完整专区支持全部 12+ 接口
+              统一身份认证与电子票根权益已打通，12+ 项官方及第三方服务免登录直达
             </div>
           </div>
-          <span class="tag" style="background: var(--lime); color: #0b251d">实时接口全部在线</span>
+          <span class="tag" style="background: var(--lime); color: #0b251d">服务实时在线</span>
         </div>
 
         <div class="grid-4 summary-stretch-grid">
@@ -908,8 +907,8 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
               </div>
             </div>
             <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
-              <span style="font-size: 11.5px; color: var(--primary); font-weight: 700">● 实时互通已授权</span>
-              <span style="font-size: 12px; font-weight: 800; color: var(--primary)">一键拉起 →</span>
+              <span style="font-size: 11.5px; color: var(--primary); font-weight: 700">● 官方直连</span>
+              <span style="font-size: 12px; font-weight: 800; color: var(--primary)">立即使用 →</span>
             </div>
           </div>
         </div>
@@ -963,7 +962,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
           <div class="card card-pad summary-fill-card" style="justify-content: space-between">
             <div>
               <div class="flex-between" style="margin-bottom: 12px">
-                <strong style="font-size: 15.5px">🧾 最近订单摘要（共 {{ state.orders.length }} 笔）</strong>
+                <strong style="font-size: 15.5px">🧾 最近订单（共 {{ state.orders.length }} 笔）</strong>
                 <span class="tag green">支持在线核销与极速退改</span>
               </div>
               <div style="display: flex; flex-direction: column; gap: 9px">
@@ -987,7 +986,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
               </div>
             </div>
             <div style="font-size: 11.5px; color: var(--ink-3)">
-              完整个人中心另含五维能力雷达图、积分兑换中心、我的收藏夹与全部订单管理。
+              五维能力雷达图、积分兑换中心与我的收藏夹，尽在个人中心。
             </div>
           </div>
         </div>
@@ -996,26 +995,14 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
 
     <!-- 固定容器统一底部跳转入口 -->
     <div class="summary-stage-footer">
-      <div class="summary-footer-left">
-        <span class="summary-footer-dot" />
-        <div>
-          <strong style="font-size: 13.5px; color: var(--ink)">
-            {{ state.activeModule === 1 ? '快速新窗口直达热门完整专区' : `想查看「${currentMeta.shortName}」全部数据与完整功能？` }}
-          </strong>
-          <div style="font-size: 11.5px; color: var(--ink-3)">
-            {{ fullPageHintMap[state.activeModule] }}
-          </div>
-        </div>
-      </div>
-
-      <div v-if="state.activeModule === 1" class="flex-row">
+      <div v-if="state.activeModule === 1" class="summary-footer-links">
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(2)">打 · 订场与比分 ↗</button>
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(4)">吃 · 美食与团餐 ↗</button>
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(5)">住 · 公寓与酒店 ↗</button>
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(3)">游 · 全域线路 ↗</button>
       </div>
       <button v-else class="summary-footer-cta" @click="openCurrentFullPage">
-        查看全部内容 · 进入「{{ currentMeta.shortName }}」完整页面（新窗口） ↗
+        查看「{{ currentMeta.shortName }}」全部内容 ↗
       </button>
     </div>
   </section>

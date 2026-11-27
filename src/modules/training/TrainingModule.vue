@@ -98,7 +98,7 @@ function submitCoachSlot(coachId: string) {
         <div>
           <h1 class="mh-title">“训”：课程预约与培训研学服务</h1>
           <div class="mh-desc">
-            支持按日期日历与具体时间段在线预约「团体课 / 私教课」，涵盖水平与方向筛选、省网校招生、五维能力评测晋升与运动康复
+            湖北省网球学校招生咨询、五维能力评测与晋升测试、训练营研学与康复
           </div>
         </div>
       </div>

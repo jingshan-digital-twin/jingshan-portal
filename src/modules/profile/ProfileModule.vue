@@ -24,7 +24,7 @@ const filteredOrders = computed(() =>
         <div>
           <h1 class="mh-title">个人中心（会员积分 · 五维网球能力 · 订单票根）</h1>
           <div class="mh-desc">
-            完整展示会员等级与积分规则、指定机构评测的五维网球能力图与晋升测试通道，以及我的订单（场地/住宿/门票/课程/商品）、收藏、优惠券、消息通知
+            会员等级、积分权益、五维能力档案与我的订单，一页掌握
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ const filteredOrders = computed(() =>
 
         <div style="background: rgba(0, 0, 0, 0.24); border-radius: 0; padding: 10px 12px; font-size: 11.5px; line-height: 1.75; margin-bottom: 10px">
           <div><strong style="color: var(--lime)">💰 怎么积累积分：</strong>在线订场 +50分 ｜ 完赛 +120分 ｜ 约陪练/购课 +80分 ｜ 联盟消费 +60分 ｜ 打卡点评 +20分</div>
-          <div><strong style="color: #f5ca69">🎁 积分快捷兑换：</strong>点击下方按钮即可实时用积分兑换权益券！</div>
+          <div><strong style="color: #f5ca69">🎁 积分兑好礼：</strong>积分可直接兑换订场券、温泉券与联盟商户代金券</div>
         </div>
         <div class="flex-row">
           <button class="btn-orange" style="padding: 5px 11px; font-size: 11.5px" @click="redeemPoints(500, '1小时免费订场通兑券', '全市186片开放球场通用 · 免场地费')">
@@ -104,7 +104,7 @@ const filteredOrders = computed(() =>
           </div>
           <div style="font-size: 11.5px; color: var(--ink-2); line-height: 1.7; margin-bottom: 10px">
             • <strong>等级体系：</strong>JS-1.5(启蒙) → JS-2.5 → <strong>{{ state.abilityLevel }}(当前)</strong> → JS-4.5 → JS-5.0<br />
-            • <strong>晋升路径：</strong>训练后可在「训」模块预约指定机构<strong>晋升测试</strong>，复测录入自动刷新五维图！<br />
+            • <strong>晋升路径：</strong>训练后可在「训」专区预约指定机构<strong>晋升测试</strong>，复测录入自动刷新五维图！<br />
             • <strong>智能联动：</strong>已自动绑定至「分级赛同级报名」与「同城约球精准匹配」。
           </div>
           <div class="flex-row">

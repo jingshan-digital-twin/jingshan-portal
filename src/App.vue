@@ -80,7 +80,7 @@ onMounted(() => {
 
     <footer class="footer">
       <div class="container footer-row">
-        <span>© 2026 <strong>京山网球</strong> · 数智京山网旅产业一张图公众端（Vue 3 + Spring Boot 前后端分离）</span>
+        <span>© 2026 <strong>京山网球</strong> · 中国网球之城 · 京山网旅公众服务平台</span>
         <span>指导单位：京山市文化和旅游局 · 市政数局 · 市房管局 · 卫健局 ｜ 运营单位：京山网球产业发展有限公司</span>
       </div>
     </footer>

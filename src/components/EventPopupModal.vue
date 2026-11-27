@@ -34,7 +34,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   <div v-if="state.showEventModal" class="modal-backdrop" @click.self="handleClose">
     <div class="modal-box" style="width: 660px; border: 2px solid #f4c65d">
       <div class="photo-box" style="height: 230px; cursor: default">
-        <img src="/images/tournament_2.jpg" alt="2026京山网球重大赛事弹窗" />
+        <img src="/images/tournament_2.jpg" alt="2026京山网球重大赛事" />
         <div
           style="
             position: absolute;
@@ -59,11 +59,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
           </div>
         </div>
         <span class="badge-tl" style="background: #df2e38; z-index: 5">
-          <span class="live-dot" />重磅赛事弹窗 · 正在火热进行中
+          <span class="live-dot" />重磅赛事 · 正在火热进行中
         </span>
         <button
           type="button"
-          title="关闭弹窗"
+          title="关闭"
           style="
             position: absolute;
             top: 12px;

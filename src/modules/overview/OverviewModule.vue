@@ -181,9 +181,6 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
         <div class="mh-num">01</div>
         <div>
           <h1 class="mh-title">首页总览与全城热门精选</h1>
-          <div class="mh-desc">
-            下方固定展示京山城市名片、三大网旅主题及吃住行游购娱训打热门概览；点击各专区「查看全部 ↗」将在新窗口打开完整页面
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
@@ -197,7 +194,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           {{ tab === '全部' ? '全部主题' : tab }}
         </button>
         <button class="m-tab" style="background: #fff3eb; border-color: #f9c8ae; color: #c93f14" @click="state.showEventModal = true">
-          🏆 赛事重磅弹窗
+          🏆 赛事重磅福利
         </button>
         <button class="m-tab" @click="openNewPage(2)">完整赛况大厅 ↗</button>
       </div>
@@ -227,7 +224,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <div class="flex-row" style="margin-bottom: 8px">
               <span class="tag" style="background: var(--lime); color: #0b251d">中国网球之城 · 城市名片</span>
               <span class="tag" style="background: rgba(255, 255, 255, 0.2); color: #fff">全市 356 片标准场 · 万人5.67片</span>
-              <span class="tag" style="background: rgba(255, 255, 255, 0.2); color: #fff">📍 已识别来源地：{{ state.origin }}</span>
+              <span class="tag" style="background: rgba(255, 255, 255, 0.2); color: #fff">📍 来源地：{{ state.origin }}</span>
             </div>
             <div style="font-size: 21px; font-weight: 900; margin-bottom: 6px">以球塑城、以赛兴业：欢迎来到生态京山</div>
             <div class="flex-between">
@@ -270,7 +267,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
       <div style="display: flex; flex-direction: column; gap: 14px">
         <div v-if="state.showActivityPopup" class="popup-preview">
           <div class="flex-between" style="margin-bottom: 8px">
-            <span class="tag orange">🎉 热门活动弹窗 · 2026京山网球公开赛重磅福利</span>
+            <span class="tag orange">🎉 2026京山网球公开赛重磅福利</span>
             <button style="border: none; background: transparent; font-size: 11px; color: var(--ink-3)" @click="state.showActivityPopup = false">
               ✕ 收起
             </button>
@@ -287,8 +284,8 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           </div>
         </div>
         <div v-else class="card card-pad flex-between" style="background: #fff9ef">
-          <span style="font-size: 12.5px; font-weight: 700; color: #7a4e16">🎁 活动弹窗已收起（购房减5万元 / 赛事消费券）</span>
-          <button class="btn-ghost" @click="state.showActivityPopup = true">重新展开弹窗</button>
+          <span style="font-size: 12.5px; font-weight: 700; color: #7a4e16">🎁 活动福利已收起（购房减5万元 / 赛事消费券）</span>
+          <button class="btn-ghost" @click="state.showActivityPopup = true">展开福利</button>
         </div>
 
         <div class="card card-pad">
@@ -296,7 +293,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <strong style="font-size: 15px">🏆 近期赛事预告 & 热门活动报名</strong>
             <div class="flex-row">
               <button class="btn-ghost" style="padding: 3px 9px; font-size: 11px" @click="state.showEventModal = true">
-                📣 打开赛事弹窗
+                📣 查看赛事福利
               </button>
               <button class="home-more-link" @click="openNewPage(2)">看网球记实时比分 ↗</button>
             </div>
@@ -631,7 +628,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <span class="home-sec-badge" style="background: linear-gradient(135deg, #0d7a58, #085940)">全</span>
           <div>
             <h2 class="home-sec-title">行 · 购 · 娱 · 训 核心业务概览</h2>
-            <div class="home-sec-sub">实时掌握赛期交通车位、京山好物热榜、温泉影城娱乐与省网校培训动态，点击卡片底部入口新窗口查看全部</div>
+            <div class="home-sec-sub">赛期交通车位、京山好物热榜、温泉影城娱乐与省网校培训，一站掌握</div>
           </div>
         </div>
       </div>
@@ -757,7 +754,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <span class="home-service-arrow">↗</span>
         </div>
         <div class="home-service-desc">网球记 / 政务 / 文旅 / 支付 / 网约车一键直连</div>
-        <div class="home-service-foot">查看全部 12+ 第三方互通接口</div>
+        <div class="home-service-foot">查看全部 12+ 项互通服务</div>
       </button>
 
       <button class="home-service-card highlight" @click="openNewPage(13)">

@@ -58,7 +58,7 @@ function submitInquiryForm() {
 
 function redeemStubAtMerchant() {
   state.points += 60
-  showToast(`电子票根 ${state.ticketStubCode} 模拟核销成功！已享网球联盟85折，并获得 +60 金网积分`)
+  showToast(`电子票根 ${state.ticketStubCode} 核销成功！已享网球联盟 85 折，并获得 +60 金网积分`)
   close()
 }
 </script>
@@ -253,7 +253,7 @@ function redeemStubAtMerchant() {
           包含联盟餐饮85折、合作酒店85折、天沐温泉立减¥60、特产满150减30
         </div>
         <button class="btn-orange" style="width: 100%; padding: 10px" @click="redeemStubAtMerchant">
-          模拟商户扫码核销（体验 +60 积分到账）
+          模拟商户扫码核销 · +60 积分即时到账
         </button>
       </div>
     </div>
@@ -279,7 +279,7 @@ function redeemStubAtMerchant() {
           <button class="btn-primary" @click="playing = !playing">
             {{ playing ? '⏸ 暂停讲解' : '▶ 继续讲解' }}
           </button>
-          <span style="font-size: 11.5px; color: var(--ink-3)">支持后台息屏播放 · 路线沿途自动触发</span>
+          <span style="font-size: 11.5px; color: var(--ink-3)">支持息屏播放 · 沿途自动讲解</span>
         </div>
       </div>
     </div>

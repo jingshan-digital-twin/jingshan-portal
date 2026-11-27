@@ -23,9 +23,9 @@ const visibleGroups = computed(() =>
       <div class="mh-left">
         <div class="mh-num">12</div>
         <div>
-          <h1 class="mh-title">小程序互联互通接口</h1>
+          <h1 class="mh-title">小程序互联互通</h1>
           <div class="mh-desc">
-            开放聚合不重复建设：一键跳转本地政务、文旅、支付、打车等现有大众服务小程序，并与「京网有约」「网球记」实现账号与订单数据互通
+            政务、文旅、支付、打车等常用小程序，一次授权即可直达
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ const visibleGroups = computed(() =>
             <span style="font-size: 24px">{{ g.icon }}</span>
             <strong style="font-size: 16px">{{ g.cat }}</strong>
           </div>
-          <span class="tag green">● 接口已连通</span>
+          <span class="tag green">● 已连通</span>
         </div>
         <div style="font-size: 12px; color: var(--ink-3); margin-bottom: 10px">{{ g.desc }}</div>
         <div class="grid-2" style="gap: 8px; margin-bottom: 12px">

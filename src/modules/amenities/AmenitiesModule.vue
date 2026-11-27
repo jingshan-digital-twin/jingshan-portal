@@ -27,7 +27,7 @@ const visibleAmenities = computed(() =>
         <div>
           <h1 class="mh-title">便民配套服务</h1>
           <div class="mh-desc">
-            全市卫生间、医疗点、充电桩、ATM、母婴室地图一键查找（均含实景照片与评分），叠加实时天气、打球指数与全城路况查询
+            卫生间、医疗点、充电桩、母婴室与 ATM，随时找到离你最近的一处
           </div>
         </div>
       </div>
@@ -147,7 +147,7 @@ const visibleAmenities = computed(() =>
         </div>
         <ServiceCircleMap mode="amenities" />
         <div class="card-pad flex-between" style="background: #fafdfc">
-          <span style="font-size: 12px; color: var(--ink-2)">点击左侧任意设施缩略图可查看现场实景与游客评分，支持一键跳转高德/百度导航</span>
+          <span style="font-size: 12px; color: var(--ink-2)">全部设施实地实景采集，支持一键导航前往与游客实时评分</span>
           <button class="btn-orange" @click="switchModule(11)">设施故障上报</button>
         </div>
       </div>

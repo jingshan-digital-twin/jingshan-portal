@@ -28,9 +28,9 @@ async function onSubmit() {
       <div class="mh-left">
         <div class="mh-num">11</div>
         <div>
-          <h1 class="mh-title">互动反馈模块</h1>
+          <h1 class="mh-title">互动反馈</h1>
           <div class="mh-desc">
-            游客打卡分享、各类设施服务星级评价打分、意见反馈与 12345 投诉上报，以及全透明「商户服务信用预警与红黑榜」闭环监督
+            真实打卡评价、12345 投诉分办与商户信用红黑榜，一起把服务做得更好
           </div>
         </div>
       </div>

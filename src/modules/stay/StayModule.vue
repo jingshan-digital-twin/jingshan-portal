@@ -59,7 +59,7 @@ function openHotelDetail(id: string) {
         <div>
           <h1 class="mh-title">“住”：住宿服务</h1>
           <div class="mh-desc">
-            京网推荐住宿（酒店、精品民宿、短/长租网球公寓全覆盖），支持完整房型列表、透明价格查询、详情展开与一键预订，以及房管局赛事购房减5万元活动
+            从球场步行可达的酒店与网球公寓，房型与赛期价一目了然，购房再减 5 万
           </div>
         </div>
       </div>
@@ -246,7 +246,7 @@ function openHotelDetail(id: string) {
     <!-- 全部 6 家住宿房型与价格透明对照表 -->
     <div class="card card-pad">
       <strong style="font-size: 14.5px; display: block; margin-bottom: 8px">
-        📋 全部赛事合作住宿 & 网球公寓房型价格一览表（点击任意行查看完整设施、政策与全部房型）
+        📋 赛事合作住宿 & 网球公寓房型价格一览
       </strong>
       <table class="clean-table">
         <thead>

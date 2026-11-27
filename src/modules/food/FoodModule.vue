@@ -185,7 +185,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
         <div>
           <h1 class="mh-title">“吃”：美食服务</h1>
           <div class="mh-desc">
-            京网推荐美食（特色餐饮、农家菜、本地特色店铺的精确坐标位置导航、完整菜单与真实评价）、网球联盟票根核销、以及团餐与赛事接待定点餐饮推荐
+            京山味道：桥米、土鸡与夜市烟火，凭球票根享 79 家联盟商户 85 折
           </div>
         </div>
       </div>
