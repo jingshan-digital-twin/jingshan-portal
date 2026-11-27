@@ -558,7 +558,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <span class="home-sec-badge" style="background: linear-gradient(135deg, #2eb36a, #168249)">游</span>
           <div>
             <h2 class="home-sec-title">全域网旅延伸线路概览</h2>
-            <div class="home-sec-sub">已结合来源地「{{ state.origin }}」精选京山本地 / 荆门周边 / 湖北省内三大圈层代表线路</div>
+            <div class="home-sec-sub">📍 来源地：{{ state.origin }} · 精选京山本地 / 荆门周边 / 湖北省内三大圈层代表线路</div>
           </div>
         </div>
         <button class="home-jump-btn" @click="openNewPage(3)">查看全部线路与智能语音导览 ↗</button>
