@@ -47,13 +47,7 @@ const { state, memberTier, switchModule, handleSearch } = usePortalStore()
         >
           🏆 赛事福利
         </span>
-        <span class="hdr-pill" :class="{ active: state.activeModule === 11 }" @click="switchModule(11)">
-          💬 互动反馈
-        </span>
-        <span class="hdr-pill" :class="{ active: state.activeModule === 12 }" @click="switchModule(12)">
-          🔗 小程序互通
-        </span>
-        <div class="member-chip" :class="{ active: state.activeModule === 13 }" @click="switchModule(13)">
+        <div class="member-chip">
           <div class="avatar-sm">林</div>
           <span>林先生 · {{ memberTier.code }} · {{ state.abilityLevel }} · {{ state.points }}分</span>
         </div>

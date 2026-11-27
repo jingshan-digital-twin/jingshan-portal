@@ -24,7 +24,7 @@ const kpiPillsMap = computed<Record<ModuleId, string[]>>(() => ({
   1: ['356片标准球场', '79家联盟商家', `来源地：${state.origin}`],
   2: ['全市356片球场', '今日84片可约', `实时${state.liveMatches.length}场焦点赛`],
   3: ['3大旅游圈层', '配智能语音导览', '持证社保障'],
-  4: ['79家联盟餐饮', '打球票根85折', '支持赛事团餐'],
+  4: ['79家联盟餐饮', '打球票根85折', '夜市夜宵'],
   5: ['6家精选住宿', '百套短长租公寓', '购房直减¥50,000'],
   6: ['赛期限行避堵', `P1车位剩${state.parkingLots[0]?.remain ?? 84}`, `超充桩闲${state.parkingLots[1]?.remain ?? 14}`],
   7: ['产地直发包邮', '积分100分=¥10', '票根满150减30'],
@@ -465,7 +465,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
           <div>
             <strong style="font-size: 14px">🎫 打球电子票根（{{ state.ticketStubCode }}）· 吃美食直享 85 折</strong>
             <div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82)">
-              全市 79 家网球联盟餐饮支持票根核销满减，赛事球队团餐与包厢可在线预订
+              全市 79 家网球联盟餐饮支持票根核销满减，包厢与夜市桌位可在线预约
             </div>
           </div>
           <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">出示电子票根</button>
@@ -995,7 +995,7 @@ function openRestaurantMenu(r: (typeof hotRestaurants)[number]) {
     <div class="summary-stage-footer">
       <div v-if="state.activeModule === 1" class="summary-footer-links">
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(2)">打 · 订场与比分 ↗</button>
-        <button class="home-jump-btn sm" @click="openModuleInNewWindow(4)">吃 · 美食与团餐 ↗</button>
+        <button class="home-jump-btn sm" @click="openModuleInNewWindow(4)">吃 · 美食与夜市 ↗</button>
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(5)">住 · 公寓与酒店 ↗</button>
         <button class="home-jump-btn sm" @click="openModuleInNewWindow(3)">游 · 全域线路 ↗</button>
       </div>

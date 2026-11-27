@@ -72,7 +72,7 @@ function parseModuleFromUrl(): ModuleId | null {
     const raw = params.get('module')
     if (raw) {
       const id = Number(raw)
-      if (id >= 2 && id <= 13) return id as ModuleId
+      if (id >= 2 && id <= 9) return id as ModuleId
     }
   } catch {
     // ignore URL parse errors
@@ -297,6 +297,12 @@ export function usePortalStore() {
       silent?: boolean
     },
   ) {
+    // 10-13 专栏已下线：统一拦截，避免残留入口打开隐藏页面
+    if (id > 9) {
+      showToast('该栏目已下线')
+      return
+    }
+
     // Explicit new-window jump (e.g. clicking "进入完整专区 ↗" inside the fixed summary container)
     if (options?.newWindow && id !== 1) {
       openModuleInNewWindow(id, options.params, options.silent)

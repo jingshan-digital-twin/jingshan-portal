@@ -105,8 +105,6 @@ function submitQuickPackage() {
           {{ currentSlide.titlePrefix }}<em>{{ currentSlide.titleHighlight }}</em>
         </h1>
 
-        <p class="hero-main-desc">{{ currentSlide.desc }}</p>
-
         <div class="hero-cta-row">
           <button class="btn-orange" style="padding: 9px 18px; font-size: 13px; border-radius: 0" @click="triggerSlideAction(currentSlide.primaryAction)">
             {{ currentSlide.primaryAction.label }}
@@ -118,16 +116,6 @@ function submitQuickPackage() {
           >
             {{ currentSlide.secondaryAction.label }}
           </button>
-        </div>
-
-        <div class="hero-stats-row">
-          <div v-for="st in currentSlide.stats" :key="st.label" class="hero-stat-pill">
-            <div class="hero-stat-num">{{ st.num }}</div>
-            <div class="hero-stat-lbl">
-              {{ st.label }}
-              <small>{{ st.sub }}</small>
-            </div>
-          </div>
         </div>
 
         <!-- Carousel Indicators -->

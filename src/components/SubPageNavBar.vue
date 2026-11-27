@@ -5,7 +5,7 @@ import { getModuleMeta, MODULE_META_LIST, usePortalStore } from '../store/usePor
 const { state, switchModule } = usePortalStore()
 
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
-const subModules = MODULE_META_LIST.filter((m) => m.id !== 1)
+const subModules = MODULE_META_LIST.filter((m) => m.id >= 2 && m.id <= 9)
 
 function closeOrReturnHome() {
   if (window.opener && !window.opener.closed) {

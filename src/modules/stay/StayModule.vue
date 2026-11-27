@@ -7,7 +7,7 @@ import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
 const PAGE_SIZE = 4
-const stayTab = ref<'全部' | '公寓' | '赛事优惠' | '民宿'>('全部')
+const stayTab = ref<'公寓' | '赛事优惠' | '民宿'>('公寓')
 const stayKeyword = ref('')
 const stayPage = ref(1)
 const checkInDate = ref(BOOKING_DATES[0]!.iso)
@@ -32,7 +32,7 @@ const nightsCount = computed(() => {
 const filteredHotels = computed(() => {
   const q = stayKeyword.value.trim().toLowerCase()
   const list = HOTEL_PROFILES.filter((h) => {
-    const okTab = stayTab.value === '全部' || h.category === stayTab.value
+    const okTab = h.category === stayTab.value
     const okQ = !q || h.name.toLowerCase().includes(q) || h.address.toLowerCase().includes(q) || h.rooms.some((r) => r.name.toLowerCase().includes(q))
     const minP = h.rooms[0]?.eventPrice ?? 0
     const okPrice =
@@ -68,7 +68,6 @@ function openHotelDetail(id: string) {
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: stayTab === '全部' }" @click="stayTab = '全部'">全部住宿 (6家)</button>
         <button class="m-tab" :class="{ active: stayTab === '公寓' }" @click="stayTab = '公寓'">短/长租网球公寓</button>
         <button class="m-tab" :class="{ active: stayTab === '赛事优惠' }" @click="stayTab = '赛事优惠'">赛事合作优惠专区</button>
         <button class="m-tab" :class="{ active: stayTab === '民宿' }" @click="stayTab = '民宿'">温泉精品民宿</button>

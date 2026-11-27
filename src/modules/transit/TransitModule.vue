@@ -5,7 +5,7 @@ import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, reserveParkingOrCharger, openActionModal, openNavigation, showToast } = usePortalStore()
-const transitTab = ref<'全部' | '限行与车位' | '优质司机' | '公交与租车'>('全部')
+const transitTab = ref<'限行与车位' | '优质司机' | '公交与租车'>('限行与车位')
 const parkDate = ref(BOOKING_DATES[0]!.shortDate)
 const parkSlot = ref('16:00-18:00')
 const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00']
@@ -15,7 +15,6 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: transitTab === '全部' }" @click="transitTab = '全部'">全部出行</button>
         <button class="m-tab" :class="{ active: transitTab === '限行与车位' }" @click="transitTab = '限行与车位'">限行图与车位/充电</button>
         <button class="m-tab" :class="{ active: transitTab === '优质司机' }" @click="transitTab = '优质司机'">京网优质司机</button>
         <button class="m-tab" :class="{ active: transitTab === '公交与租车' }" @click="transitTab = '公交与租车'">公交专线/租车打车</button>
@@ -23,7 +22,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
     </div>
 
     <div class="grid-split">
-      <div v-if="transitTab === '全部' || transitTab === '限行与车位'" class="card">
+      <div v-if="transitTab === '限行与车位'" class="card">
         <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); background: #fff6f6">
           <div>
             <strong style="font-size: 15px; color: #a81721">
@@ -121,7 +120,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 14px">
-        <div v-if="transitTab === '全部' || transitTab === '优质司机'" class="card card-pad">
+        <div v-if="transitTab === '优质司机'" class="card card-pad">
           <div class="flex-between" style="margin-bottom: 10px">
             <strong style="font-size: 15px">👨‍✈️ 京网推荐出行 · 官方优质司机（6位认证）</strong>
             <span class="tag gold">全程评星监督</span>
@@ -144,7 +143,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
           </div>
         </div>
 
-        <div v-if="transitTab === '全部' || transitTab === '公交与租车'" class="card card-pad">
+        <div v-if="transitTab === '公交与租车'" class="card card-pad">
           <div class="flex-between" style="margin-bottom: 8px">
             <strong style="font-size: 15px">🚌 公交 & 赛事旅游专线实时班次</strong>
             <span class="tag green">实时到站</span>
@@ -161,7 +160,7 @@ const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '
           </table>
         </div>
 
-        <div v-if="transitTab === '全部' || transitTab === '公交与租车'" class="card card-pad">
+        <div v-if="transitTab === '公交与租车'" class="card card-pad">
           <strong style="font-size: 14.5px; display: block; margin-bottom: 9px">🚕 租车 & 网约车入口（无缝跳转第三方小程序）</strong>
           <div class="grid-2" style="gap: 9px">
             <button class="btn-ghost" style="padding: 10px; text-align: left" @click="openActionModal({ type: 'miniprogram', appName: '滴滴出行小程序', desc: '自动带入京山国际网球中心上车定位，支持球友一键快车/专车' })">

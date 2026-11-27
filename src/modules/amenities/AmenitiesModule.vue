@@ -14,7 +14,7 @@ interface AmenityCardItem extends AmenityMapPoint {
 
 const { state, switchModule, openPhoto, openNavigation } = usePortalStore()
 const PAGE_SIZE = 4
-const amFilter = ref<'全部' | '卫生间' | '医疗点' | '充电桩' | 'ATM' | '母婴室'>('全部')
+const amFilter = ref<'卫生间' | '医疗点' | '充电桩' | 'ATM' | '母婴室'>('卫生间')
 const amKeyword = ref('')
 const amPage = ref(1)
 const mapRadius = ref<RadiusOption>('1公里')
@@ -76,7 +76,7 @@ const currentVenueAmenities = computed(
 const visibleAmenities = computed(() => {
   const q = amKeyword.value.trim().toLowerCase()
   return currentVenueAmenities.value.filter((a) => {
-    const okCat = amFilter.value === '全部' || a.key === amFilter.value
+    const okCat = a.key === amFilter.value
     const okQ = !q || a.name.toLowerCase().includes(q) || a.address.toLowerCase().includes(q) || a.info.toLowerCase().includes(q)
     return okCat && okQ
   })
@@ -97,13 +97,13 @@ watch([visibleAmenities, selectedVenueId], () => {
     <div class="module-toolbar">
       <div class="mh-tabs">
         <button
-          v-for="t in (['全部', '卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"
+          v-for="t in (['卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"
           :key="t"
           class="m-tab"
           :class="{ active: amFilter === t }"
           @click="amFilter = t"
         >
-          {{ t === '全部' ? '全部便民设施' : t }}
+          {{ t }}
         </button>
       </div>
     </div>
@@ -268,14 +268,14 @@ watch([visibleAmenities, selectedVenueId], () => {
           </div>
           <div class="flex-row" style="gap: 5px">
             <button
-              v-for="t in (['全部', '卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"
+              v-for="t in (['卫生间', '医疗点', '充电桩', 'ATM', '母婴室'] as const)"
               :key="`map-${t}`"
               class="filter-pill"
               :class="{ active: amFilter === t }"
               style="padding: 3px 8px; font-size: 11px"
               @click="amFilter = t"
             >
-              {{ t === '全部' ? '全部' : t }}
+              {{ t }}
             </button>
           </div>
         </div>

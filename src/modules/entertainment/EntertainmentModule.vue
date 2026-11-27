@@ -7,14 +7,14 @@ import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openPhoto, openNavigation, showToast } = usePortalStore()
 const PAGE_SIZE = 4
-const entTab = ref<'全部' | '农庄' | '采摘' | '亲子' | '康养' | 'KTV/电影'>('全部')
+const entTab = ref<'农庄' | '采摘' | '亲子' | '康养' | 'KTV/电影'>('农庄')
 const entKeyword = ref('')
 const entPage = ref(1)
 
 const visibleItems = computed(() => {
   const q = entKeyword.value.trim().toLowerCase()
   return ENTERTAINMENT_ITEMS.filter((i) => {
-    const okTab = entTab.value === '全部' || i.catKey === entTab.value
+    const okTab = i.catKey === entTab.value
     const okQ = !q || i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q) || i.address.toLowerCase().includes(q)
     return okTab && okQ
   })
@@ -35,13 +35,13 @@ watch(visibleItems, () => {
     <div class="module-toolbar">
       <div class="mh-tabs">
         <button
-          v-for="t in (['全部', '农庄', '采摘', '亲子', '康养', 'KTV/电影'] as const)"
+          v-for="t in (['农庄', '采摘', '亲子', '康养', 'KTV/电影'] as const)"
           :key="t"
           class="m-tab"
           :class="{ active: entTab === t }"
           @click="entTab = t"
         >
-          {{ t === '全部' ? '全部娱乐(6大类)' : t }}
+          {{ t }}
         </button>
       </div>
     </div>

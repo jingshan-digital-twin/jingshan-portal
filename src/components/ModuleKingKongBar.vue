@@ -22,7 +22,6 @@ const mainTiles: MainTile[] = [
   { id: 7, title: '购 · 特色商品', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
   { id: 8, title: '娱 · 休闲娱乐', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
   { id: 9, title: '训 · 培训研学', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
-  { id: 10, title: '便民配套服务', bg: 'linear-gradient(135deg,#0EA5A4,#0A6F72)' },
 ]
 </script>
 

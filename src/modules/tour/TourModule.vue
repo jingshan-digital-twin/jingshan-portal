@@ -5,7 +5,6 @@ import { BOOKING_DATES } from '../../mock/schedules'
 import {
   OUTDOOR_TRAILS,
   TENNIS_BUS_LINES,
-  TOUR_ITINERARY_PLANS,
   TOUR_PACKAGES,
   TOUR_SPOTS,
   type TourSpotCategory,
@@ -15,21 +14,32 @@ import { usePortalStore } from '../../store/usePortalStore'
 const { state, openPhoto, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
 
 // 模块顶部主视图切换
-const activeSection = ref<'all' | 'spots' | 'packages' | 'audio' | 'lines'>('all')
+const activeSection = ref<'scenic' | 'rural' | 'trendy' | 'packages' | 'lines'>('scenic')
 
 // 1. 景区 / 乡村 / 网红 / 夜市 筛选、搜索与分页（每页4项）
 const PAGE_SIZE = 4
-const spotCategory = ref<'全部' | TourSpotCategory>('全部')
 const spotKeyword = ref('')
 const spotPage = ref(1)
 const visitDate = ref(BOOKING_DATES[0]!.iso)
 const visitSlot = ref<'上午 08:30-12:00' | '下午 13:00-17:00' | '夜游 17:30-22:00'>('下午 13:00-17:00')
 const ticketCount = ref(2)
 
+const activeCategory = computed<TourSpotCategory>(() =>
+  activeSection.value === 'scenic' ? '景区' : activeSection.value === 'rural' ? '乡村景点' : '网红打卡点',
+)
+
+const sectionTitle = computed(() =>
+  activeSection.value === 'scenic'
+    ? '🏔️ 景区门票与电子导览'
+    : activeSection.value === 'rural'
+      ? '🏡 乡村景点与田园体验'
+      : '📸 网红打卡点',
+)
+
 const visibleSpots = computed(() => {
   const q = spotKeyword.value.trim().toLowerCase()
   return TOUR_SPOTS.filter((s) => {
-    const okCat = spotCategory.value === '全部' || s.category === spotCategory.value
+    const okCat = s.category === activeCategory.value
     const okQ = !q || s.name.toLowerCase().includes(q) || s.summary.toLowerCase().includes(q) || s.tags.some((t) => t.toLowerCase().includes(q))
     return okCat && okQ
   })
@@ -40,7 +50,7 @@ const pagedSpots = computed(() => {
   return visibleSpots.value.slice(start, start + PAGE_SIZE)
 })
 
-watch([spotCategory, spotKeyword], () => {
+watch([activeSection, spotKeyword], () => {
   spotPage.value = 1
 })
 
@@ -96,12 +106,6 @@ function bookTourPackage(pkg: (typeof TOUR_PACKAGES)[number]) {
   )
 }
 
-// 3. 语音导览与游玩时长建议
-const activePlanId = ref<'half' | 'weekend' | 'deep'>('weekend')
-const activePlan = computed(
-  () => TOUR_ITINERARY_PLANS.find((p) => p.id === activePlanId.value) ?? TOUR_ITINERARY_PLANS[1]!,
-)
-
 // 4. 网球文旅专线 & 骑行徒步
 const busDate = ref(BOOKING_DATES[0]!.shortDate)
 const busDepartTime = ref('09:30')
@@ -118,50 +122,28 @@ const visibleTrails = computed(() =>
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: activeSection === 'all' }" @click="activeSection = 'all'">全部总览</button>
-        <button class="m-tab" :class="{ active: activeSection === 'spots' }" @click="activeSection = 'spots'">景区/乡村/网红/夜市</button>
-        <button class="m-tab" :class="{ active: activeSection === 'packages' }" @click="activeSection = 'packages'">网旅产品专区</button>
-        <button class="m-tab" :class="{ active: activeSection === 'audio' }" @click="activeSection = 'audio'">语音导览与时长</button>
+        <button class="m-tab" :class="{ active: activeSection === 'scenic' }" @click="activeSection = 'scenic'">景区</button>
+        <button class="m-tab" :class="{ active: activeSection === 'rural' }" @click="activeSection = 'rural'">乡村</button>
+        <button class="m-tab" :class="{ active: activeSection === 'trendy' }" @click="activeSection = 'trendy'">网红</button>
+        <button class="m-tab" :class="{ active: activeSection === 'packages' }" @click="activeSection = 'packages'">网旅产品</button>
         <button class="m-tab" :class="{ active: activeSection === 'lines' }" @click="activeSection = 'lines'">文旅专线与骑行徒步</button>
       </div>
     </div>
 
-    <!-- 顶部来源地定制横幅 -->
-    <div class="ticket-stub-banner mb-16">
-      <div>
-        <div style="font-size: 15px; font-weight: 900">
-          📍 来源地：<span style="color: var(--lime)">{{ state.origin }}</span> · 电子票根 {{ state.ticketStubCode }} 畅享全市景区/夜市/专线优待
-        </div>
-      </div>
-      <div class="flex-row">
-        <button class="tag" style="background: var(--lime); color: #0b251d; border: none; cursor: pointer" @click="activeSection = 'spots'">🏔️ {{ TOUR_SPOTS.length }} 处热门场景</button>
-        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'packages'">🌿 {{ TOUR_PACKAGES.length }} 大网旅套餐</button>
-        <button class="tag" style="background: rgba(255, 255, 255, 0.18); color: #fff; border: none; cursor: pointer" @click="activeSection = 'lines'">🚌 专线与绿道</button>
-      </div>
-    </div>
 
     <!-- ===== 模块一：景区 · 乡村景点 · 网红打卡点 · 夜市消费场景（含导航 + 精确时段门票预约） ===== -->
-    <div v-if="activeSection === 'all' || activeSection === 'spots'" class="mb-24">
+    <div v-if="activeSection === 'scenic' || activeSection === 'rural' || activeSection === 'trendy'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div>
-            <strong style="font-size: 16px">🏔️ 热门景区与打卡点</strong>
+            <strong style="font-size: 16px">{{ sectionTitle }}</strong>
           </div>
           <div class="flex-row" style="gap: 6px">
             <div class="search-bar" style="width: 240px; height: 34px">
               <span>🔍</span>
-              <input v-model="spotKeyword" type="text" placeholder="搜索景区/乡村/网红/夜市…" />
+              <input v-model="spotKeyword" type="text" placeholder="搜索景点、玩法、关键词…" />
               <button v-if="spotKeyword" class="btn-ghost" style="padding: 1px 6px; font-size: 11px" @click="spotKeyword = ''">✕</button>
             </div>
-            <button
-              v-for="cat in (['全部', '景区', '乡村景点', '网红打卡点', '夜市消费'] as const)"
-              :key="cat"
-              class="filter-pill"
-              :class="{ active: spotCategory === cat }"
-              @click="spotCategory = cat"
-            >
-              {{ cat === '全部' ? `全部场景 (${TOUR_SPOTS.length})` : cat }}
-            </button>
           </div>
         </div>
 
@@ -191,8 +173,8 @@ const visibleTrails = computed(() =>
       </div>
 
       <div v-if="pagedSpots.length === 0" class="card card-pad" style="text-align: center; padding: 36px 20px">
-        <strong style="font-size: 14px; display: block; margin-bottom: 8px">未查询到匹配的景点或夜市</strong>
-        <button class="btn-primary" @click="spotKeyword = ''; spotCategory = '全部'">重置查询条件</button>
+        <strong style="font-size: 14px; display: block; margin-bottom: 8px">未查询到匹配的景点</strong>
+        <button class="btn-primary" @click="spotKeyword = ''">重置查询条件</button>
       </div>
 
       <div v-else>
@@ -303,7 +285,7 @@ const visibleTrails = computed(() =>
     </div>
 
     <!-- ===== 模块二：“游”网旅产品专区（官方打球+吃住游打包套餐） ===== -->
-    <div v-if="activeSection === 'all' || activeSection === 'packages'" class="mb-24">
+    <div v-if="activeSection === 'packages'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between">
           <div>
@@ -391,73 +373,8 @@ const visibleTrails = computed(() =>
       />
     </div>
 
-    <!-- ===== 模块三：语音导览与游玩时长建议 ===== -->
-    <div v-if="activeSection === 'all' || activeSection === 'audio'" class="card card-pad mb-24">
-      <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
-        <div>
-          <strong style="font-size: 16.5px">🎧 智能语音导览</strong>
-        </div>
-        <div class="seg-group">
-          <button
-            v-for="plan in TOUR_ITINERARY_PLANS"
-            :key="plan.id"
-            :class="{ active: activePlanId === plan.id }"
-            @click="activePlanId = plan.id"
-          >
-            {{ plan.label }}
-          </button>
-        </div>
-      </div>
-
-      <div style="background: #f4faf7; border: 1px solid #d5e8df; padding: 10px 14px; margin-bottom: 14px" class="flex-between">
-        <div>
-          <span class="tag green" style="margin-right: 8px">{{ activePlan.durationTag }}</span>
-          <span style="font-size: 12.5px; color: var(--ink-2)">{{ activePlan.desc }}</span>
-        </div>
-        <button
-          class="btn-primary"
-          style="padding: 5px 12px; font-size: 12px"
-          @click="
-            openActionModal({
-              type: 'audio',
-              spotName: `京山网旅全景导览（${activePlan.label}）`,
-              duration: activePlan.durationTag,
-              script: activePlan.stops.map((s) => `${s.time} ${s.spot}（${s.stay}）：${s.audioScript}`).join(' '),
-              photo: activePlan.stops[0]?.photo ?? '/images/hero.jpg',
-            })
-          "
-        >
-          🎧 连续播放全程语音导览
-        </button>
-      </div>
-
-      <div :class="activePlan.stops.length === 4 ? 'grid-4' : 'grid-3'">
-        <div
-          v-for="(st, idx) in activePlan.stops"
-          :key="st.spot"
-          style="background: #fff; border: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between"
-        >
-          <div>
-            <div class="flex-between" style="margin-bottom: 6px">
-              <span class="tag green">第 {{ idx + 1 }} 站 · {{ st.time }}</span>
-              <span class="tag gold">⏱️ {{ st.stay }}</span>
-            </div>
-            <strong style="font-size: 14.5px; display: block; margin-bottom: 5px">{{ st.spot }}</strong>
-            <div style="font-size: 12px; color: var(--ink-2); line-height: 1.55; margin-bottom: 10px">{{ st.tip }}</div>
-          </div>
-          <button
-            class="btn-ghost"
-            style="width: 100%; font-size: 12px"
-            @click="openActionModal({ type: 'audio', spotName: st.spot, duration: st.stay, script: st.audioScript, photo: st.photo })"
-          >
-            🎧 试听本站语音讲解
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== 模块四：网球主题文旅专线 & 骑行徒步路线 ===== -->
-    <div v-if="activeSection === 'all' || activeSection === 'lines'" class="grid-2">
+    <!-- ===== 模块三：网球主题文旅专线 & 骑行徒步路线 ===== -->
+    <div v-if="activeSection === 'lines'" class="grid-2">
       <!-- 左侧：3条网球主题文旅专线 -->
       <div class="card card-pad">
         <div class="flex-between mb-12" style="padding-bottom: 10px; border-bottom: 1px solid var(--line)">
@@ -567,9 +484,9 @@ const visibleTrails = computed(() =>
                 <div style="font-size: 11.5px; color: var(--ink-2); margin-bottom: 5px">{{ trail.desc }}</div>
                 <div style="font-size: 11px; color: var(--ink-3)">⛺ {{ trail.supplyStations }}</div>
               </div>
-              <div class="flex-between" style="margin-top: 7px">
-                <span style="font-size: 10.5px; color: var(--ink-3)">起点：{{ trail.startPoint }}</span>
-                <div class="flex-row" style="gap: 5px">
+              <div class="flex-between" style="margin-top: 7px; gap: 8px; flex-wrap: wrap">
+                <span style="font-size: 10.5px; color: var(--ink-3); flex: 1 1 150px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">起点：{{ trail.startPoint }}</span>
+                <div class="flex-row" style="gap: 5px; flex-shrink: 0; flex-wrap: nowrap; margin-left: auto">
                   <button
                     class="btn-ghost"
                     style="padding: 3px 8px; font-size: 11px"

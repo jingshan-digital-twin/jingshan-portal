@@ -7,7 +7,7 @@ import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openPhoto, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
 const PAGE_SIZE = 4
-const foodTab = ref<'全部' | '联盟85折' | '农家菜' | '夜市' | '团餐'>('全部')
+const foodTab = ref<'联盟85折' | '农家菜' | '夜市'>('联盟85折')
 const foodKeyword = ref('')
 const foodPage = ref(1)
 const dineDate = ref(BOOKING_DATES[0]!.iso)
@@ -122,45 +122,180 @@ const restaurants = [
     quote: '打完夜场球走3分钟就到，球友聚餐氛围超棒！',
     avg: 58,
   },
-]
-
-const groupVenues = [
   {
-    name: '文峰迎宾馆赛事宴会厅',
-    rating: 4.9,
-    desc: '可同时接待 320 人 · 运动员营养自助 ¥60/人起 · 距赛场0.8km',
-    address: '温泉街道京山大道128号文峰迎宾馆二楼',
-    lng: 113.1146,
-    lat: 31.0241,
-    dist: '距赛场 0.8km',
-    driveMin: '驾车约 3 分钟',
+    name: '硒泉鱼庄 · 温泉小镇店',
+    cat: '联盟85折',
+    address: '湖北省荆门市京山市温泉街道温泉大道18号',
+    lng: 113.1287,
+    lat: 31.0294,
+    driveMin: '驾车约 6 分钟',
+    openHours: '11:00 – 21:30',
+    photo: '/images/cuisine.jpg',
+    badge: '🎫 票根85折 · 温泉鱼头招牌',
+    dist: '距国际网球中心 2.1km',
+    rating: 4.7,
+    reviews: 326,
+    menu: '温泉鱼头煲 ¥88 ｜ 香煎小白鱼 ¥48 ｜ 葛粉圆子 ¥28',
+    intro:
+      '温泉小镇里的本地鱼庄，招牌温泉鱼头煲用惠亭湖胖头鱼慢炖，汤白味浓。打完球泡完汤过来吃一顿，凭电子票根整单 85 折。',
+    tags: ['网球联盟85折', '温泉鱼头煲', '可停8辆车', '有包间'],
+    highlights: ['出示「京山网球」电子票根整单 85 折，消费累计 +60 金网积分', '鱼头每日现杀，汤底吊足三小时，配手工葛粉圆子'],
+    hotItems: [
+      { name: '温泉鱼头煲（3—4人）', price: '票根价 ¥75', tag: '必点', desc: '胖头鱼头配豆腐千张，汤白鲜浓可续汤。' },
+      { name: '香煎惠亭湖小白鱼', price: '票根价 ¥41', tag: '本地味', desc: '外酥里嫩，椒盐微辣，下酒下饭都合适。' },
+    ],
+    detailedReviews: [
+      { user: '荆门球友老周', origin: '荆门', score: 4.7, date: '2026-11-23', content: '泡完温泉过来吃鱼头，汤鲜得能喝三碗，票根还打了折。' },
+    ],
+    quote: '温泉鱼头汤够鲜，泡完汤吃一顿正好。',
+    avg: 72,
   },
   {
-    name: '京源网球中心餐厅（定点）',
+    name: '桥米煲仔饭 · 文峰店',
+    cat: '联盟85折',
+    address: '湖北省荆门市京山市新市街道文峰路22号',
+    lng: 113.1129,
+    lat: 31.0206,
+    driveMin: '步行约 4 分钟',
+    openHours: '10:30 – 21:00',
+    photo: '/images/cuisine.jpg',
+    badge: '🎫 票根85折 · 快出餐',
+    dist: '距文峰公园球场 300m',
+    rating: 4.6,
+    reviews: 410,
+    menu: '腊味煲仔饭 ¥32 ｜ 桥米鸡蓉粥 ¥18 ｜ 例汤 ¥8',
+    intro:
+      '打完球想快速解决一餐的最佳选择：砂锅现焖桥米煲仔饭，锅巴焦香，出餐快、分量足，凭票根 85 折。',
+    tags: ['网球联盟85折', '出餐快', '单人友好', '可打包'],
+    highlights: ['电子票根 85 折，单人套餐 30 元出头就能吃饱', '桥米现焖，锅巴另装一小碟，脆到最后一口'],
+    hotItems: [
+      { name: '腊味双拼煲仔饭', price: '票根价 ¥27', tag: '招牌', desc: '腊肠腊肉双拼，配一份时蔬与例汤。' },
+      { name: '桥米鸡蓉粥', price: '票根价 ¥15', tag: '赛前轻食', desc: '好消化不顶胃，适合赛前一小时吃。' },
+    ],
+    detailedReviews: [
+      { user: '武汉球友小林', origin: '武汉', score: 4.6, date: '2026-11-24', content: '打完早场过来十分钟就上饭，锅巴香脆，价格也实惠。' },
+    ],
+    quote: '出餐快、锅巴香，打完球吃最省时间。',
+    avg: 38,
+  },
+  {
+    name: '老湾土菜馆 · 惠亭湖畔',
+    cat: '农家菜',
+    address: '湖北省荆门市京山市新市街道惠亭湖东岸老湾村',
+    lng: 113.0832,
+    lat: 31.0301,
+    driveMin: '驾车约 16 分钟',
+    openHours: '11:00 – 20:30',
+    photo: '/images/cuisine.jpg',
+    badge: '🐔 柴火土鸡 · 湖边院子',
+    dist: '距国际网球中心 9.4km',
     rating: 4.8,
-    desc: '可接待 200 人 · 赛间简餐/团餐 ¥45/人起 · 场馆内步行2分钟',
-    address: '温泉街道网球大道1号国际网球中心东附楼',
-    lng: 113.1202,
-    lat: 31.0215,
-    dist: '场馆内 150m',
-    driveMin: '步行约 2 分钟',
+    reviews: 512,
+    menu: '柴火土鸡 ¥88 ｜ 湖水煮鱼 ¥68 ｜ 蒸白花菜 ¥26',
+    intro:
+      '开在惠亭湖边的老院子，柴火灶现炖散养土鸡，配自家腌的白花菜和湖边时蔬，是本地人周末聚餐常去的一家。',
+    tags: ['柴火灶土鸡', '湖边院子', '亲子友好', '免费停车'],
+    highlights: ['土鸡现点现炖约 40 分钟，建议提前电话预订', '院子临湖，能边吃边看水面落日'],
+    hotItems: [
+      { name: '柴火灶散养土鸡（半只）', price: '¥88', tag: '招牌', desc: '柴火慢炖，汤色金黄，配手工面条。' },
+      { name: '湖水煮活鱼', price: '¥68', tag: '本地做法', desc: '只放姜葱与本地豆瓣，吃鱼本味。' },
+    ],
+    detailedReviews: [
+      { user: '京山本地阿珍', origin: '京山', score: 4.8, date: '2026-11-21', content: '带外地朋友来的，土鸡炖得脱骨，院子里坐着很舒服。' },
+    ],
+    quote: '湖边院子炖土鸡，周末带家人来最合适。',
+    avg: 58,
   },
   {
-    name: '温泉度假区生态宴会中心',
-    rating: 4.9,
-    desc: '可接待 400 人 · 鄂菜庆功宴 ¥880/桌起 · 免费大巴泊位',
-    address: '温泉街道天沐温泉度假区东区宴会楼',
-    lng: 113.1408,
-    lat: 31.0305,
-    dist: '距赛场 3.4km',
-    driveMin: '驾车约 8 分钟',
+    name: '太子山下的院子 · 柴火灶',
+    cat: '农家菜',
+    address: '湖北省荆门市京山市太子山林场路6号',
+    lng: 113.0172,
+    lat: 31.0408,
+    driveMin: '驾车约 20 分钟',
+    openHours: '11:30 – 21:00',
+    photo: '/images/cuisine.jpg',
+    badge: '🔥 柴火焖鹅 · 山野时蔬',
+    dist: '距国际网球中心 13km',
+    rating: 4.7,
+    reviews: 298,
+    menu: '柴火焖鹅 ¥128 ｜ 山笋炒腊肉 ¥58 ｜ 野菜煎蛋 ¥28',
+    intro:
+      '去太子山徒步、看玻璃栈道后顺路吃饭的院子菜，招牌柴火焖鹅分量足，山笋、野菜都是当天从林场收的。',
+    tags: ['柴火焖鹅', '山野时蔬', '适合团队', '院子停车'],
+    highlights: ['焖鹅需提前 1 小时预订，6—8 人一只刚好', '窗外就是林场，秋天能看到整片水杉'],
+    hotItems: [
+      { name: '柴火焖鹅（6—8人）', price: '¥128', tag: '招牌', desc: '铁锅焖足两小时，配土豆与魔芋。' },
+      { name: '山笋炒腊肉', price: '¥58', tag: '当季', desc: '春笋季最香，平时用笋干。' },
+    ],
+    detailedReviews: [
+      { user: '荆门自驾客', origin: '荆门', score: 4.7, date: '2026-11-18', content: '爬完太子山过来吃焖鹅，锅气足，分量给得实在。' },
+    ],
+    quote: '焖鹅够香，爬山下来吃一锅很满足。',
+    avg: 65,
+  },
+  {
+    name: '老张烤鱼大排档 · 新市大道',
+    cat: '夜市',
+    address: '湖北省荆门市京山市新市大道夜市B区12号',
+    lng: 113.1186,
+    lat: 31.0219,
+    driveMin: '驾车约 13 分钟',
+    openHours: '17:00 – 次日 01:00',
+    photo: '/images/night_market.jpg',
+    badge: '🌙 深夜食堂 · 炭火烤鱼',
+    dist: '距国际网球中心 8km',
+    rating: 4.6,
+    reviews: 730,
+    menu: '炭火烤鱼 ¥78 ｜ 牛油小串 ¥3/串 ｜ 炒米粉 ¥12',
+    intro:
+      '新市大道夜市里开了十几年的烤鱼摊，炭火现烤草鱼，配土豆片豆皮，是本地人下夜班和球友夜宵的固定据点。',
+    tags: ['炭火烤鱼', '营业到凌晨', '明码标价', '人均50'],
+    highlights: ['营业到凌晨 1 点，打完夜场过来还热乎', '烤鱼现杀现烤，15 分钟上桌'],
+    hotItems: [
+      { name: '炭火烤鱼（2—3人）', price: '¥78', tag: '招牌', desc: '草鱼现杀，配土豆片、豆皮、藕片。' },
+      { name: '牛油小串（10串）', price: '¥30', tag: '下酒', desc: '现穿现烤，趁热吃最香。' },
+    ],
+    detailedReviews: [
+      { user: '京山本地阿凯', origin: '京山', score: 4.6, date: '2026-11-25', content: '十点多过来还满座，烤鱼入味，价格也实在。' },
+    ],
+    quote: '夜场打完来一锅烤鱼，配冰米茶最爽。',
+    avg: 48,
+  },
+  {
+    name: '温泉夜市 · 米茶与小龙虾铺',
+    cat: '夜市',
+    address: '湖北省荆门市京山市温泉街道温泉小镇商业街A区',
+    lng: 113.1303,
+    lat: 31.0261,
+    driveMin: '步行约 9 分钟',
+    openHours: '18:00 – 23:30',
+    photo: '/images/night_market.jpg',
+    badge: '🦐 油焖大虾 · 冰镇米茶',
+    dist: '距国际网球中心 700m',
+    rating: 4.5,
+    reviews: 366,
+    menu: '油焖大虾 ¥98/份 ｜ 冰镇米茶 ¥6 ｜ 卤藕 ¥18',
+    intro:
+      '离球场最近的一摊宵夜：夏天油焖大虾、冬天羊肉汤，配一杯冰镇京山米茶解腻，走回酒店只要十分钟。',
+    tags: ['步行可达', '油焖大虾', '京山米茶', '可打包'],
+    highlights: ['距球场步行约 9 分钟，吃完走回酒店正好消食', '米茶现熬放凉，解辣解腻'],
+    hotItems: [
+      { name: '油焖大虾（约2斤）', price: '¥98', tag: '当季', desc: '每日鲜活到货，蒜香微辣。' },
+      { name: '冰镇京山米茶', price: '¥6', tag: '解腻', desc: '本地大麦炒制熬煮，微苦回甘。' },
+    ],
+    detailedReviews: [
+      { user: '襄阳小敏', origin: '襄阳', score: 4.5, date: '2026-11-20', content: '住温泉这边，晚上下来吃虾喝米茶，走回去很近。' },
+    ],
+    quote: '就在酒店楼下，虾新鲜、米茶解腻。',
+    avg: 55,
   },
 ]
 
 const visibleShops = computed(() => {
   const q = foodKeyword.value.trim().toLowerCase()
   const list = restaurants.filter((r) => {
-    const okTab = foodTab.value === '全部' || foodTab.value === '团餐' || r.cat === foodTab.value
+    const okTab = r.cat === foodTab.value
     const okQ = !q || r.name.toLowerCase().includes(q) || r.menu.toLowerCase().includes(q) || r.address.toLowerCase().includes(q)
     return okTab && okQ
   })
@@ -197,29 +332,17 @@ function reserveTable(shop: (typeof restaurants)[number]) {
     <div class="module-toolbar">
       <div class="mh-tabs">
         <button
-          v-for="t in (['全部', '联盟85折', '农家菜', '夜市', '团餐'] as const)"
+          v-for="t in (['联盟85折', '农家菜', '夜市'] as const)"
           :key="t"
           class="m-tab"
           :class="{ active: foodTab === t }"
           @click="foodTab = t"
         >
-          {{ t === '全部' ? '全部推荐美食' : t === '团餐' ? '赛事团餐定点' : t }}
+          {{ t }}
         </button>
       </div>
     </div>
 
-    <div class="ticket-stub-banner mb-16">
-      <div>
-        <div style="font-size: 15px; font-weight: 900">🎫 票根经济 · 打球凭证直享「京山网球联盟商家」餐饮特惠</div>
-        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 2px">
-          您的今日订场票根 <strong style="color: var(--lime)">{{ state.ticketStubCode }}</strong> 已激活：仅限全市
-          <strong>79 家认证网球联盟商家</strong>（含26家餐饮）核销立减与85折！
-        </div>
-      </div>
-      <button class="btn-orange" @click="openActionModal({ type: 'stub', code: state.ticketStubCode })">
-        出示我的电子票根码
-      </button>
-    </div>
 
     <!-- 用餐日期、时段与排序筛选条 -->
     <div class="card card-pad mb-16 filter-workbench">
@@ -256,7 +379,7 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       </div>
     </div>
 
-    <div v-if="foodTab !== '团餐'" class="mb-16">
+    <div class="mb-16">
       <div class="grid-3">
         <div v-for="shop in pagedShops" :key="shop.name" class="card">
         <div
@@ -300,9 +423,9 @@ function reserveTable(shop: (typeof restaurants)[number]) {
             <strong>📖 招牌菜单：</strong>{{ shop.menu }}
           </div>
           <div class="review-quote">💬 评：“{{ shop.quote }}”</div>
-          <div class="flex-between" style="margin-top: 10px">
+          <div class="flex-between" style="margin-top: 10px; gap: 8px; flex-wrap: wrap">
             <span class="price" style="font-size: 17px">¥{{ shop.avg }}<small>/人均 · 核销+60分</small></span>
-            <div class="flex-row">
+            <div class="flex-row" style="gap: 6px; flex-shrink: 0; flex-wrap: nowrap; margin-left: auto">
               <button
                 class="btn-ghost"
                 @click="
@@ -352,51 +475,5 @@ function reserveTable(shop: (typeof restaurants)[number]) {
       />
     </div>
 
-    <div class="card card-pad" style="background: #fffbf2; border-color: #f2d59b">
-      <div class="flex-between" style="margin-bottom: 10px">
-        <div>
-          <strong style="font-size: 16px; color: #6e4300">🍱 团餐及赛事接待定点餐饮推荐（市场监管A级食安保障）</strong>
-        </div>
-        <button
-          class="btn-orange"
-          @click="openActionModal({ type: 'inquiry', title: '赛事团餐 / 研学团队用餐预订', subtitle: '支持 10–400 人定制菜单与运动员营养自助餐，食安 A 级保障', submitLabel: '提交团餐预订需求' })"
-        >
-          一键提交团餐需求
-        </button>
-      </div>
-      <div class="grid-3">
-        <div
-          v-for="gv in groupVenues"
-          :key="gv.name"
-          style="background: #fff; border: 1px solid #f1dfb9; border-radius: 0; padding: 10px 12px; font-size: 12px"
-        >
-          <div class="flex-between" style="margin-bottom: 4px">
-            <strong>{{ gv.name }}</strong>
-            <span class="rating-pill">★ {{ gv.rating }}</span>
-          </div>
-          <div style="color: var(--ink-2); margin-bottom: 5px">{{ gv.desc }}</div>
-          <div class="flex-between" style="font-size: 11px; color: var(--ink-3)">
-            <span>📍 {{ gv.address }}</span>
-            <button
-              class="btn-ghost"
-              style="padding: 3px 8px; font-size: 11px; flex-shrink: 0"
-              @click="
-                openNavigation({
-                  placeName: gv.name,
-                  address: gv.address,
-                  lng: gv.lng,
-                  lat: gv.lat,
-                  distance: gv.dist,
-                  driveMin: gv.driveMin,
-                  tip: '团队大巴可免费停靠专属区域，食安 A 级定点接待',
-                })
-              "
-            >
-              🧭 导航
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </section>
 </template>

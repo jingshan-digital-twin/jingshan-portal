@@ -27,7 +27,7 @@ const {
 } = usePortalStore()
 
 // 主分区切换
-const trainSection = ref<'all' | 'booking' | 'camps' | 'clubs' | 'school' | 'rehab'>('all')
+const trainSection = ref<'booking' | 'camps' | 'clubs' | 'school' | 'rehab'>('booking')
 
 // ===== 1. 日常约课（团体课 / 私教课 7日日历） =====
 const lessonMode = ref<'group' | 'private'>('group')
@@ -256,7 +256,6 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: trainSection === 'all' }" @click="trainSection = 'all'">全部总览</button>
         <button class="m-tab" :class="{ active: trainSection === 'booking' }" @click="trainSection = 'booking'">团体/私教约课</button>
         <button class="m-tab" :class="{ active: trainSection === 'camps' }" @click="trainSection = 'camps'">训练营/研学/团建</button>
         <button class="m-tab" :class="{ active: trainSection === 'clubs' }" @click="trainSection = 'clubs'">俱乐部与评价</button>
@@ -266,7 +265,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     </div>
 
     <!-- ===== 一、湖北省网球学校官方报名咨询通道 + 官方五维评测 ===== -->
-    <div v-if="trainSection === 'all' || trainSection === 'school'" class="mb-24">
+    <div v-if="trainSection === 'school'" class="mb-24">
       <div class="grid-2 mb-16">
         <!-- 湖北省网球学校直通咨询通道 -->
         <div class="card" style="border: 2px solid #0d7278">
@@ -332,7 +331,6 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
               </select>
               <div class="flex-row">
                 <button class="btn-orange" @click="runUpgradeTest(selectedOrg, true)">完成晋升复测录入（200分抵扣）</button>
-                <button class="btn-ghost" @click="switchModule(13)">我的能力档案</button>
               </div>
             </div>
             <div>
@@ -418,7 +416,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     </div>
 
     <!-- ===== 二、网球训练营 · 研学课程 · 团建活动 查询报名 ===== -->
-    <div v-if="trainSection === 'all' || trainSection === 'camps'" class="mb-24">
+    <div v-if="trainSection === 'camps'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div>
@@ -529,7 +527,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     </div>
 
     <!-- ===== 三、认证网球俱乐部：介绍 · 课程销售 · 学员真实评价 ===== -->
-    <div v-if="trainSection === 'all' || trainSection === 'clubs'" class="mb-24">
+    <div v-if="trainSection === 'clubs'" class="mb-24">
       <div class="flex-between mb-12">
         <div>
           <strong style="font-size: 16.5px">🏟️ 认证网球俱乐部 · 俱乐部介绍、课程直售与真实评价</strong>
@@ -621,7 +619,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     </div>
 
     <!-- ===== 四、日常团体课 / 私教课 7日日历约课 ===== -->
-    <div v-if="trainSection === 'all' || trainSection === 'booking'" class="mb-24">
+    <div v-if="trainSection === 'booking'" class="mb-24">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-12">
           <div class="flex-row">
@@ -841,7 +839,7 @@ function bookRehab(center: (typeof REHAB_CENTERS)[number]) {
     </div>
 
     <!-- ===== 五、运动康复机构专区（卫健认证 + 自选日期时段与理疗项目） ===== -->
-    <div v-if="trainSection === 'all' || trainSection === 'rehab'">
+    <div v-if="trainSection === 'rehab'">
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between mb-10">
           <div>

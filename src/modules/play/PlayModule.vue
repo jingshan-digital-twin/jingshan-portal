@@ -21,7 +21,7 @@ const {
   showToast,
 } = usePortalStore()
 
-const subView = ref<'all' | 'courts' | 'matchmaking' | 'scores'>('all')
+const subView = ref<'courts' | 'matchmaking' | 'scores'>('courts')
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
@@ -275,7 +275,6 @@ function submitNewGame() {
   <section>
     <div class="module-toolbar">
       <div class="mh-tabs">
-        <button class="m-tab" :class="{ active: subView === 'all' }" @click="subView = 'all'">全部功能</button>
         <button class="m-tab" :class="{ active: subView === 'courts' }" @click="subView = 'courts'">场地预约（选日期/时段）</button>
         <button class="m-tab" :class="{ active: subView === 'matchmaking' }" @click="subView = 'matchmaking'">同城约球（CUTR分级）</button>
         <button class="m-tab" :class="{ active: subView === 'scores' }" @click="subView = 'scores'">网球记实时赛况</button>
@@ -284,7 +283,7 @@ function submitNewGame() {
 
     <!-- 网球记实时赛事比分看板 -->
     <div
-      v-if="subView === 'all' || subView === 'scores'"
+      v-if="subView === 'scores'"
       class="card card-pad mb-16"
       style="background: linear-gradient(135deg, #092d22, #0e4936); color: #fff"
     >
@@ -344,7 +343,7 @@ function submitNewGame() {
     </div>
 
     <!-- 场地预约多维检索区 + 左侧场馆列表 + 右侧服务圈地图 -->
-    <div v-if="subView === 'all' || subView === 'courts'" class="mb-18">
+    <div v-if="subView === 'courts'" class="mb-18">
       <!-- 顶部多维筛选面板（参照图2） -->
       <div class="card card-pad mb-16 filter-workbench">
         <div class="flex-between" style="gap: 12px; margin-bottom: 12px">
@@ -684,7 +683,7 @@ function submitNewGame() {
     </div>
 
     <!-- 同城约球完整工作台（参照图1：CUTR分级、日期、精确时间段、室内外、拉球/比赛、性别、单双打、设施标签、发布约球） -->
-    <div v-if="subView === 'all' || subView === 'matchmaking'" class="card card-pad">
+    <div v-if="subView === 'matchmaking'" class="card card-pad">
       <div class="flex-between mb-16" style="padding-bottom: 12px; border-bottom: 1px solid var(--line)">
         <div>
           <strong style="font-size: 17px">🤝 同城约球大厅（CUTR 分级精准匹配）</strong>

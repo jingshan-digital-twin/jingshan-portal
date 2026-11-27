@@ -6,16 +6,13 @@ import { usePortalStore } from '../../store/usePortalStore'
 
 const { state, openActionModal, openNavigation } = usePortalStore()
 const PAGE_SIZE = 4
-const shopTab = ref<'全部' | '农特' | '装备' | '文创'>('全部')
 const shopKeyword = ref('')
 const shopPage = ref(1)
 
 const visibleProducts = computed(() => {
   const q = shopKeyword.value.trim().toLowerCase()
   return PRODUCT_CATALOG.filter((p) => {
-    const okTab = shopTab.value === '全部' || p.cat === shopTab.value
-    const okQ = !q || p.name.toLowerCase().includes(q) || p.originPlace.toLowerCase().includes(q) || p.badge.toLowerCase().includes(q)
-    return okTab && okQ
+    return !q || p.name.toLowerCase().includes(q) || p.originPlace.toLowerCase().includes(q) || p.badge.toLowerCase().includes(q)
   })
 })
 
@@ -35,31 +32,6 @@ function openProduct(id: string) {
 
 <template>
   <section>
-    <div class="module-toolbar">
-      <div class="mh-tabs">
-        <button
-          v-for="t in (['全部', '农特', '装备', '文创'] as const)"
-          :key="t"
-          class="m-tab"
-          :class="{ active: shopTab === t }"
-          @click="shopTab = t"
-        >
-          {{ t === '全部' ? '全部好物' : t === '农特' ? '京山农特产品' : t === '装备' ? '李宁网球装备' : '网球文创纪念品' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="ticket-stub-banner mb-16">
-      <div>
-        <div style="font-size: 15.5px; font-weight: 900">🛍️ 京山好物官方线上商城 · 产地直发全国包邮</div>
-        <div style="font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 2px">
-          支持「京山网球」会员积分抵现（100分=¥10）+ 打球电子票根满150减30 · 线下32家金网特产门店同价可提
-        </div>
-      </div>
-      <button class="btn-orange" @click="openActionModal({ type: 'miniprogram', appName: '京山好物官方商城小程序', desc: '已同步您的 Lv.3 会员折扣与积分，支持全国快递直发' })">
-        🛒 一键跳转线上官方商城 →
-      </button>
-    </div>
 
     <div class="card card-pad mb-16 filter-workbench flex-between">
       <div class="search-bar" style="width: 300px; height: 36px">
