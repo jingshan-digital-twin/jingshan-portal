@@ -83,9 +83,6 @@ const visibleAmenities = computed(() =>
         <div class="mh-num">10</div>
         <div>
           <h1 class="mh-title">便民配套服务</h1>
-          <div class="mh-desc">
-            卫生间、医疗点、充电桩、母婴室与 ATM，随时找到离你最近的一处
-          </div>
         </div>
       </div>
       <div class="mh-tabs">
