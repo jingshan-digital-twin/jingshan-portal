@@ -4,7 +4,15 @@ import PaginationBar from '../../components/PaginationBar.vue'
 import { PRODUCT_CATALOG } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { openProductDetail, openPhoto, openNavigation, createQuickOrder } = usePortalStore()
+const { state, memberTier, switchModule, openProductDetail, openPhoto, openNavigation, createQuickOrder } = usePortalStore()
+
+const productOrdersCount = computed(
+  () => state.orders.filter((o) => o.category === '商品' && o.status !== '已取消').length,
+)
+
+function hasOrderedProduct(name: string) {
+  return state.orders.some((o) => o.category === '商品' && o.status !== '已取消' && o.title.startsWith(name))
+}
 
 function quickOrderSingle(item: (typeof PRODUCT_CATALOG)[number]) {
   createQuickOrder(
@@ -306,6 +314,33 @@ watch(visibleStores, () => {
 
     <!-- ===== 一、特色商品购买 ===== -->
     <template v-if="shopView === 'goods'">
+      <div class="card shop-member-strip">
+        <div class="shop-member-kpis">
+          <div class="shop-mk">
+            <span>当前等级</span>
+            <strong class="gold">{{ memberTier.code }} {{ memberTier.name }}</strong>
+          </div>
+          <span class="shop-mk-sep" />
+          <div class="shop-mk">
+            <span>可用积分</span>
+            <strong class="primary">{{ state.points }} 分</strong>
+          </div>
+          <span class="shop-mk-sep" />
+          <div class="shop-mk">
+            <span>本次累计</span>
+            <strong class="primary">+{{ state.sessionPointsEarned }} 分</strong>
+          </div>
+          <span class="shop-mk-sep" />
+          <div class="shop-mk">
+            <span>已购商品</span>
+            <strong>{{ productOrdersCount }} 单</strong>
+          </div>
+        </div>
+        <button type="button" class="btn-primary shop-profile-cta" @click="switchModule(13)">
+          个人中心看积分 →
+        </button>
+      </div>
+
       <div class="card filter-workbench shop-filter-compact">
         <div class="dd-filter-top" style="margin-bottom: 8px">
           <div class="search-bar" style="flex: 1; min-width: 240px; max-width: 400px; height: 36px; border-radius: 6px; padding: 2px 10px">
@@ -387,7 +422,7 @@ watch(visibleStores, () => {
                 </strong>
                 <div class="shop-goods-meta">
                   <span style="color: #b47400; font-weight: 800">★ {{ item.rating }}</span>
-                  <span>已售 {{ item.sold }}</span>
+                  <span class="shop-pts-chip">+40分</span>
                 </div>
               </div>
 
@@ -397,8 +432,11 @@ watch(visibleStores, () => {
                   <button class="btn-ghost shop-goods-btn" @click="openProduct(item.id)">
                     详情
                   </button>
-                  <button class="btn-primary shop-goods-btn" @click="quickOrderSingle(item)">
-                    快递买
+                  <button
+                    :class="hasOrderedProduct(item.name) ? 'btn-orange shop-goods-btn' : 'btn-primary shop-goods-btn'"
+                    @click="quickOrderSingle(item)"
+                  >
+                    {{ hasOrderedProduct(item.name) ? '再买1件' : '快递下单' }}
                   </button>
                 </div>
               </div>
@@ -549,6 +587,55 @@ watch(visibleStores, () => {
 </template>
 
 <style scoped>
+.shop-member-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 18px;
+}
+.shop-member-kpis {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.shop-mk {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.shop-mk strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.shop-mk strong.primary {
+  color: var(--primary);
+}
+.shop-mk strong.gold {
+  color: #8f5c04;
+}
+.shop-mk-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+}
+.shop-profile-cta {
+  padding: 7px 14px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.shop-pts-chip {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  background: var(--primary-light);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
 .shop-filter-compact {
   padding: 12px 16px;
 }

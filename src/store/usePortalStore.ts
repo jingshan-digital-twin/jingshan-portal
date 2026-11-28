@@ -48,9 +48,12 @@ import type {
 const STORAGE_KEY = 'jingshan_tennis_portal_state_v4'
 
 const INITIAL_POINT_LOGS: PointLogItem[] = [
-  { id: 'pt-1', title: '预订国际网球中心3号场（含停车充电联动）', category: '订场', delta: 50, time: '11-26 14:00' },
-  { id: 'pt-2', title: '入住文峰花园酒店（网球主题合作 · 票根85折）', category: '住宿', delta: 120, time: '11-26 16:30' },
-  { id: 'pt-3', title: '预约陈浩陪练 · 网前截击特训课', category: '参训', delta: 80, time: '11-26 18:10' },
+  { id: 'pt-6', title: '预约陈浩陪练 · 网前截击特训课', category: '参训', delta: 80, time: '11-27 16:00' },
+  { id: 'pt-5', title: '游览绿林山风景区（电子票根核销）', category: '游览', delta: 60, time: '11-27 10:30' },
+  { id: 'pt-4', title: '桥米公馆用餐（联盟85折核销）', category: '美食', delta: 40, time: '11-26 19:20' },
+  { id: 'pt-3', title: '入住文峰花园酒店（合作酒店礼遇）', category: '住宿', delta: 120, time: '11-26 16:30' },
+  { id: 'pt-2', title: '预订国际网球中心3号场（含停车充电）', category: '订场', delta: 50, time: '11-26 14:00' },
+  { id: 'pt-1', title: '报名2026京山网球公开赛分级赛', category: '参赛', delta: 120, time: '11-26 09:30' },
 ]
 
 const INITIAL_MERCHANT_RATINGS: MerchantRatingItem[] = [
@@ -63,61 +66,52 @@ const INITIAL_MERCHANT_RATINGS: MerchantRatingItem[] = [
     positiveRate: 99.2,
     complaintCount: 0,
     reviewCount: 1428,
-    status: '五星诚信',
-    badge: '京网推荐 · 零投诉示范场馆',
-    recentReview: '灯光标准、订场联动车位充电桩非常丝滑！',
+    status: '五星标杆',
+    badge: '温泉街道 · 9片标准场',
+    recentReview: '灯光标准，订场顺手锁车位和充电桩非常顺畅。',
+    experienced: true,
   },
   {
     id: 'mr-hotel-1',
-    name: '文峰花园酒店（网球主题合作）',
+    name: '文峰花园酒店',
     category: '酒店',
     starLevel: 5,
     rating: 4.9,
     positiveRate: 98.8,
     complaintCount: 0,
     reviewCount: 815,
-    status: '五星诚信',
-    badge: '京网推荐 · 赛事官方接待酒店',
-    recentReview: '步行/摆渡3分钟到赛场，提供运动员营养早餐与球拍烘干。',
+    status: '五星标杆',
+    badge: '温泉街道 · 赛事合作酒店',
+    recentReview: '摆渡3分钟到赛场，含运动早餐和球拍烘干服务。',
+    experienced: true,
   },
   {
     id: 'mr-food-1',
-    name: '桥米公馆 · 京山非遗特色鄂菜',
+    name: '桥米公馆',
     category: '餐饮',
     starLevel: 5,
     rating: 4.9,
     positiveRate: 98.5,
     complaintCount: 0,
     reviewCount: 624,
-    status: '五星诚信',
-    badge: '京网推荐 · 明厨亮灶A级食安',
-    recentReview: '国宝桥米锅巴与洪湖藕汤非常地道，票根直接享85折！',
+    status: '五星标杆',
+    badge: '温泉街道 · 联盟85折',
+    recentReview: '桥米锅巴和藕汤很地道，明码标价，票根直享85折。',
+    experienced: true,
   },
   {
     id: 'mr-coach-1',
-    name: '陈浩 · 金网5.0认证陪练/教练',
+    name: '陈浩 · 金网教练',
     category: '教练',
     starLevel: 5,
     rating: 5.0,
     positiveRate: 99.6,
     complaintCount: 0,
     reviewCount: 326,
-    status: '五星诚信',
-    badge: '京网推荐 · 零投诉口碑教练',
-    recentReview: '赛间加练针对性极强，帮孩子稳住了二发和反手节奏。',
-  },
-  {
-    id: 'mr-hotel-2',
-    name: '京山网球运动酒店',
-    category: '酒店',
-    starLevel: 4,
-    rating: 4.8,
-    positiveRate: 96.4,
-    complaintCount: 1,
-    reviewCount: 392,
-    status: '四星优质',
-    badge: '京网推荐 · 步行6分钟到赛场',
-    recentReview: '大堂免费取用冰袋与穿线服务，性价比高。',
+    status: '五星标杆',
+    badge: '金网5.0 · 私教/陪练',
+    recentReview: '网前截击与二发调整针对性强，课程节奏紧凑。',
+    experienced: true,
   },
   {
     id: 'mr-court-2',
@@ -128,24 +122,88 @@ const INITIAL_MERCHANT_RATINGS: MerchantRatingItem[] = [
     positiveRate: 97.9,
     complaintCount: 0,
     reviewCount: 654,
-    status: '五星诚信',
-    badge: '京网推荐 · 公益惠民示范场',
-    recentReview: '白天免费打球，夜场打完步行300米就是文峰夜市！',
+    status: '五星标杆',
+    badge: '新市街道 · 公益惠民场',
+    recentReview: '白天公益免费，夜场打完步行可达文峰夜市。',
+  },
+  {
+    id: 'mr-hotel-2',
+    name: '京山网球运动酒店',
+    category: '酒店',
+    starLevel: 4,
+    rating: 4.6,
+    positiveRate: 94.8,
+    complaintCount: 1,
+    reviewCount: 392,
+    status: '四星优良',
+    badge: '温泉街道 · 步行6分钟到场',
+    recentReview: '大堂配冰袋与穿线服务，高峰期入住办理稍慢。',
+  },
+  {
+    id: 'mr-food-2',
+    name: '文峰河畔碳火烧烤街',
+    category: '餐饮',
+    starLevel: 4,
+    rating: 4.5,
+    positiveRate: 93.4,
+    complaintCount: 1,
+    reviewCount: 520,
+    status: '四星优良',
+    badge: '新市街道 · 夜市联盟',
+    recentReview: '夜场球后聚餐方便，高峰时段上菜略有等待。',
   },
   {
     id: 'mr-warn-1',
-    name: 'XX路社会临时停车点（整改公示）',
-    category: '球场',
+    name: '城南快捷宾馆',
+    category: '酒店',
     starLevel: 2,
-    rating: 3.1,
-    positiveRate: 68.0,
+    rating: 3.2,
+    positiveRate: 71.0,
     complaintCount: 4,
-    reviewCount: 42,
-    status: '整改预警',
-    badge: '黄牌降星预警 · 已暂停推荐',
-    recentReview: '收费公示不清，已由市场监管部门介入责令限期整改。',
+    reviewCount: 68,
+    status: '降星整改',
+    badge: '已降星 · 暂停推荐',
+    recentReview: '存在赛期临时加价投诉，已责令限期整改。',
   },
 ]
+
+function recalcMerchantGrade(m: MerchantRatingItem) {
+  if (m.complaintCount >= 3 || m.rating < 3.8 || m.positiveRate < 80) {
+    m.starLevel = m.rating < 3.0 || m.complaintCount >= 5 ? 1 : 2
+    m.status = '降星整改'
+  } else if (m.complaintCount >= 1 || m.rating < 4.7 || m.positiveRate < 95) {
+    m.starLevel = m.rating < 4.3 ? 3 : 4
+    m.status = '四星优良'
+  } else {
+    m.starLevel = 5
+    m.status = '五星标杆'
+  }
+}
+
+function hydrateMerchantRatings(savedList?: MerchantRatingItem[]): MerchantRatingItem[] {
+  const base = structuredClone(INITIAL_MERCHANT_RATINGS)
+  if (!Array.isArray(savedList) || savedList.length === 0) return base
+  const savedMap = new Map(savedList.map((item) => [item.id, item]))
+  return base.map((item) => {
+    const old = savedMap.get(item.id)
+    if (!old) return item
+    if (old.reviewedByMe) {
+      const merged: MerchantRatingItem = {
+        ...item,
+        rating: old.rating,
+        positiveRate: old.positiveRate,
+        complaintCount: old.complaintCount,
+        reviewCount: old.reviewCount,
+        recentReview: old.recentReview,
+        reviewedByMe: true,
+        myRating: old.myRating,
+      }
+      recalcMerchantGrade(merged)
+      return merged
+    }
+    return item
+  })
+}
 
 export interface ModuleMeta {
   id: ModuleId
@@ -228,7 +286,17 @@ function loadSaved(): Partial<PersistedState> {
   }
 }
 
+function hydratePointLogs(savedLogs?: PointLogItem[]): PointLogItem[] {
+  if (!Array.isArray(savedLogs) || savedLogs.length === 0) return structuredClone(INITIAL_POINT_LOGS)
+  // Keep user-generated logs (prefixed pt-17...) on top of the updated base trip logs
+  const baseIds = new Set(['pt-1', 'pt-2', 'pt-3', 'pt-4', 'pt-5', 'pt-6'])
+  const customLogs = savedLogs.filter((l) => !baseIds.has(l.id))
+  return [...customLogs, ...structuredClone(INITIAL_POINT_LOGS)]
+}
+
 const saved = loadSaved()
+const initialPointLogs = hydratePointLogs(saved.pointLogs)
+const initialSessionEarned = initialPointLogs.reduce((sum, item) => sum + (item.delta > 0 ? item.delta : 0), 0)
 
 const state = reactive({
   isStandalonePage: initialStandaloneModule !== null,
@@ -248,9 +316,9 @@ const state = reactive({
   activeProductId: null as string | null,
   showCinemaModal: false,
   points: saved.points ?? 1280,
-  sessionPointsEarned: saved.sessionPointsEarned ?? 250,
-  pointLogs: (saved.pointLogs ?? structuredClone(INITIAL_POINT_LOGS)) as PointLogItem[],
-  merchantRatings: (saved.merchantRatings ?? structuredClone(INITIAL_MERCHANT_RATINGS)) as MerchantRatingItem[],
+  sessionPointsEarned: initialSessionEarned,
+  pointLogs: initialPointLogs,
+  merchantRatings: hydrateMerchantRatings(saved.merchantRatings),
   abilityLevel: saved.abilityLevel ?? 'JS-3.5',
   ability: (saved.ability ?? { ...INITIAL_ABILITY }) as AbilityDimensions,
   liveMatches: structuredClone(ENRICHED_MATCHES) as LiveMatch[],
@@ -315,7 +383,7 @@ function applySavedSnapshot(next: Partial<PersistedState>) {
   if (typeof next.points === 'number') state.points = next.points
   if (typeof next.sessionPointsEarned === 'number') state.sessionPointsEarned = next.sessionPointsEarned
   if (Array.isArray(next.pointLogs)) state.pointLogs = next.pointLogs
-  if (Array.isArray(next.merchantRatings)) state.merchantRatings = next.merchantRatings
+  if (Array.isArray(next.merchantRatings)) state.merchantRatings = hydrateMerchantRatings(next.merchantRatings)
   if (typeof next.abilityLevel === 'string') state.abilityLevel = next.abilityLevel
   if (next.ability) state.ability = { ...next.ability }
   if (next.origin) state.origin = next.origin
@@ -975,7 +1043,7 @@ export function usePortalStore() {
       cls.bookedByMe = true
       cls.enrolled += 1
       state.orders.unshift(order)
-      state.points += 60
+      recordPoints(60, order.title, '参训')
       return order.id
     })
   }
@@ -1012,7 +1080,7 @@ export function usePortalStore() {
       if (state.bookedCoachKeys.includes(key)) throw new ReservationUnavailable('该时段已被预约，请返回重选。')
       state.bookedCoachKeys.push(key)
       state.orders.unshift(order)
-      state.points += 80
+      recordPoints(80, order.title, '参训')
       return order.id
     })
   }
@@ -1044,7 +1112,7 @@ export function usePortalStore() {
       subtitle,
       time: '刚刚下单',
       amount,
-      status: category === '住宿' ? '已确认' : '待使用',
+      status: category === '住宿' ? '已确认' : category === '商品' ? '已确认' : '待使用',
       cancellable: true,
     }
     if (category === '商品') {
@@ -1054,7 +1122,7 @@ export function usePortalStore() {
       if (actualSpent > 0) recordPoints(-actualSpent, `购物抵扣：${title}`, '抵现')
       recordPoints(pointsGain, title, '购物')
       openOrderSuccess({
-        headline: '购买成功',
+        headline: '下单成功 · 快递到家',
         orderId: order.id,
         category,
         title,
@@ -1062,7 +1130,7 @@ export function usePortalStore() {
         amount,
         pointsGain,
         pointsSpent: actualSpent,
-        note: '支付已完成，我们将尽快安排原产地打包发货并同步物流',
+        note: '产地直发快递到家，积分已自动计入个人中心',
       })
       return true
     }
@@ -1126,7 +1194,7 @@ export function usePortalStore() {
     const levels = ['JS-3.5', 'JS-4.0', 'JS-4.5', 'JS-5.0']
     const curIdx = levels.indexOf(state.abilityLevel)
     state.abilityLevel = levels[Math.min(levels.length - 1, Math.max(0, curIdx) + 1)] ?? 'JS-4.5'
-    state.points += 100
+    recordPoints(100, `网球能力晋升复测：${orgName}`, '参训')
     showToast(`已在「${orgName}」完成晋升复测录入！五维能力图已刷新，等级晋升为 ${state.abilityLevel}（+100分）`)
   }
 
@@ -1167,55 +1235,59 @@ export function usePortalStore() {
       showToast('商户点评发布成功！动态星级已同步更新，获得 +20 金网积分')
     } else {
       const tagRouteMap: Record<string, { dept: string; sla: string }> = {
-        '价格争议': { dept: '市市场监管局（价格监督科）', sla: '限时 24 小时办结' },
-        '服务不符': { dept: '市文旅局（市场综合执法）', sla: '限时 24 小时办结' },
-        '卫生/医疗保障': { dept: '市卫健局（监督保障组）', sla: '限时 12 小时办结' },
-        '交通停车收费': { dept: '市交通局 / 城运中心', sla: '限时 12 小时办结' },
+        '价格争议': { dept: '市市场监管局', sla: '24小时内' },
+        '服务不符': { dept: '市文旅局', sla: '24小时内' },
+        '卫生安全': { dept: '市卫健局', sla: '12小时内' },
+        '停车收费': { dept: '市交通局', sla: '12小时内' },
       }
       const deptMap: Record<string, string> = {
-        '酒店/公寓/餐饮价格纠纷': '市市场监管局（价格监督科）',
-        '出行/停车/充电桩': '市交通局 / 城运中心',
-        '医疗康复/便民设施': '市卫健局（监督保障组）',
+        '酒店/公寓/餐饮价格纠纷': '市市场监管局',
+        '出行/停车/充电桩': '市交通局',
+        '医疗康复/便民设施': '市卫健局',
       }
       const routed = payload.tag ? tagRouteMap[payload.tag] : undefined
-      const dept = routed?.dept ?? deptMap[payload.category] ?? '市文旅局 / 12345 城运中心'
-      const sla = routed?.sla ?? '限时 24 小时办结'
+      const dept = routed?.dept ?? deptMap[payload.category] ?? '市文旅局'
+      const sla = routed?.sla ?? '24小时内'
       const nowTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
+      const targetName = payload.target.trim() || '相关商户'
+      const tagName = payload.tag || '服务反馈'
       const ticket: ComplaintTicket = {
         id: `FB-${Date.now().toString().slice(-4)}`,
         category: payload.category,
-        tag: payload.tag || '服务反馈',
-        target: payload.target || '相关服务商户',
+        tag: tagName,
+        target: targetName,
         content: payload.content.trim(),
         status: '已分办至对应部门',
         dept,
         sla,
         createdAt: `今日 ${nowTime}`,
         timeline: [
-          { step: '游客一键提交投诉', time: `今日 ${nowTime}`, detail: `已关联商户【${payload.target || '相关商户'}】与问题标签【${payload.tag || payload.category}】`, done: true },
-          { step: '系统按标签自动分派', time: `今日 ${nowTime}`, detail: `已自动分派至【${dept}】（${sla}），同步抄送政府监管端红黑榜系统`, done: true },
-          { step: '责任部门现场核查处置', time: '处理中…', detail: '执法专员正在联系商户核实情况并督促整改', done: false },
-          { step: '处置结果实时回传', time: '待回传', detail: '办结后自动推送整改凭证并同步商户动态星级', done: false },
+          { step: '游客提交', time: `今日 ${nowTime}`, detail: `已提交【${tagName}】投诉 · ${targetName}`, done: true },
+          { step: '自动派单', time: `今日 ${nowTime}`, detail: `已按标签自动分派至${dept}（${sla}办结）`, done: true },
+          { step: '部门核查', time: '待核查', detail: '执法专员核查中', done: false },
+          { step: '结果回传', time: '待回传', detail: '办结后同步结果与商户星级', done: false },
         ],
       }
       await apiRequest('/feedback/complaint', { method: 'POST', body: JSON.stringify(ticket) }, () => ticket)
       state.complaints.unshift(ticket)
-      showToast(`一键投诉已受理（单号 ${ticket.id}），已按标签自动分派至：${ticket.dept}`)
+      showToast(`投诉已受理（${ticket.id}），已自动分派至${ticket.dept}`)
     }
   }
 
   function rateMerchant(merchantId: string, star: number, comment: string) {
     const m = state.merchantRatings.find((x) => x.id === merchantId)
     if (!m) return
-    const nextCount = m.reviewCount + 1
-    const nextRating = Number(((m.rating * Math.min(m.reviewCount, 50) + star) / (Math.min(m.reviewCount, 50) + 1)).toFixed(1))
-    m.reviewCount = nextCount
+    const firstTime = !m.reviewedByMe
+    if (firstTime) m.reviewCount += 1
+    const baseWeight = Math.min(m.reviewCount, 12)
+    const nextRating = Number(((m.rating * baseWeight + star * 2) / (baseWeight + 2)).toFixed(1))
     m.rating = Math.min(5.0, Math.max(1.0, nextRating))
-    m.positiveRate = Number(Math.min(99.9, Math.max(55, m.positiveRate + (star >= 4 ? 0.1 : -1.2))).toFixed(1))
-    m.starLevel = m.rating >= 4.8 && m.complaintCount === 0 ? 5 : m.rating >= 4.4 ? 4 : m.rating >= 3.8 ? 3 : 2
-    m.status = m.starLevel === 5 ? '五星诚信' : m.starLevel === 4 ? '四星优质' : '整改预警'
-    m.recentReview = comment.trim() || `张先生给出 ${star} 星好评，体验非常满意！`
+    const rateDelta = star >= 4 ? 0.2 : star === 3 ? -1.5 : -4.5
+    m.positiveRate = Number(Math.min(99.9, Math.max(55, m.positiveRate + rateDelta)).toFixed(1))
+    recalcMerchantGrade(m)
+    m.recentReview = comment.trim() || `给出 ${star} 星评价`
     m.reviewedByMe = true
+    m.myRating = star
     state.posts.unshift({
       id: `post-${Date.now()}`,
       author: '张先生',
@@ -1227,8 +1299,12 @@ export function usePortalStore() {
       liked: true,
       category: m.category,
     })
-    recordPoints(20, `点评商户：${m.name}`, '点评')
-    showToast(`已完成对「${m.name}」的 ${star} 星点评，动态评级已同步更新（+20积分）`)
+    if (firstTime) {
+      recordPoints(20, `点评商户：${m.name}`, '点评')
+      showToast(`已评价「${m.name}」${star}★，星级已实时更新（+20积分）`)
+    } else {
+      showToast(`已更新「${m.name}」评分为 ${star}★，动态定级已同步`)
+    }
   }
 
   function advanceComplaintProgress(ticketId: string) {
@@ -1236,22 +1312,47 @@ export function usePortalStore() {
     if (!t || !t.timeline) return
     const nowTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
     const nextIdx = t.timeline.findIndex((s) => !s.done)
-    if (nextIdx === -1) {
-      showToast(`工单 ${t.id} 已全部办结并回传结果`)
-      return
-    }
+    if (nextIdx === -1) return
     const step = t.timeline[nextIdx]!
     step.done = true
     step.time = `今日 ${nowTime}`
-    if (nextIdx === 2) {
-      step.detail = `${t.dept}专员已抵达现场核查完毕，责令商户当场退还差价并规范明码标价`
-      t.status = '部门核查处置中'
-      showToast(`工单 ${t.id} 进度实时回传：${t.dept}已完成现场核查处置`)
-    } else if (nextIdx === 3) {
-      step.detail = '已办结并退还争议费用，同步扣减该商户动态信用分并回传政府监管端'
-      t.status = '已办结 · 反馈满意'
-      showToast(`工单 ${t.id} 已限时办结，处置结果已实时回传！`)
+    const inspectDetailMap: Record<string, string> = {
+      '价格争议': `${t.dept}已到场核查，责令商户退还差价并规范明码标价`,
+      '服务不符': `${t.dept}已核实服务偏差，责令商户限期整改并补齐承诺服务`,
+      '卫生安全': `${t.dept}已完成现场卫生抽检，责令立即消杀整改`,
+      '停车收费': `${t.dept}已核验收费公示牌，责令退还违规加收费用`,
     }
+    const resolveDetailMap: Record<string, string> = {
+      '价格争议': '差价已原路退回，整改凭证已上传，商户动态信用同步扣分',
+      '服务不符': '商户已完成整改并致歉，动态星级已同步复核更新',
+      '卫生安全': '复检合格并上传整改记录，商户信用档案已同步记录',
+      '停车收费': '多收费用已退还，收费公示已规范，同步记入商户考核',
+    }
+    if (nextIdx === 2) {
+      step.detail = inspectDetailMap[t.tag ?? ''] ?? `${t.dept}已完成现场核查，正督促商户落实整改`
+      t.status = '部门核查处置中'
+      showToast(`${t.id} 进度回传：${t.dept}已完成核查`)
+    } else if (nextIdx === 3) {
+      step.detail = resolveDetailMap[t.tag ?? ''] ?? '已限时办结，处置结果与商户信用已同步更新'
+      t.status = '已办结 · 反馈满意'
+      const matched = state.merchantRatings.find((m) => m.name === t.target || t.target.includes(m.name) || m.name.includes(t.target))
+      if (matched) {
+        matched.complaintCount += 1
+        matched.positiveRate = Number(Math.max(55, matched.positiveRate - 3.5).toFixed(1))
+        matched.rating = Number(Math.max(2.0, matched.rating - 0.3).toFixed(1))
+        recalcMerchantGrade(matched)
+        showToast(`${t.id} 已办结回传，「${matched.name}」动态星级已同步调整为 ${matched.starLevel}★`)
+      } else {
+        showToast(`${t.id} 已限时办结，处置结果已实时回传`)
+      }
+    }
+  }
+
+  function rateComplaintSatisfaction(ticketId: string, result: '满意' | '不满意') {
+    const t = state.complaints.find((x) => x.id === ticketId)
+    if (!t) return
+    t.satisfaction = result
+    showToast(`已反馈工单 ${t.id} 处置结果：${result}`)
   }
 
   function registerYouthTournament(payload: {
@@ -1406,6 +1507,7 @@ export function usePortalStore() {
     submitFeedback,
     rateMerchant,
     advanceComplaintProgress,
+    rateComplaintSatisfaction,
     registerYouthTournament,
     recordPoints,
     toggleFavorite,

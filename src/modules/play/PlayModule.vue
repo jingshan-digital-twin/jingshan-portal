@@ -11,6 +11,7 @@ import { usePortalStore } from '../../store/usePortalStore'
 import type { CutrBand, MatchmakingGame, RadiusOption } from '../../types/portal'
 
 const MatchmakingMap = defineAsyncComponent(() => import('./MatchmakingMap.vue'))
+const TournamentsSection = defineAsyncComponent(() => import('./TournamentsSection.vue'))
 
 const {
   state,
@@ -20,7 +21,6 @@ const {
   openVenueDetail,
   openBookingModal,
   openNavigation,
-  refreshLiveScores,
   joinMatchmakingGame,
   publishMatchmakingGame,
   createQuickOrder,
@@ -31,9 +31,12 @@ const playTabs = [
   { id: 'courts', label: '场地预约', icon: 'M5 4h14v16H5zM5 12h14M8 8h8v8H8z' },
   { id: 'matchmaking', label: '同城约球', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z' },
   { id: 'nearby', label: '球场周边服务', icon: 'M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07' },
-  { id: 'scores', label: '实时比分', icon: 'M4 19h16M7 15v-4m5 4V5m5 10V8' },
+  { id: 'events', label: '赛事信息', icon: 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3' },
 ] as const
-const subView = ref<(typeof playTabs)[number]['id']>('courts')
+const initialPlayTab = new URLSearchParams(window.location.search).get('tab')
+const subView = ref<(typeof playTabs)[number]['id']>(
+  initialPlayTab === 'events' || initialPlayTab === 'matchmaking' || initialPlayTab === 'nearby' ? initialPlayTab : 'courts',
+)
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
@@ -415,53 +418,8 @@ function submitNewGame() {
       </button>
     </div>
 
-    <!-- 网球记实时赛事比分看板 -->
-    <div
-      v-if="subView === 'scores'"
-      class="card card-pad mb-16"
-      style="background: linear-gradient(135deg, #092d22, #0e4936); color: #fff"
-    >
-      <div class="flex-between" style="margin-bottom: 14px">
-        <div class="flex-row">
-          <strong style="font-size: 18px">📊 赛事实时比分</strong>
-          <span class="tag" style="background: var(--lime); color: #0b251d">网球记实时同步</span>
-        </div>
-        <div class="flex-row">
-          <button
-            class="btn-ghost"
-            style="background: rgba(255, 255, 255, 0.14); color: #fff; border-color: rgba(255, 255, 255, 0.3)"
-            @click="refreshLiveScores"
-          >
-            🔄 刷新比分
-          </button>
-        </div>
-      </div>
-      <div class="score-grid">
-        <div v-for="m in state.liveMatches" :key="m.id" class="score-card">
-          <div class="sc-head">
-            <span>{{ m.venue }} · <strong>{{ m.courtNo }}</strong></span>
-            <span :style="{ color: m.status === '已完赛' ? 'var(--lime)' : '#FF7B6B' }">
-              {{ m.status }}
-            </span>
-          </div>
-          <div style="font-size: 12.5px; color: rgba(255, 255, 255, 0.72); margin-bottom: 8px">
-            {{ m.round }} · 耗时 {{ m.duration }}
-          </div>
-          <div class="sc-row">
-            <span>{{ m.playerA }}</span>
-            <div class="sc-sets">
-              <span v-for="(s, idx) in m.setsA" :key="idx" :class="{ cur: idx > 0 && m.status !== '已完赛' }">{{ s }}</span>
-            </div>
-          </div>
-          <div class="sc-row">
-            <span>{{ m.playerB }}</span>
-            <div class="sc-sets">
-              <span v-for="(s, idx) in m.setsB" :key="idx">{{ s }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 赛事信息模块（列表 + 历史/实时/签表/成绩汇总/技术统计/战表/报名） -->
+    <TournamentsSection v-if="subView === 'events'" class="mb-16" />
 
     <!-- 场地预约多维检索区 + 左侧场馆列表 + 右侧服务圈地图 -->
     <div v-if="subView === 'courts'" class="mb-18">

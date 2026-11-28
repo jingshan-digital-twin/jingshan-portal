@@ -337,7 +337,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
         <div class="card card-pad">
           <div class="flex-between" style="margin-bottom: 12px">
             <strong style="font-size: 17px">🏆 近期焦点赛事</strong>
-            <button class="home-more-link" @click="openNewPage(2)">实时比分 →</button>
+            <button class="home-more-link" @click="navigateToModulePage(2, { tab: 'events' })">全部赛事信息 →</button>
           </div>
           <div style="display: flex; flex-direction: column; gap: 10px">
             <div class="flex-between" style="background: #f5faf8; padding: 11px 13px; border-radius: 0">
@@ -346,7 +346,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
                 <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/24–12/3 · 国际网球中心 · 报完荐空房酒店</div>
               </div>
               <div class="flex-row" style="gap: 6px">
-                <button class="btn-ghost" style="padding: 6px 10px; font-size: 13px" @click="openNewPage(2)">赛况</button>
+                <button class="btn-ghost" style="padding: 6px 10px; font-size: 13px" @click="navigateToModulePage(2, { tab: 'events' })">赛事信息</button>
                 <button class="btn-orange" style="padding: 6px 12px; font-size: 13px" @click="state.showTourneyRegModal = true">一键报名</button>
               </div>
             </div>
@@ -355,7 +355,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
                 <div style="font-size: 14.5px; font-weight: 800">京山周末分级赛 <span class="tag orange">余12位</span></div>
                 <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/29 文峰公园 · 匹配 {{ state.abilityLevel }}</div>
               </div>
-              <button class="btn-orange" @click="openNewPage(2)">报名 →</button>
+              <button class="btn-orange" @click="navigateToModulePage(2, { tab: 'events' })">报名 →</button>
             </div>
           </div>
         </div>
@@ -425,10 +425,10 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <span class="tag" style="background: var(--lime); color: #0b251d">📊 网球记实时比分</span>
             <span style="font-size: 14px; color: rgba(255, 255, 255, 0.9)">2026中青赛总决赛焦点对阵</span>
           </div>
-          <button class="home-live-jump" @click="openNewPage(2)">全部赛况 →</button>
+          <button class="home-live-jump" @click="navigateToModulePage(2, { tab: 'events' })">全部赛事信息 →</button>
         </div>
         <div class="score-grid">
-          <div v-for="m in state.liveMatches" :key="m.id" class="score-card" style="cursor: pointer" @click="openNewPage(2)">
+          <div v-for="m in state.liveMatches" :key="m.id" class="score-card" style="cursor: pointer" @click="navigateToModulePage(2, { tab: 'events' })">
             <div class="sc-head">
               <span>{{ m.venue }} · <strong>{{ m.courtNo }}</strong></span>
               <span :style="{ color: m.status === '已完赛' ? 'var(--lime)' : '#FF7B6B' }">

@@ -304,6 +304,7 @@ export interface ComplaintTicket {
   sla?: string
   createdAt: string
   timeline?: ComplaintTimelineStep[]
+  satisfaction?: '满意' | '不满意'
 }
 
 export interface PointLogItem {
@@ -323,10 +324,12 @@ export interface MerchantRatingItem {
   positiveRate: number
   complaintCount: number
   reviewCount: number
-  status: '五星诚信' | '四星优质' | '整改预警'
+  status: '五星标杆' | '四星优良' | '降星整改'
   badge: string
   recentReview: string
+  experienced?: boolean
   reviewedByMe?: boolean
+  myRating?: number
 }
 
 export interface CouponItem {

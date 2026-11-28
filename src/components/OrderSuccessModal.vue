@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted } from 'vue'
 import { usePortalStore } from '../store/usePortalStore'
 
-const { state, closeOrderSuccess, openActionModal } = usePortalStore()
+const { state, closeOrderSuccess, openActionModal, switchModule } = usePortalStore()
 
 function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && state.orderSuccessModal) {
@@ -13,6 +13,11 @@ function onKeydown(e: KeyboardEvent) {
 function viewTicketStub() {
   closeOrderSuccess()
   openActionModal({ type: 'stub', code: state.ticketStubCode })
+}
+
+function goToProfilePoints() {
+  closeOrderSuccess()
+  switchModule(13)
 }
 
 onMounted(() => window.addEventListener('keydown', onKeydown))
@@ -84,12 +89,22 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       </div>
 
       <div class="order-success-actions">
-        <button type="button" class="btn-ghost" @click="viewTicketStub">
-          🎫 查看电子票根
-        </button>
-        <button type="button" class="btn-primary" @click="closeOrderSuccess">
-          我知道了
-        </button>
+        <template v-if="state.orderSuccessModal.category === '商品'">
+          <button type="button" class="btn-ghost" @click="closeOrderSuccess">
+            继续选购
+          </button>
+          <button type="button" class="btn-primary" @click="goToProfilePoints">
+            查看个人中心积分 →
+          </button>
+        </template>
+        <template v-else>
+          <button type="button" class="btn-ghost" @click="viewTicketStub">
+            查看电子票根
+          </button>
+          <button type="button" class="btn-primary" @click="closeOrderSuccess">
+            我知道了
+          </button>
+        </template>
       </div>
     </div>
   </div>
