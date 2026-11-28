@@ -19,6 +19,7 @@ import {
   INITIAL_MATCHMAKING_GAMES,
   INITIAL_PRIVATE_COACHES,
 } from '../mock/schedules'
+import { TOUR_SPOTS, TOUR_VISIT_SLOTS, type TourSpot } from '../mock/tourData'
 import type {
   AbilityDimensions,
   ActionModalPayload,
@@ -38,6 +39,7 @@ import type {
   PortalOrder,
   PrivateCoach,
   RadiusOption,
+  TourSpotVisitSelection,
   VisitorOrigin,
 } from '../types/portal'
 
@@ -221,19 +223,60 @@ function updateDocumentTitle(moduleId: ModuleId, standalone: boolean) {
     : '京山网球 · 中国网球之城'
 }
 
+function tourSpotDetail(spot: TourSpot, visit?: TourSpotVisitSelection): DetailPagePayload {
+  return {
+    kind: 'place',
+    spotId: spot.id,
+    visit,
+    data: {
+      title: spot.name,
+      category: `京山${spot.category}详情`,
+      photo: spot.photo,
+      rating: spot.rating,
+      subtitle: `${spot.badge} ｜ ${spot.duration}`,
+      intro: spot.intro,
+      openHours: `${spot.openHours}（推荐：${spot.bestTime}）`,
+      priceInfo: spot.stubPrice === 0 ? '免费预约入园/打卡' : `票根价 ¥${spot.stubPrice}${spot.priceUnit}（原价 ¥${spot.price}）`,
+      priceNum: spot.stubPrice,
+      priceUnit: spot.stubPrice === 0 ? '' : ` ${spot.priceUnit}`,
+      distance: spot.distance,
+      driveMin: spot.driveMin,
+      audioScript: spot.audioScript,
+      audioDuration: spot.duration,
+      address: spot.address,
+      lng: spot.lng,
+      lat: spot.lat,
+      actionKind: 'spot',
+      tags: spot.tags,
+      hotItemsTitle: '✨ 必体验亮点与消费推荐',
+      hotItems: spot.hotItems,
+      reviews: spot.reviews,
+    },
+  }
+}
+
 function parseDetailFromUrl(): DetailPagePayload | null {
   try {
     const raw = new URLSearchParams(window.location.search).get('detail')
     if (!raw) return null
     if (raw === 'cinema') return { kind: 'cinema' }
-    const [kind, id, checkIn, checkOut, roomId] = raw.split(':')
+    const [kind, id, ...options] = raw.split(':')
     if (kind === 'hotel' && id) {
+      const [checkIn, checkOut, roomId] = options
       const stay = checkIn && checkOut && checkOut > checkIn
         && BOOKING_DATES.some((day) => day.iso === checkIn)
         && BOOKING_DATES.some((day) => day.iso === checkOut)
         ? { checkIn, checkOut, roomId }
         : undefined
       return { kind: 'hotel', hotelId: id, stay }
+    }
+    if (kind === 'spot' && id) {
+      const spot = TOUR_SPOTS.find((entry) => entry.id === id)
+      if (!spot) return null
+      const [date, encodedSlot] = options
+      const slot = TOUR_VISIT_SLOTS.find((option) => encodeURIComponent(option) === encodedSlot)
+      const visit = date && slot && BOOKING_DATES.some((day) => day.iso === date) ? { date, slot } : undefined
+      return tourSpotDetail(spot, visit)
     }
     if (kind === 'product' && id) return { kind: 'product', productId: id }
     if (kind === 'venue' && id) return { kind: 'venue', venueId: id }
@@ -253,6 +296,10 @@ function encodeDetailParam(payload: DetailPagePayload): string {
   if (payload.kind === 'product') return `product:${payload.productId}`
   if (payload.kind === 'venue') return `venue:${payload.venueId}`
   if (payload.kind === 'cinema') return 'cinema'
+  if (payload.spotId) {
+    const spot = `spot:${payload.spotId}`
+    return payload.visit ? `${spot}:${payload.visit.date}:${encodeURIComponent(payload.visit.slot)}` : spot
+  }
   return `place:${encodeURIComponent(payload.data.title.slice(0, 24))}`
 }
 
@@ -379,6 +426,10 @@ export function usePortalStore() {
 
   function openCinemaDetail() {
     openDetailPage({ kind: 'cinema' })
+  }
+
+  function openTourSpotDetail(spot: TourSpot, visit?: TourSpotVisitSelection) {
+    openDetailPage(tourSpotDetail(spot, visit))
   }
 
   function openModulePage(
@@ -1105,6 +1156,7 @@ export function usePortalStore() {
     openProductDetail,
     openVenueDetail,
     openCinemaDetail,
+    openTourSpotDetail,
     buildModuleUrl,
     openActionModal,
     openOrderSuccess,

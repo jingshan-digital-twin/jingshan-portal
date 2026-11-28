@@ -1,5 +1,7 @@
 export type TourSpotCategory = '景区' | '乡村景点' | '网红打卡点' | '夜市消费'
 
+export const TOUR_VISIT_SLOTS = ['上午 08:30-12:00', '下午 13:00-17:00', '夜游 17:30-22:00'] as const
+
 export interface TourSpot {
   id: string
   category: TourSpotCategory

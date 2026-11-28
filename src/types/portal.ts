@@ -366,12 +366,17 @@ export interface HotelStaySelection {
   roomId?: string
 }
 
+export interface TourSpotVisitSelection {
+  date: string
+  slot: string
+}
+
 export type DetailPagePayload =
   | { kind: 'hotel'; hotelId: string; stay?: HotelStaySelection }
   | { kind: 'product'; productId: string }
   | { kind: 'venue'; venueId: string; date?: string; courtId?: string; slotTime?: string }
   | { kind: 'cinema' }
-  | { kind: 'place'; data: LightboxPayload }
+  | { kind: 'place'; data: LightboxPayload; spotId?: string; visit?: TourSpotVisitSelection }
 
 export interface BookingDraft {
   venueId: string

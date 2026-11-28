@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RESTAURANT_MENUS } from '../mock/data'
 import { CINEMA_MOVIES, HOTEL_PROFILES, PRODUCT_CATALOG } from '../mock/details'
 import { BOOKING_DATES, COURT_HOURS, formatHourRange } from '../mock/schedules'
+import { TOUR_VISIT_SLOTS } from '../mock/tourData'
 import { isBookingQuantity } from '../store/reservationFlow'
 import { getModuleMeta, usePortalStore } from '../store/usePortalStore'
 import type { CourtUnit, LightboxReview, MenuDish } from '../types/portal'
@@ -300,7 +301,9 @@ async function submitCinemaOrder() {
 
 // 5. Place generic reservation state
 const placeDate = ref(BOOKING_DATES[0]!.iso)
-const placeSlot = ref('下午 14:00-17:00')
+const defaultPlaceSlots = ['上午 09:00-12:00', '下午 14:00-17:00', '晚间 17:30-21:00']
+const placeSlots = computed(() => detail.value?.kind === 'place' && detail.value.visit ? TOUR_VISIT_SLOTS : defaultPlaceSlots)
+const placeSlot = ref(defaultPlaceSlots[1]!)
 const placeQty = ref<number | ''>(2)
 const audioPlaying = ref(false)
 const audioProgress = ref(28)
@@ -396,7 +399,11 @@ watch(
     showReviewForm.value = false
     localReviews.value = []
     audioPlaying.value = false
-    if (val?.kind === 'place' && val.data.quantityLimit !== undefined) placeQty.value = 1
+    if (val?.kind === 'place') {
+      placeDate.value = val.visit?.date ?? BOOKING_DATES[0]!.iso
+      placeSlot.value = val.visit?.slot ?? defaultPlaceSlots[1]!
+      placeQty.value = val.visit || val.data.quantityLimit !== undefined ? 1 : 2
+    }
 
     if (val?.kind === 'hotel') {
       const h = HOTEL_PROFILES.find((x) => x.id === val.hotelId) ?? HOTEL_PROFILES[0]!
@@ -1724,9 +1731,7 @@ function triggerPrimaryNav() {
                 <div class="dp-ub-cell dp-ub-full">
                   <label>时段选择</label>
                   <select v-model="placeSlot">
-                    <option>上午 09:00-12:00</option>
-                    <option>下午 14:00-17:00</option>
-                    <option>晚间 17:30-21:00</option>
+                    <option v-for="slot in placeSlots" :key="slot" :value="slot">{{ slot }}</option>
                   </select>
                 </div>
               </div>

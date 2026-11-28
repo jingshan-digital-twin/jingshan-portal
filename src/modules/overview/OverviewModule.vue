@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { ENTERTAINMENT_ITEMS, TOUR_ROUTES } from '../../mock/data'
 import { HOTEL_PROFILES, PRODUCT_CATALOG } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
@@ -16,8 +16,6 @@ const {
   openBookingModal,
   openActionModal,
 } = usePortalStore()
-
-const activeTheme = ref<'全部' | '网球+文旅' | '网球+研学' | '网球+康养'>('全部')
 
 function openNewPage(id: ModuleId) {
   navigateToModulePage(id)
@@ -148,10 +146,6 @@ const hotHotels = computed(() => HOTEL_PROFILES.slice(0, 3))
 const hotProducts = computed(() => PRODUCT_CATALOG.slice(0, 2))
 const hotEntertainments = computed(() => [ENTERTAINMENT_ITEMS[3]!, ENTERTAINMENT_ITEMS[5]!])
 
-const visibleThemes = computed(() =>
-  activeTheme.value === '全部' ? themes : themes.filter((t) => t.key === activeTheme.value),
-)
-
 const totalRemainingSlots = computed(() =>
   state.courts.reduce(
     (sum, c) => sum + c.slots.reduce((s, slot) => s + slot.remaining, 0),
@@ -221,28 +215,14 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
       <div class="home-overview-bar-left">
         <h2 class="summary-stage-title">全城服务总览与热门精选</h2>
       </div>
-      <div class="flex-row">
-        <div class="home-theme-pills">
-          <button
-            v-for="tab in (['全部', '网球+文旅', '网球+研学', '网球+康养'] as const)"
-            :key="tab"
-            type="button"
-            class="home-theme-pill"
-            :class="{ active: activeTheme === tab }"
-            @click="activeTheme = tab"
-          >
-            {{ tab === '全部' ? '全部主题' : tab }}
-          </button>
-        </div>
-        <button
-          type="button"
-          class="hdr-pill hdr-pill-event"
-          style="height: 36px"
-          @click="state.showEventModal = true"
-        >
-          赛事福利
-        </button>
-      </div>
+      <button
+        type="button"
+        class="hdr-pill hdr-pill-event"
+        style="height: 36px"
+        @click="state.showEventModal = true"
+      >
+        赛事福利
+      </button>
     </div>
 
     <div class="grid-split mb-18">
@@ -349,7 +329,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
 
     <!-- 三大精品主题 -->
     <div class="grid-3 mb-24">
-      <div v-for="t in visibleThemes" :key="t.key" class="card">
+      <div v-for="t in themes" :key="t.key" class="card">
         <div
           class="photo-box"
           style="height: 175px"
