@@ -74,7 +74,7 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
         <button
           type="button"
           class="hdr-pill hdr-pill-event"
-          @click="state.showEventModal = true"
+          @click="state.showTourneyRegModal = true"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M8 21h8" />
@@ -83,8 +83,19 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
             <path d="M7 6H4v2a3 3 0 0 0 3 3" />
             <path d="M17 6h3v2a3 3 0 0 1-3 3" />
           </svg>
-          <span>赛事福利</span>
+          <span>赛事报名</span>
           <i class="hdr-event-dot" aria-hidden="true" />
+        </button>
+
+        <button
+          type="button"
+          class="hdr-pill"
+          @click="state.showArrivalGuideModal = true"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+          </svg>
+          <span>抵京指引</span>
         </button>
 
         <button
@@ -98,7 +109,7 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
             <path d="M8.5 11.5h7" />
             <path d="M8.5 15h4.5" />
           </svg>
-          <span>互动反馈</span>
+          <span>点评投诉</span>
         </button>
 
         <button
@@ -125,8 +136,8 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
           :class="{ active: state.isStandalonePage && state.activeModule === 13 }"
           @click="navigateToModulePage(13)"
         >
-          <span class="avatar-sm">林</span>
-          <span class="member-name">林先生</span>
+          <span class="avatar-sm">张</span>
+          <span class="member-name">张先生</span>
           <span class="member-tier-badge">{{ memberTier.code }}</span>
           <svg class="member-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M9 6l6 6-6 6" />

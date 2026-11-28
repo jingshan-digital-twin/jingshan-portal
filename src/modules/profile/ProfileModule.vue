@@ -56,46 +56,49 @@ watch(
             <div
               style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #f5ca69, #ca8613); color: #2d1b00; font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center"
             >
-              林
+              张
             </div>
             <div>
               <div style="font-size: 20px; font-weight: 900">
-                林先生
+                张先生
                 <span style="font-size: 13px; background: #f5ca69; color: #2f1c00; padding: 3px 10px; border-radius: 999px; margin-left: 8px">
                   👑 {{ memberTier.code }} {{ memberTier.name }}
                 </span>
               </div>
-              <div style="font-size: 13.5px; color: rgba(255, 255, 255, 0.84); margin-top: 3px">
-                可用积分：<strong style="color: var(--lime); font-size: 17px">{{ state.points }} 分</strong>
+              <div style="font-size: 13.5px; color: rgba(255, 255, 255, 0.86); margin-top: 3px">
+                当前可用积分：<strong style="color: var(--lime); font-size: 18px">{{ state.points }} 分</strong>
+                <span style="margin-left: 10px; background: rgba(200, 245, 66, 0.18); border: 1px solid rgba(200, 245, 66, 0.45); color: var(--lime); padding: 1px 8px; font-size: 12px; font-weight: 700">
+                  本次行程累计 +{{ state.sessionPointsEarned }} 分
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         <div class="grid-4" style="gap: 8px; margin-bottom: 14px">
-          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 9px; font-size: 12.5px">
-            <strong>Lv.1 新星</strong><br />订场98折
+          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 9px; font-size: 12px; line-height: 1.5">
+            <strong>Lv.1 新星</strong><br />订场98折 · 消费积分
           </div>
-          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 9px; font-size: 12.5px">
-            <strong>Lv.2 球友</strong><br />订场92折
+          <div style="background: rgba(255, 255, 255, 0.1); border-radius: 0; padding: 9px; font-size: 12px; line-height: 1.5">
+            <strong>Lv.2 球友</strong><br />订场92折 · 联盟88折
           </div>
-          <div :style="memberTier.code === 'Lv.3' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:9px;font-size:12.5px;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:9px;font-size:12.5px;'">
-            <strong :style="{ color: memberTier.code === 'Lv.3' ? 'var(--lime)' : '#fff' }">Lv.3 精英</strong><br />85折+免退
+          <div :style="memberTier.code === 'Lv.3' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:9px;font-size:12px;line-height:1.5;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:9px;font-size:12px;line-height:1.5;'">
+            <strong :style="{ color: memberTier.code === 'Lv.3' ? 'var(--lime)' : '#fff' }">Lv.3 精英（当前）</strong><br />85折+赛事优先报名
           </div>
-          <div :style="memberTier.code === 'Lv.4' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:9px;font-size:12.5px;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:9px;font-size:12.5px;'">
-            <strong :style="{ color: memberTier.code === 'Lv.4' ? 'var(--lime)' : '#fff' }">Lv.4 黑金</strong><br />8折+VIP室
+          <div :style="memberTier.code === 'Lv.4' ? 'background:rgba(196,246,61,0.22);border:1px solid var(--lime);border-radius: 0;padding:9px;font-size:12px;line-height:1.5;' : 'background:rgba(255,255,255,0.1);border-radius: 0;padding:9px;font-size:12px;line-height:1.5;'">
+            <strong :style="{ color: memberTier.code === 'Lv.4' ? 'var(--lime)' : '#fff' }">Lv.4 黑金</strong><br />8折+酒店景区礼遇
           </div>
         </div>
 
-        <div class="flex-row">
-          <button class="btn-orange" @click="redeemPoints(500, '1小时免费订场通兑券', '全市186片开放球场通用 · 免场地费')">
+        <div class="flex-row" style="flex-wrap: wrap; gap: 8px">
+          <button class="btn-orange" @click="redeemPoints(200, '京山网旅 ¥20 全城通用消费券', '餐饮/酒店/景区/商城全场满减通用')">
+            🎫 200分兑 ¥20 消费券
+          </button>
+          <button class="btn-ghost" @click="redeemPoints(500, '1小时免费订场通兑券', '全市186片开放球场通用 · 免场地费')">
             500分兑免费场
           </button>
           <button class="btn-ghost" @click="redeemPoints(300, '天沐温泉康养免费入园券', '含温泉泡池体验1次')">
             300分兑温泉券
-          </button>
-          <button class="btn-ghost" @click="redeemPoints(200, '指定机构晋升评测抵用券', '湖北省网球学校/国际中心通用')">
-            200分兑评测券
           </button>
         </div>
       </div>
@@ -223,6 +226,32 @@ watch(
               >
                 出示核销
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <div class="flex-between" style="margin-bottom: 10px">
+            <strong style="font-size: 17px">✨ 本次消费累计积分明细</strong>
+            <span class="tag green">吃住游购训打全串联</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 7px; font-size: 13px">
+            <div
+              v-for="log in state.pointLogs.slice(0, 6)"
+              :key="log.id"
+              class="flex-between"
+              style="padding: 7px 10px; background: #f6faf8; border-left: 3px solid var(--primary); gap: 8px"
+            >
+              <div style="min-width: 0">
+                <div class="flex-row" style="gap: 6px">
+                  <span class="tag blue" style="font-size: 11px; padding: 1px 6px">{{ log.category }}</span>
+                  <strong style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ log.title }}</strong>
+                </div>
+                <div style="font-size: 11.5px; color: var(--ink-3); margin-top: 2px">{{ log.time }}</div>
+              </div>
+              <strong :style="{ color: log.delta > 0 ? 'var(--primary)' : 'var(--accent)', fontSize: '14.5px', flexShrink: 0 }">
+                {{ log.delta > 0 ? `+${log.delta}` : log.delta }}分
+              </strong>
             </div>
           </div>
         </div>

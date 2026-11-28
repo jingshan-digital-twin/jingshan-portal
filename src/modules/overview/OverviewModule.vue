@@ -15,7 +15,28 @@ const {
   openCinemaDetail,
   openBookingModal,
   openActionModal,
+  createQuickOrder,
 } = usePortalStore()
+
+function orderThreeDaySpaPkg() {
+  createQuickOrder(
+    '门票',
+    '“打网球＋泡温泉”三天两晚精品套餐',
+    '含 4h 标准球场畅打 + 2晚网球主题/温泉酒店 + 天沐温泉通票 + 电子票根85折',
+    1688,
+    180,
+    0,
+    {
+      fields: [
+        { label: '套餐内容', value: '4h 红土/硬地订场 + 2晚精选住宿 + 天沐天然温泉通票' },
+        { label: '出行周期', value: '三天两晚（含赛场往返免费摆渡车）' },
+        { label: '附加福利', value: '自动激活全市 79 家网球联盟商家 85 折电子票根' },
+      ],
+      successTitle: '三天两晚套餐下单成功',
+      successMessage: '已同步至个人中心，获赠 180 金网积分。',
+    },
+  )
+}
 
 function openNewPage(id: ModuleId) {
   navigateToModulePage(id)
@@ -76,30 +97,31 @@ const themes = [
   },
   {
     key: '网球+康养',
-    badge: '♨️ 主题三：网球 + 康养',
-    sub: '★ 4.9 · 官方旗舰热销1,240份',
+    badge: '♨️ 主题三：打网球 + 泡温泉',
+    sub: '★ 5.0 · 参赛家庭热销 2,180 份',
     photo: '/images/hotspring.jpg',
-    title: '京山四天三晚尊享：打网球 + 泡温泉 + 运动康复',
-    desc: '含6小时红土/硬地场 + 温泉主题酒店 + 专业理疗恢复 + 桥米宴',
-    intro: '京山年度口碑No.1官方旗舰度假产品！专为热爱网球又讲究身心恢复的品质球友设计：连住三晚五星/私汤温泉酒店，每天畅打红土/硬地标准场，赛后尊享天然偏硅酸温泉私汤、卫健认证运动康复筋膜松解与非遗桥米欢迎宴。',
-    openHours: '全年可订 · 四天三晚自由行/小包团',
-    address: '湖北省荆门市京山市温泉街道天沐温泉度假区',
+    title: '“打网球＋泡温泉”三天两晚精品套餐',
+    desc: '含4小时标准红土/硬地场 + 2晚网球主题/温泉酒店 + 天沐温泉通票 + 桥米85折',
+    intro: '专为来京山参赛、打球度假的球友与家庭打造的人气Top1套餐！连住两晚精选网球主题或温泉酒店，含4小时国际中心/红土场畅打、天沐天然偏硅酸温泉通票、赛场免费摆渡车及79家联盟餐饮85折电子票根。',
+    openHours: '全年可订 · 三天两晚一站式自由行',
+    address: '湖北省荆门市京山市温泉街道天沐温泉度假区 & 国际网球中心',
     lng: 113.1415,
     lat: 31.0312,
-    tags: ['热销1,240份', '含6h高端订场', '天然矿物质私汤', '配专业运动理疗'],
+    tags: ['三天两晚爆款', '含4h标准订场', '天沐天然温泉通票', '赠79家联盟85折票根'],
     hotItems: [
-      { name: '红土+硬地畅打6小时', price: '含灯光与陪练体验', tag: '旗舰权益', desc: '优先锁定国际网球中心与训练基地黄金时段场地。' },
-      { name: '天沐温泉 + 运动康复理疗', price: '含3晚温泉房', tag: '满血恢复', desc: '天然矿泉汤池叠加专业康复师筋膜放松，告别次日酸痛。' },
+      { name: '红土/硬地标准场畅打4小时', price: '含灯光时段', tag: '核心权益', desc: '优先锁定国际网球中心与训练基地黄金时段场地。' },
+      { name: '2晚主题酒店 + 天沐天然温泉通票', price: '含双人早餐', tag: '赛后解乏', desc: '天然偏硅酸矿泉汤池舒缓运动疲劳，步行/摆渡直达赛场。' },
     ],
     detailedReviews: [
-      { user: '上海球友俱乐部陈总', origin: '上海', score: 5.0, date: '2026-11-25', content: '带俱乐部8个人订了四天三晚套餐，白天打红土晚上泡温泉再做个理疗，吃的是地道桥米宴，大家都说来年还要来！' },
-      { user: '武汉周女士', origin: '武汉', score: 4.9, date: '2026-11-20', content: '全程无缝衔接，高铁站有专车接送，几乎零操心的高品质运动度假体验。' },
+      { user: '武汉参赛家长张先生', origin: '武汉', score: 5.0, date: '2026-11-26', content: '给孩子报完中青赛顺手下了这个三天两晚套餐，订场、酒店和泡温泉一次搞定，比分开订划算太多！' },
+      { user: '上海球友俱乐部陈总', origin: '上海', score: 5.0, date: '2026-11-25', content: '白天打红土晚上泡温泉，吃的是地道桥米宴，高铁站还有专线接送，体验满分！' },
     ],
-    price: '¥2,999',
-    extra: '/人起 · 票根立减',
-    btn: '立即查看 →',
+    price: '¥1,688',
+    extra: '/三天两晚 · 票根立减',
+    btn: '顺手下单 →',
     target: 3 as const,
     orange: true,
+    isSpa3d: true,
   },
 ]
 
@@ -215,14 +237,24 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
       <div class="home-overview-bar-left">
         <h2 class="summary-stage-title">全城服务总览与热门精选</h2>
       </div>
-      <button
-        type="button"
-        class="hdr-pill hdr-pill-event"
-        style="height: 36px"
-        @click="state.showEventModal = true"
-      >
-        赛事福利
-      </button>
+      <div class="flex-row" style="gap: 10px">
+        <button
+          type="button"
+          class="btn-ghost"
+          style="height: 36px; border-radius: 999px; font-size: 13.5px"
+          @click="state.showArrivalGuideModal = true"
+        >
+          🚦 抵京出行指引卡
+        </button>
+        <button
+          type="button"
+          class="hdr-pill hdr-pill-event"
+          style="height: 36px"
+          @click="state.showEventModal = true"
+        >
+          赛事福利
+        </button>
+      </div>
     </div>
 
     <div class="grid-split mb-18">
@@ -311,9 +343,12 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <div class="flex-between" style="background: #f5faf8; padding: 11px 13px; border-radius: 0">
               <div>
                 <div style="font-size: 14.5px; font-weight: 800">2026中青赛总决赛 <span class="tag red">进行中</span></div>
-                <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/24–12/3 · 国际网球中心</div>
+                <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/24–12/3 · 国际网球中心 · 报完荐空房酒店</div>
               </div>
-              <button class="btn-primary" @click="openNewPage(2)">赛况 →</button>
+              <div class="flex-row" style="gap: 6px">
+                <button class="btn-ghost" style="padding: 6px 10px; font-size: 13px" @click="openNewPage(2)">赛况</button>
+                <button class="btn-orange" style="padding: 6px 12px; font-size: 13px" @click="state.showTourneyRegModal = true">一键报名</button>
+              </div>
             </div>
             <div class="flex-between" style="background: #fff8f4; padding: 11px 13px; border-radius: 0">
               <div>
@@ -360,7 +395,12 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <div style="font-size: 17px; font-weight: 800; margin-bottom: 14px">{{ t.title }}</div>
           <div class="flex-between">
             <span class="price">{{ t.price }}<small>{{ t.extra }}</small></span>
-            <button :class="t.orange ? 'btn-orange' : 'btn-primary'" @click="openNewPage(t.target)">{{ t.btn }}</button>
+            <button
+              :class="t.orange ? 'btn-orange' : 'btn-primary'"
+              @click="'isSpa3d' in t && t.isSpa3d ? orderThreeDaySpaPkg() : openNewPage(t.target)"
+            >
+              {{ t.btn }}
+            </button>
           </div>
         </div>
       </div>

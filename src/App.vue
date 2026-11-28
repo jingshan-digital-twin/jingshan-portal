@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import ActionDetailModal from './components/ActionDetailModal.vue'
+import ArrivalGuideModal from './components/ArrivalGuideModal.vue'
 import EventPopupModal from './components/EventPopupModal.vue'
 import HeroSpotlightCarousel from './components/HeroSpotlightCarousel.vue'
 import ListingDetailPage from './components/ListingDetailPage.vue'
@@ -8,6 +9,7 @@ import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
 import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
 import ReservationDialog from './components/ReservationDialog.vue'
+import TourneyRegistrationModal from './components/TourneyRegistrationModal.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
 import FeedbackModule from './modules/feedback/FeedbackModule.vue'
@@ -93,7 +95,9 @@ onMounted(() => {
     </footer>
 
     <ActionDetailModal />
+    <ArrivalGuideModal />
     <EventPopupModal />
+    <TourneyRegistrationModal />
     <OrderSuccessModal />
     <ReservationDialog />
 

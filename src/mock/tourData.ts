@@ -721,6 +721,24 @@ export const TOUR_SPOTS: TourSpot[] = [
 
 export const TOUR_PACKAGES: TourPackageItem[] = [
   {
+    id: 'pkg-spa-3d',
+    scope: '京山本地',
+    badge: '🔥 赛期爆款 · 3天2晚',
+    title: '“打网球＋泡温泉”三天两晚精品套餐',
+    subtitle: '含 4小时标准球场畅打 + 2晚网球主题/温泉酒店 + 天沐温泉通票 + 桥米美食85折票根',
+    photo: '/images/hotspring.jpg',
+    rating: 5.0,
+    sold: 2180,
+    duration: '3天2晚',
+    price: 1688,
+    originalPrice: 2180,
+    includes: ['4h 国际中心/红土订场', '2晚精选主题酒店含早', '天沐天然温泉通票', '79家联盟85折电子票根'],
+    highlights: ['参赛家长与周末球友下单Top1套餐', '含赛场往返免费摆渡与延时退房礼遇'],
+    address: '京山国际网球中心 & 天沐温泉度假区',
+    lng: 113.1195,
+    lat: 31.0218,
+  },
+  {
     id: 'pkg-local-2d',
     scope: '京山本地',
     badge: '🔥 本地热卖 · 2天1晚',
@@ -760,19 +778,55 @@ export const TOUR_PACKAGES: TourPackageItem[] = [
     id: 'pkg-jingmen-2d',
     scope: '荆门周边',
     badge: '🏛️ 世遗延伸 · 2天1晚',
-    title: '京山网球 + 天沐温泉 + 钟祥明显陵/漳河联游',
-    subtitle: '第一天京山挥拍泡泉，第二天顺路游世界文化遗产明显陵、莫愁村与漳河橘洲',
+    title: '京山网球 + 天沐温泉 + 钟祥明显陵/莫愁湖联游',
+    subtitle: '第一天京山挥拍泡泉逛夜市，第二天“赛后游荆门”顺路游世界文化遗产明显陵与莫愁村',
     photo: '/images/hotel.jpg',
     rating: 4.9,
     sold: 930,
     duration: '2天1晚',
     price: 688,
     originalPrice: 860,
-    includes: ['2h 京山订场权益', '天沐温泉通票', '明显陵+漳河游船票', '1晚品质住宿'],
-    highlights: ['一程尽览运动、温泉、世遗与湖岛风光', '自驾/返程顺路首选'],
-    address: '京山 → 钟祥明显陵 → 漳河风景区',
+    includes: ['2h 京山订场权益', '天沐温泉通票+夜市券', '明显陵+莫愁村联票', '1晚品质住宿'],
+    highlights: ['一程尽览运动、温泉、世遗与荆楚民俗', '武汉/荆门周边自驾返程顺路首选'],
+    address: '京山 → 钟祥明显陵 → 莫愁村/莫愁湖',
     lng: 112.6345,
     lat: 31.2028,
+  },
+  {
+    id: 'pkg-beijing-return-1',
+    scope: '湖北省内',
+    badge: '🚄 北京客源专享 · 返程顺路游',
+    title: '京山→钟祥明显陵→襄阳古隆中 北上返京3日联游合作套餐',
+    subtitle: '政府端按【北京客源】自动推送上架：高铁/高速北上顺路串联世遗明显陵与三国名胜古隆中',
+    photo: '/images/scenic.jpg',
+    rating: 5.0,
+    sold: 486,
+    duration: '3天2晚（返程衔接）',
+    price: 998,
+    originalPrice: 1280,
+    includes: ['钟祥明显陵+莫愁村联票', '襄阳古隆中+盛世唐城夜游票', '沿线2晚精选合作酒店含早', '襄阳东高铁站北上返京专车接驳'],
+    highlights: ['北上返京零绕路，高铁4.5h直达北京西', '沿途景区门票、特色住宿一站式打包下单'],
+    address: '京山 → 钟祥明显陵 → 襄阳古隆中 → 返京',
+    lng: 112.0631,
+    lat: 32.0085,
+  },
+  {
+    id: 'pkg-beijing-return-2',
+    scope: '湖北省内',
+    badge: '🛣️ 北京客源专享 · 高速顺路游',
+    title: '京山→钟祥明显陵→随州大洪山/炎帝故里 返程2日联游套餐',
+    subtitle: '北上自驾/高铁顺路联游大洪山生态秘境与随州炎帝故里，把网球之旅延伸为荆楚文化之旅',
+    photo: '/images/hotspring.jpg',
+    rating: 4.9,
+    sold: 352,
+    duration: '2天1晚（返程衔接）',
+    price: 768,
+    originalPrice: 980,
+    includes: ['钟祥明显陵世遗门票', '随州大洪山/炎帝故里联票', '大洪山温泉/随州合作酒店1晚', '沿线餐饮85折电子券'],
+    highlights: ['紧邻京港澳/许广高速北上通道，返京超顺路', '门票+酒店打包直降¥212，赠送京山桥米伴手礼'],
+    address: '京山 → 钟祥明显陵 → 随州大洪山/炎帝故里 → 返京',
+    lng: 113.0012,
+    lat: 31.4628,
   },
   {
     id: 'pkg-hubei-4d',
@@ -791,6 +845,155 @@ export const TOUR_PACKAGES: TourPackageItem[] = [
     address: '京山出发 · 辐射襄阳/十堰/宜昌',
     lng: 113.1135,
     lat: 31.0172,
+  },
+]
+
+export interface ReturnRouteNode {
+  city: string
+  spot: string
+  tag: string
+  driveOrRail: string
+  highlight: string
+}
+
+export interface ReturnTripBundle {
+  id: string
+  originKey: 'wuhan' | 'beijing' | 'shenzhen'
+  originLabel: string
+  badge: string
+  sourceTag: string
+  title: string
+  routeTitle: string
+  transportTip: string
+  duration: string
+  ticketPrice: number
+  hotelPrice: number
+  bundlePrice: number
+  originalPrice: number
+  photo: string
+  hotelName: string
+  ticketsIncluded: string[]
+  nodes: ReturnRouteNode[]
+}
+
+export const RETURN_TRIP_BUNDLES: ReturnTripBundle[] = [
+  {
+    id: 'rt-wuhan-1',
+    originKey: 'wuhan',
+    originLabel: '武汉客源（省内推荐）',
+    badge: '♨️ 赛后游京山 · 温泉+夜市',
+    sourceTag: '智能匹配武汉参赛家庭行程',
+    title: '赛后放松：天沐温泉 + 文峰河畔夜市美食打包券',
+    routeTitle: '国际网球中心 → 天沐天然温泉 → 文峰河畔夜市 → 返汉',
+    transportTip: '距武汉 1.5h 车程 / 汉十城际便捷往返',
+    duration: '赛后半日/当晚',
+    ticketPrice: 158,
+    hotelPrice: 318,
+    bundlePrice: 438,
+    originalPrice: 566,
+    photo: '/images/night_market.jpg',
+    hotelName: '文峰花园酒店（网球主题合作 · 含双早）',
+    ticketsIncluded: ['天沐温泉成人通票', '文峰河畔夜市 ¥50 美食消费券', '桥米公馆 85 折电子票根'],
+    nodes: [
+      { city: '京山赛场', spot: '国际网球中心', tag: '完赛出发', driveOrRail: '起点', highlight: '赛后激活79家联盟票根' },
+      { city: '京山温泉', spot: '天沐天然温泉', tag: '康养解乏', driveOrRail: '车程 8 分钟', highlight: '38个偏硅酸汤池+筋膜放松' },
+      { city: '京山夜市', spot: '文峰河畔烟火夜市', tag: '地道美食', driveOrRail: '车程 6 分钟', highlight: '桥米锅巴、油焖大虾、免费米茶' },
+    ],
+  },
+  {
+    id: 'rt-wuhan-2',
+    originKey: 'wuhan',
+    originLabel: '武汉客源（赛后游荆门）',
+    badge: '🏛️ 赛后游荆门 · 世遗+民俗',
+    sourceTag: '荆门市域跨区文旅联动推荐',
+    title: '“赛后游荆门”钟祥明显陵 + 莫愁湖/莫愁村 1日联游套餐',
+    routeTitle: '京山 → 钟祥明显陵（世遗）→ 莫愁村/莫愁湖 → 返汉',
+    transportTip: '京山驱车 1h 抵钟祥，沿武荆高速 2h 顺路返汉',
+    duration: '2天1晚 / 返程1日游',
+    ticketPrice: 118,
+    hotelPrice: 330,
+    bundlePrice: 398,
+    originalPrice: 518,
+    photo: '/images/scenic.jpg',
+    hotelName: '莫愁村楚风精品客栈 / 惠亭湖畔精品酒店',
+    ticketsIncluded: ['钟祥明显陵世界遗产门票', '莫愁村非遗美食体验券', '景区往返摆渡车票'],
+    nodes: [
+      { city: '京山', spot: '京山打球+温泉', tag: '第一站', driveOrRail: '起点', highlight: '挥拍观赛+泡天然温泉' },
+      { city: '钟祥', spot: '世界遗产明显陵', tag: '荆门世遗', driveOrRail: '高速 1 小时', highlight: '一陵双冢明代帝陵孤例' },
+      { city: '钟祥', spot: '莫愁湖 & 莫愁村', tag: '楚风夜游', driveOrRail: '车程 10 分钟', highlight: '蟠龙菜、非遗小吃与湖畔夜景' },
+    ],
+  },
+  {
+    id: 'rt-beijing-1',
+    originKey: 'beijing',
+    originLabel: '北京客源（北上返京）',
+    badge: '🚄 政府端自动上架 · 北上高铁联游',
+    sourceTag: '根据报名来源地【北京】自动推送上架',
+    title: '京山→钟祥明显陵→襄阳古隆中 北上返京联游合作套餐',
+    routeTitle: '京山 → 钟祥明显陵 → 襄阳古隆中/唐城 → 襄阳东高铁返京',
+    transportTip: '沿北上高铁通道顺路游览，襄阳东直达北京西站 4.5 小时',
+    duration: '3天2晚（门票+住宿一键打包）',
+    ticketPrice: 288,
+    hotelPrice: 710,
+    bundlePrice: 998,
+    originalPrice: 1280,
+    photo: '/images/scenic.jpg',
+    hotelName: '钟祥莫愁村精品酒店 1晚 + 襄阳古城四星合作酒店 1晚',
+    ticketsIncluded: ['钟祥明显陵世遗联票', '襄阳古隆中 5A 景区门票', '襄阳盛世唐城夜游票', '高铁站专车接驳券'],
+    nodes: [
+      { city: '京山', spot: '国际网球中心/温泉', tag: '赛事起点', driveOrRail: '完赛出发', highlight: '打球参赛+温泉康养' },
+      { city: '钟祥', spot: '明显陵 & 莫愁村', tag: '荆门世遗', driveOrRail: '车程 65 分钟', highlight: '世界文化遗产+楚风古镇' },
+      { city: '襄阳', spot: '古隆中 & 盛世唐城', tag: '三国名城', driveOrRail: '车程 1.5 小时', highlight: '诸葛亮隐居地+大唐实景夜游' },
+      { city: '返京', spot: '襄阳东高铁站', tag: '北上返京', driveOrRail: '高铁 4.5h 直达', highlight: '顺路不走回头路直返北京' },
+    ],
+  },
+  {
+    id: 'rt-beijing-2',
+    originKey: 'beijing',
+    originLabel: '北京客源（北上返京）',
+    badge: '🛣️ 政府端自动上架 · 生态人文双线',
+    sourceTag: '根据报名来源地【北京】自动推送上架',
+    title: '京山→钟祥明显陵→随州大洪山/炎帝故里 返程合作套餐',
+    routeTitle: '京山 → 钟祥明显陵 → 随州大洪山 & 炎帝故里 → 北上返京',
+    transportTip: '紧贴许广/京港澳北上高速及汉十高铁随州南站，返京顺路省时',
+    duration: '2天1晚（门票+住宿一键打包）',
+    ticketPrice: 218,
+    hotelPrice: 550,
+    bundlePrice: 768,
+    originalPrice: 980,
+    photo: '/images/hotspring.jpg',
+    hotelName: '随州大洪山自在谷酒店 / 随州碧桂园合作酒店（含双早）',
+    ticketsIncluded: ['钟祥明显陵世遗门票', '随州大洪山风景区+观光车票', '随州炎帝故里寻根文化园门票'],
+    nodes: [
+      { city: '京山', spot: '京山网球之城', tag: '赛事起点', driveOrRail: '完赛出发', highlight: '网球参赛+带走京山桥米' },
+      { city: '钟祥', spot: '世界遗产明显陵', tag: '荆门世遗', driveOrRail: '车程 65 分钟', highlight: '明代帝陵红墙神道' },
+      { city: '随州', spot: '大洪山 & 炎帝故里', tag: '楚北名山', driveOrRail: '车程 1.1 小时', highlight: '千年银杏谷+炎帝寻根文化' },
+      { city: '返京', spot: '随州南站 / 京港澳高速', tag: '北上返京', driveOrRail: '高铁/高速北上', highlight: '顺畅接驳北方返程通道' },
+    ],
+  },
+  {
+    id: 'rt-shenzhen-1',
+    originKey: 'shenzhen',
+    originLabel: '深圳/华南客源（南下返程）',
+    badge: '🚄 省外南下专享 · 返程顺路游',
+    sourceTag: '根据报名来源地【深圳】自动推送上架',
+    title: '京山→漳河风景区→宜昌三峡大坝/三峡人家 南下返粤联游套餐',
+    routeTitle: '京山 → 荆门漳河风景区 → 宜昌三峡大坝 → 高铁南下返深',
+    transportTip: '宜昌东/荆门西高铁直达广州南、深圳北',
+    duration: '3天2晚（门票+住宿一键打包）',
+    ticketPrice: 298,
+    hotelPrice: 690,
+    bundlePrice: 988,
+    originalPrice: 1260,
+    photo: '/images/hero.jpg',
+    hotelName: '漳河湖景酒店 1晚 + 宜昌滨江精选酒店 1晚',
+    ticketsIncluded: ['漳河风景区游船门票', '三峡大坝观光车票', '三峡人家5A景区联票'],
+    nodes: [
+      { city: '京山', spot: '京山网球中心', tag: '赛事起点', driveOrRail: '完赛出发', highlight: '打球泡泉体验中国网球之城' },
+      { city: '荆门', spot: '漳河阳光沙滩', tag: '湖北千岛湖', driveOrRail: '车程 1.2 小时', highlight: '泛舟观音岛、一类水质湖景' },
+      { city: '宜昌', spot: '三峡大坝 & 三峡人家', tag: '大国重器', driveOrRail: '车程 1.5 小时', highlight: '壮美三峡画廊与巴楚风情' },
+      { city: '返深', spot: '宜昌东高铁站', tag: '南下返粤', driveOrRail: '高铁直达深圳北', highlight: '一站式顺路返程' },
+    ],
   },
 ]
 

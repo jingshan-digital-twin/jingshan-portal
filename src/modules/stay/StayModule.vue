@@ -337,12 +337,17 @@ function bookStay(hotel: HotelProfile, room: HotelRoom) {
               <div class="stay-card-info">
                 <h3>{{ hotel.name }}</h3>
                 <div class="stay-card-meta">
+                  <span class="tag gold" style="font-size: 11.5px; padding: 1px 7px">🏅 京网推荐 {{ hotel.rating >= 4.9 ? '★★★★★' : '★★★★☆' }}</span>
                   <span class="stay-score">{{ hotel.rating.toFixed(1) }} 分</span>
-                  <span>{{ hotel.reviewCount }} 条点评</span>
+                  <span>{{ hotel.reviewCount }} 条真实点评</span>
+                  <span class="tag green" style="font-size: 11.5px; padding: 1px 7px">今日余 {{ hotel.rooms.reduce((s, r) => s + r.remaining, 0) }} 间空房</span>
                 </div>
                 <p class="stay-location">
                   {{ hotel.distanceToCourt }} · {{ hotel.address.replace('湖北省荆门市京山市', '') }}
                   <button type="button" class="stay-reset" @click="navigateToHotel(hotel)">导航</button>
+                </p>
+                <p v-if="hotel.reviews[0]" style="margin-top: 5px; font-size: 12.5px; color: var(--ink-2); background: #f6faf8; padding: 4px 8px; border-left: 2px solid var(--primary)">
+                  💬 {{ hotel.reviews[0].user }}：“{{ hotel.reviews[0].content }}”
                 </p>
                 <div class="stay-offer">
                   <div>

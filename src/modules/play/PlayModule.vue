@@ -1,29 +1,36 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, reactive, ref, watch } from 'vue'
 import MapResultsLayout from '../../components/MapResultsLayout.vue'
 import MapViewToggle from '../../components/MapViewToggle.vue'
 import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
+import { CAMP_PROGRAMS, REHAB_CENTERS } from '../../mock/trainingData'
 import { usePortalStore } from '../../store/usePortalStore'
 import type { CutrBand, MatchmakingGame, RadiusOption } from '../../types/portal'
+
+const MatchmakingMap = defineAsyncComponent(() => import('./MatchmakingMap.vue'))
 
 const {
   state,
   memberTier,
+  switchModule,
   openPhoto,
   openVenueDetail,
   openBookingModal,
   openNavigation,
   refreshLiveScores,
+  joinMatchmakingGame,
   publishMatchmakingGame,
+  createQuickOrder,
   showToast,
 } = usePortalStore()
 
 const playTabs = [
   { id: 'courts', label: '场地预约', icon: 'M5 4h14v16H5zM5 12h14M8 8h8v8H8z' },
   { id: 'matchmaking', label: '同城约球', icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z' },
+  { id: 'nearby', label: '球场周边服务', icon: 'M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07' },
   { id: 'scores', label: '实时比分', icon: 'M4 19h16M7 15v-4m5 4V5m5 10V8' },
 ] as const
 const subView = ref<(typeof playTabs)[number]['id']>('courts')
@@ -167,10 +174,12 @@ watch(courtPage, () => {
   if (firstOnPage) activeVenueId.value = firstOnPage.id
 })
 
-// ===== 同城约球多维筛选（参照图1） =====
+// ===== 同城约球多维筛选 =====
 const mgSearch = ref('')
 const mgSort = ref<'distance' | 'time' | 'spots'>('distance')
 const mgDate = ref<string>('全部')
+const mgRegion = ref<'全部' | '温泉街道' | '新市街道' | '永兴街道'>('全部')
+const mgRole = ref<'全部' | '京网陪练' | '同龄球友' | '本地球友'>('全部')
 const mgCutr = ref<'全部' | CutrBand>('全部')
 const mgVenueType = ref<'全部' | '室内' | '室外' | '风雨棚' | '学练馆'>('全部')
 const mgActivityType = ref<'全部' | '拉球' | '比赛' | '发球机' | '人工训练'>('全部')
@@ -180,6 +189,59 @@ const mgTimeStart = ref('00:00')
 const mgTimeEnd = ref('24:00')
 const mgAmenities = ref<string[]>([])
 const mgScopeTab = ref<'全部' | '我报名的' | '可加入'>('全部')
+const showMgMap = ref(true)
+
+// ===== 球场周边服务（运动康复 + 寒假训练营） =====
+const selectedRehabServiceIdx = reactive<Record<string, number>>({
+  'rehab-shijie': 0,
+  'rehab-rmyy': 2,
+  'rehab-zyy': 0,
+})
+const rehabDate = ref(BOOKING_DATES[0]!.shortDate)
+const rehabSlot = ref('17:30-18:30（赛后放松）')
+const winterCamps = computed(() => CAMP_PROGRAMS.filter((c) => c.category === '训练营' || c.category === '研学课程').slice(0, 4))
+
+function bookRehabService(center: (typeof REHAB_CENTERS)[number]) {
+  const idx = selectedRehabServiceIdx[center.id] ?? 0
+  const svc = center.services[idx] ?? center.services[0]!
+  createQuickOrder(
+    '课程',
+    `运动康复理疗：${center.name}`,
+    `${svc.name}（${svc.duration}） · ${rehabDate.value} ${rehabSlot.value}`,
+    svc.price,
+    60,
+    0,
+    {
+      fields: [
+        { label: '康复机构', value: `${center.name}（${center.distance}）` },
+        { label: '理疗项目', value: `${svc.name}（${svc.duration}）` },
+        { label: '预约时段', value: `${rehabDate.value} ${rehabSlot.value}` },
+      ],
+      successTitle: '运动康复理疗预约成功',
+      successMessage: '已为您开通赛期绿色通道并同步至个人中心，获赠 60 积分。',
+    },
+  )
+}
+
+function enrollWinterCamp(item: (typeof CAMP_PROGRAMS)[number]) {
+  createQuickOrder(
+    '课程',
+    `${item.category}报名：${item.title}`,
+    `${item.scheduleDate} · ${item.duration} · ${item.venue}`,
+    item.price,
+    200,
+    0,
+    {
+      fields: [
+        { label: '训练营课程', value: item.title },
+        { label: '授课地点', value: item.venue },
+        { label: '营期安排', value: `${item.duration}（${item.scheduleDate}）` },
+      ],
+      successTitle: '训练营报名成功',
+      successMessage: '俱乐部教务专员将同步分班测试安排，已获赠 200 金网积分。',
+    },
+  )
+}
 function openGameDetail(g: MatchmakingGame) {
   const matchedVenue = state.courts.find((c) => c.id === g.venueId)
   const dateLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.fullTitle ?? g.date
@@ -226,6 +288,8 @@ const timePickOptions = [
 function resetMgFilters() {
   mgSearch.value = ''
   mgDate.value = '全部'
+  mgRegion.value = '全部'
+  mgRole.value = '全部'
   mgCutr.value = '全部'
   mgVenueType.value = '全部'
   mgActivityType.value = '全部'
@@ -242,6 +306,8 @@ const filteredGames = computed(() => {
   const list = state.matchmakingGames.filter((g) => {
     const okQ = !q || g.title.toLowerCase().includes(q) || g.venueName.toLowerCase().includes(q) || g.hostName.toLowerCase().includes(q)
     const okDate = mgDate.value === '全部' || g.date === mgDate.value
+    const okRegion = mgRegion.value === '全部' || g.region === mgRegion.value
+    const okRole = mgRole.value === '全部' || (g.matchRole ?? '本地球友') === mgRole.value
     const okCutr = mgCutr.value === '全部' || g.cutrBand === mgCutr.value
     const okVenue = mgVenueType.value === '全部' || g.venueType === mgVenueType.value
     const okAct = mgActivityType.value === '全部' || g.activityType === mgActivityType.value
@@ -253,13 +319,25 @@ const filteredGames = computed(() => {
       mgScopeTab.value === '全部' ||
       (mgScopeTab.value === '我报名的' && !!g.joinedByMe) ||
       (mgScopeTab.value === '可加入' && g.currentPlayers < g.maxPlayers && !g.joinedByMe)
-    return okQ && okDate && okCutr && okVenue && okAct && okGender && okFormat && okTime && okAmenities && okScope
+    return okQ && okDate && okRegion && okRole && okCutr && okVenue && okAct && okGender && okFormat && okTime && okAmenities && okScope
   })
 
   return [...list].sort((a, b) => {
     if (mgSort.value === 'distance') return a.distanceKm - b.distanceKm
     if (mgSort.value === 'time') return `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)
     return (b.maxPlayers - b.currentPlayers) - (a.maxPlayers - a.currentPlayers)
+  })
+})
+
+const filteredMgVenues = computed(() => {
+  const q = mgSearch.value.trim().toLowerCase()
+  return state.courts.filter((c) => {
+    const okRegion = mgRegion.value === '全部' || c.region === mgRegion.value
+    const okVenueType =
+      mgVenueType.value === '全部' ||
+      (mgVenueType.value === '学练馆' ? c.envs.includes('室内') : c.envs.includes(mgVenueType.value))
+    const okQ = !q || c.name.toLowerCase().includes(q) || c.region.includes(q) || c.address.toLowerCase().includes(q)
+    return okRegion && okVenueType && okQ
   })
 })
 
@@ -728,25 +806,36 @@ function submitNewGame() {
     <!-- 同城约球完整工作台 -->
     <div v-if="subView === 'matchmaking'" class="card card-pad filter-workbench">
       <div class="dd-filter-top" style="padding-bottom: 14px; border-bottom: 1px solid var(--line)">
-        <div class="flex-row" style="gap: 12px">
-          <strong style="font-size: 19px">🤝 同城约球大厅</strong>
-          <div class="search-bar" style="width: 240px; height: 40px">
+        <div class="flex-row" style="gap: 12px; flex-wrap: wrap">
+          <strong style="font-size: 19px">🤝 同城约球大厅（水平智能匹配）</strong>
+          <div class="search-bar" style="width: 220px; height: 40px">
             <span>🔍</span>
-            <input v-model="mgSearch" type="text" placeholder="搜场馆/球局…" />
+            <input v-model="mgSearch" type="text" placeholder="搜陪练/球友/球场…" />
           </div>
         </div>
-        <div class="flex-row" style="gap: 8px">
+        <div class="flex-row" style="gap: 8px; flex-wrap: wrap">
+          <MapViewToggle v-model="showMgMap" />
           <button class="btn-orange" @click="showPublishModal = true">＋ 发布约球</button>
           <button class="btn-ghost" @click="mgScopeTab = mgScopeTab === '我报名的' ? '全部' : '我报名的'">
             我的约球（{{ state.matchmakingGames.filter((g) => g.joinedByMe).length }}）
           </button>
           <button class="btn-ghost" @click="resetMgFilters">重置筛选</button>
-          <span class="dd-count-pill">共 {{ filteredGames.length }} 场球局</span>
+          <span class="dd-count-pill">共 {{ filteredGames.length }} 场匹配</span>
         </div>
       </div>
 
-      <!-- 清晰分项下拉筛选区 -->
+      <!-- 清晰分项下拉筛选区（技术等级 / 时间 / 区域 / 对象） -->
       <div class="dd-filter-grid cols-6 mb-16">
+        <label class="dd-field">
+          <span class="dd-field-label">技术等级 (CUTR)</span>
+          <select v-model="mgCutr" class="dd-select" :class="{ active: mgCutr !== '全部' }">
+            <option value="全部">全部技术等级</option>
+            <option v-for="band in CUTR_BANDS" :key="band.value" :value="band.value">
+              CUTR {{ band.value }}
+            </option>
+          </select>
+        </label>
+
         <label class="dd-field">
           <span class="dd-field-label">约球日期</span>
           <select v-model="mgDate" class="dd-select" :class="{ active: mgDate !== '全部' }">
@@ -758,35 +847,43 @@ function submitNewGame() {
         </label>
 
         <label class="dd-field">
-          <span class="dd-field-label">CUTR 水平</span>
-          <select v-model="mgCutr" class="dd-select" :class="{ active: mgCutr !== '全部' }">
-            <option value="全部">全部水平</option>
-            <option v-for="band in CUTR_BANDS" :key="band.value" :value="band.value">
-              CUTR {{ band.value }}
-            </option>
+          <span class="dd-field-label">所属区域</span>
+          <select v-model="mgRegion" class="dd-select" :class="{ active: mgRegion !== '全部' }">
+            <option value="全部">全部街道</option>
+            <option value="温泉街道">温泉街道</option>
+            <option value="新市街道">新市街道</option>
+            <option value="永兴街道">永兴街道</option>
           </select>
         </label>
 
         <label class="dd-field">
-          <span class="dd-field-label">场地环境</span>
-          <select v-model="mgVenueType" class="dd-select" :class="{ active: mgVenueType !== '全部' }">
-            <option value="全部">全部环境</option>
-            <option value="室内">室内</option>
-            <option value="室外">室外</option>
-            <option value="风雨棚">风雨棚</option>
-            <option value="学练馆">学练馆</option>
+          <span class="dd-field-label">匹配对象</span>
+          <select v-model="mgRole" class="dd-select" :class="{ active: mgRole !== '全部' }">
+            <option value="全部">全部对象</option>
+            <option value="京网陪练">🎯 京网陪练</option>
+            <option value="同龄球友">👦 同龄球友</option>
+            <option value="本地球友">🤝 本地球友</option>
           </select>
         </label>
 
         <label class="dd-field">
-          <span class="dd-field-label">活动形式</span>
-          <select v-model="mgActivityType" class="dd-select" :class="{ active: mgActivityType !== '全部' }">
-            <option value="全部">全部形式</option>
-            <option value="拉球">拉球</option>
-            <option value="比赛">比赛</option>
-            <option value="发球机">发球机</option>
-            <option value="人工训练">人工训练</option>
-          </select>
+          <span class="dd-field-label">场地环境 / 形式</span>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
+            <select v-model="mgVenueType" class="dd-select" :class="{ active: mgVenueType !== '全部' }" style="padding-left: 8px; padding-right: 22px">
+              <option value="全部">环境不限</option>
+              <option value="室内">室内</option>
+              <option value="室外">室外</option>
+              <option value="风雨棚">风雨棚</option>
+              <option value="学练馆">学练馆</option>
+            </select>
+            <select v-model="mgActivityType" class="dd-select" :class="{ active: mgActivityType !== '全部' }" style="padding-left: 8px; padding-right: 22px">
+              <option value="全部">形式不限</option>
+              <option value="拉球">拉球</option>
+              <option value="比赛">比赛</option>
+              <option value="发球机">发球机</option>
+              <option value="人工训练">人工训练</option>
+            </select>
+          </div>
         </label>
 
         <div class="dd-field">
@@ -804,13 +901,6 @@ function submitNewGame() {
             </select>
           </div>
         </div>
-
-        <MultiSelectDropdown
-          v-model="mgAmenities"
-          label="场地配套"
-          :options="mgAmenityOptions"
-          placeholder="全部不限"
-        />
       </div>
 
       <!-- 状态与时间段排序轻条 -->
@@ -834,6 +924,15 @@ function submitNewGame() {
               <option v-for="t in timePickOptions" :key="`e-${t}`" :value="t">{{ t }}</option>
             </select>
           </label>
+          <button
+            type="button"
+            class="filter-pill"
+            :class="{ active: mgCutr === '3.50-3.99' }"
+            style="padding: 5px 11px; font-size: 12.5px"
+            @click="mgCutr = mgCutr === '3.50-3.99' ? '全部' : '3.50-3.99'"
+          >
+            ⚡ 按参赛成绩自动匹配（CUTR 3.50-3.99）
+          </button>
         </div>
         <label class="flex-row" style="gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--ink-2)">
           <span>排序：</span>
@@ -845,7 +944,28 @@ function submitNewGame() {
         </label>
       </div>
 
-      <div v-if="filteredGames.length === 0" style="text-align: center; padding: 36px 20px; background: #fafdfc; border-radius: 0; border: 1px dashed var(--line)">
+      <!-- 地图视图：同屏展示京网陪练、同龄球友、本地球友及附近空闲场地 -->
+      <div v-if="showMgMap" class="mb-16">
+        <div
+          v-if="filteredGames.length === 0"
+          class="flex-between mb-12"
+          style="padding: 9px 14px; background: #fff9f2; border: 1px solid #f5d8b8; font-size: 13px; color: #7a4b15"
+        >
+          <span>当前筛选条件下暂无已发布的约球局，地图已为您保留「{{ mgRegion === '全部' ? '全城' : mgRegion }}」可约空闲场地，也可直接发起新球局。</span>
+          <div class="flex-row" style="gap: 8px; flex-shrink: 0">
+            <button type="button" class="btn-ghost" style="padding: 4px 10px; font-size: 12.5px" @click="resetMgFilters">重置筛选</button>
+            <button type="button" class="btn-orange" style="padding: 4px 10px; font-size: 12.5px" @click="showPublishModal = true">＋ 发布约球</button>
+          </div>
+        </div>
+        <MatchmakingMap
+          :games="filteredGames"
+          :venues="filteredMgVenues"
+          @join="joinMatchmakingGame"
+          @book-venue="openVenueDetail($event)"
+        />
+      </div>
+
+      <div v-else-if="filteredGames.length === 0" style="text-align: center; padding: 36px 20px; background: #fafdfc; border-radius: 0; border: 1px dashed var(--line)">
         <div style="font-size: 28px; margin-bottom: 8px">🎾</div>
         <strong style="font-size: 16px; display: block; margin-bottom: 8px">当前筛选条件下暂无约球局</strong>
         <div class="flex-row" style="justify-content: center; margin-top: 12px">
@@ -854,11 +974,17 @@ function submitNewGame() {
         </div>
       </div>
 
-      <div v-else>
+      <div v-else-if="!showMgMap">
         <div class="play-game-list">
           <div v-for="g in pagedGames" :key="g.id" class="card play-game-row">
             <div class="play-game-main">
-              <div class="flex-row" style="margin-bottom: 6px; gap: 8px">
+              <div class="flex-row" style="margin-bottom: 6px; gap: 8px; flex-wrap: wrap">
+                <span
+                  class="tag"
+                  :class="g.matchRole === '京网陪练' ? 'orange' : g.matchRole === '同龄球友' ? 'purple' : 'green'"
+                >
+                  {{ g.matchRole === '京网陪练' ? '🎯 京网陪练' : g.matchRole === '同龄球友' ? '👦 同龄球友' : '🤝 本地球友' }}
+                </span>
                 <span class="tag green">CUTR {{ g.cutrBand }}</span>
                 <span class="tag blue">{{ g.venueType }} · {{ g.activityType }} · {{ g.format }}</span>
                 <strong
@@ -870,8 +996,8 @@ function submitNewGame() {
               </div>
               <div class="play-game-meta">
                 <span>📅 <strong>{{ BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date }} {{ g.startTime }}-{{ g.endTime }}</strong></span>
-                <span>📍 {{ g.venueName }}（距您 {{ g.distanceKm }} km）</span>
-                <span>👤 发起人：{{ g.hostName }} · 性别：{{ g.gender }}</span>
+                <span>📍 {{ g.venueName }}（{{ g.region }} · 距您 {{ g.distanceKm }} km）</span>
+                <span>👤 {{ g.hostName }} · {{ g.ageGroup ?? `性别：${g.gender}` }}</span>
               </div>
             </div>
 
@@ -883,11 +1009,11 @@ function submitNewGame() {
               </div>
               <button
                 type="button"
-                :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-primary'"
-                style="padding: 9px 18px"
-                @click="openGameDetail(g)"
+                :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-orange'"
+                style="padding: 9px 16px"
+                @click="joinMatchmakingGame(g.id)"
               >
-                {{ g.joinedByMe ? '已报名 · 查看' : g.currentPlayers >= g.maxPlayers ? '已满员 · 查看' : '立即加入' }}
+                {{ g.joinedByMe ? '已预约 · 取消' : g.currentPlayers >= g.maxPlayers ? '已满员' : '一键预约并支付' }}
               </button>
             </div>
           </div>
@@ -899,6 +1025,137 @@ function submitNewGame() {
           unit="场球局"
           @update:page="gamePage = $event"
         />
+      </div>
+    </div>
+
+    <!-- 球场周边服务：运动康复机构 + 网球俱乐部寒假训练营 -->
+    <div v-if="subView === 'nearby'" style="display: flex; flex-direction: column; gap: 18px">
+      <!-- 1. 球场周边运动康复机构一键预约 -->
+      <div class="card card-pad">
+        <div class="flex-between mb-14" style="padding-bottom: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 10px">
+          <div class="flex-row" style="gap: 10px">
+            <strong style="font-size: 18.5px">🩺 球场周边运动康复机构（赛后放松理疗）</strong>
+            <span class="tag red">市卫健局认证 · 赛期绿色通道</span>
+          </div>
+          <div class="flex-row" style="gap: 8px">
+            <select v-model="rehabDate" class="dd-select active" style="height: 36px; width: 130px; font-size: 13px">
+              <option v-for="d in BOOKING_DATES" :key="`rh-${d.iso}`" :value="d.shortDate">{{ d.shortDate }}（{{ d.weekday }}）</option>
+            </select>
+            <select v-model="rehabSlot" class="dd-select active" style="height: 36px; width: 175px; font-size: 13px">
+              <option>17:30-18:30（赛后放松）</option>
+              <option>19:00-20:00（夜场恢复）</option>
+              <option>14:00-15:00（赛间肌贴）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3" style="gap: 14px">
+          <div
+            v-for="center in REHAB_CENTERS"
+            :key="center.id"
+            class="card"
+            style="display: flex; flex-direction: column; justify-content: space-between; border-color: #d6e8e0"
+          >
+            <div>
+              <div class="photo-box" style="height: 138px">
+                <img :src="center.photo" :alt="center.name" />
+                <span class="badge-tl">{{ center.badge }}</span>
+              </div>
+              <div class="card-pad" style="padding: 13px 14px">
+                <div class="flex-between" style="margin-bottom: 5px; gap: 6px">
+                  <strong style="font-size: 15.5px">{{ center.name }}</strong>
+                  <span class="rating-pill" style="flex-shrink: 0">★ {{ center.rating }}</span>
+                </div>
+                <div style="font-size: 12.5px; color: var(--primary); font-weight: 700; margin-bottom: 6px">
+                  📍 {{ center.distance }} · {{ center.openHours }}
+                </div>
+                <div style="font-size: 12.5px; color: var(--ink-2); margin-bottom: 10px">{{ center.doctorInfo }}</div>
+
+                <label class="dd-field">
+                  <span class="dd-field-label">选择放松理疗项目</span>
+                  <select
+                    v-model.number="selectedRehabServiceIdx[center.id]"
+                    class="dd-select"
+                    style="height: 36px; font-size: 13px"
+                  >
+                    <option v-for="(svc, idx) in center.services" :key="svc.name" :value="idx">
+                      {{ svc.name }}（{{ svc.duration }} · ¥{{ svc.price }}）
+                    </option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex-between" style="padding: 11px 14px; border-top: 1px dashed var(--line); background: #fafdfc">
+              <strong style="font-size: 18px; color: var(--accent)">
+                ¥{{ (center.services[selectedRehabServiceIdx[center.id] ?? 0] ?? center.services[0]!).price }}
+                <small style="font-size: 12px; color: var(--ink-3); font-weight: 600">/次</small>
+              </strong>
+              <div class="flex-row" style="gap: 6px">
+                <button
+                  type="button"
+                  class="btn-ghost"
+                  style="padding: 6px 10px; font-size: 12.5px"
+                  @click="openNavigation({ placeName: center.name, address: center.address, lng: center.lng, lat: center.lat, distance: center.distance, driveMin: '约 4 分钟', tip: center.doctorInfo })"
+                >
+                  导航
+                </button>
+                <button type="button" class="btn-orange" style="padding: 6px 13px; font-size: 13px" @click="bookRehabService(center)">
+                  一键预约理疗
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 网球俱乐部寒假训练营与研学课程 -->
+      <div class="card card-pad">
+        <div class="flex-between mb-14" style="padding-bottom: 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 10px">
+          <div class="flex-row" style="gap: 10px">
+            <strong style="font-size: 18.5px">❄️ 网球俱乐部寒假训练营 & 青少年研学课程</strong>
+            <span class="tag green">省网校 & 五星俱乐部直招</span>
+          </div>
+          <button type="button" class="btn-ghost" style="font-size: 13px" @click="switchModule(9)">
+            进入完整“训 · 培训研学”专区 →
+          </button>
+        </div>
+
+        <div class="grid-2" style="gap: 14px">
+          <div
+            v-for="camp in winterCamps"
+            :key="camp.id"
+            class="card"
+            style="display: grid; grid-template-columns: 186px 1fr; overflow: hidden; border-color: #d6e8e0"
+          >
+            <div class="photo-box" style="height: 100%; min-height: 168px">
+              <img :src="camp.photo" :alt="camp.title" />
+              <span class="badge-tl" style="font-size: 11.5px">{{ camp.badge }}</span>
+            </div>
+            <div class="card-pad" style="padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px">
+              <div>
+                <div class="flex-between" style="margin-bottom: 4px; gap: 6px">
+                  <strong style="font-size: 15.5px">{{ camp.title }}</strong>
+                  <span class="tag orange" style="flex-shrink: 0">余 {{ camp.remaining }} 名</span>
+                </div>
+                <div style="font-size: 12.5px; color: var(--ink-2); margin-bottom: 6px">
+                  📅 {{ camp.scheduleDate }} ｜ 📍 {{ camp.venue }}
+                </div>
+                <div class="flex-row" style="gap: 5px; flex-wrap: wrap">
+                  <span v-for="hl in camp.highlights.slice(0, 2)" :key="hl" class="tag blue" style="font-size: 11.5px">✔ {{ hl }}</span>
+                </div>
+              </div>
+              <div class="flex-between" style="padding-top: 8px; border-top: 1px dashed var(--line)">
+                <strong style="font-size: 18px; color: var(--accent)">
+                  ¥{{ camp.price }}<small style="font-size: 12px; color: var(--ink-3); font-weight: 600">{{ camp.priceUnit }}</small>
+                </strong>
+                <button type="button" class="btn-primary" style="padding: 6px 14px; font-size: 13px" @click="enrollWinterCamp(camp)">
+                  一键报名训练营
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

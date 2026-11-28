@@ -40,14 +40,17 @@ function redrawMarkers() {
   markers.clear()
 
   for (const { hotel, room } of props.listings) {
+    const totalRemain = hotel.rooms.reduce((sum, r) => sum + r.remaining, 0)
+    const stars = hotel.rating >= 4.9 ? '★★★★★' : '★★★★☆'
+    const reviewSnippet = hotel.reviews[0]?.content ? ` ｜ 真实点评：“${hotel.reviews[0].content}”` : ''
     const marker = addPortalMapMarker(markerLayer, [hotel.lat, hotel.lng], {
       title: hotel.name,
       icon: MAP_ICONS.hotel,
-      label: `¥${room.eventPrice}`,
+      label: `京网推荐 ¥${room.eventPrice} · 余${totalRemain}间`,
       photo: hotel.photo,
-      description: `${hotel.rating.toFixed(1)} 分 · ${hotel.reviewCount} 条点评 · ${hotel.distanceToCourt}`,
-      highlight: `¥${room.eventPrice}${room.leaseUnit ?? '/晚'}起`,
-      actions: [{ label: '查看详情', run: () => emit('detail', hotel.id, room.id) }],
+      description: `京网推荐 ${stars} ${hotel.rating.toFixed(1)}分 · ${hotel.reviewCount}条点评 · ${hotel.distanceToCourt}${reviewSnippet}`,
+      highlight: `空房余 ${totalRemain} 间 · ¥${room.eventPrice}${room.leaseUnit ?? '/晚'}起`,
+      actions: [{ label: '查看详情与预订', run: () => emit('detail', hotel.id, room.id) }],
     })
     marker.on('popupopen', () => { selectedId.value = hotel.id })
     marker.on('popupclose', () => {

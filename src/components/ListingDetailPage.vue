@@ -173,7 +173,7 @@ const prodQty = ref(1)
 const prodUseStub = ref(true)
 const prodUsePoints = ref(false)
 const prodPayMethod = ref<'wechat' | 'alipay'>('wechat')
-const prodAddr = ref('湖北省武汉市洪山区光谷大道88号（林先生 138****8866）')
+const prodAddr = ref('湖北省武汉市洪山区光谷大道88号（张先生 138****8866）')
 
 const prodUnitPrice = computed(() => {
   if (!product.value) return 0

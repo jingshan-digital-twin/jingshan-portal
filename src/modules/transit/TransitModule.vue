@@ -379,23 +379,31 @@ function bookDriver(drv: RecommendedDriver) {
           {{ matchStage === 'live' ? '温泉大道赛场段 07:30–19:00 封闭，已标注绕行路线与摆渡点' : '11/29 08:00–18:00 文峰路南门段单向通行禁停' }}
         </span>
       </div>
-      <button
-        class="btn-orange"
-        style="flex-shrink: 0"
-        @click="
-          openNavigation({
-            placeName: matchStage === 'live' ? '国际网球中心 P1 推荐停车场' : '文峰公园 P2 推荐停车场',
-            address: matchStage === 'live' ? '湖北省荆门市京山市温泉街道网球大道北侧P1入口' : '湖北省荆门市京山市新市街道文峰路文峰公园南门',
-            lng: matchStage === 'live' ? 113.1185 : 113.1128,
-            lat: matchStage === 'live' ? 31.0226 : 31.0185,
-            distance: '推荐避堵点',
-            driveMin: '约 6 分钟',
-            tip: '已自动避开当前赛期封闭与限行路段，直达推荐停车场',
-          })
-        "
-      >
-        🧭 一键避堵自驾导航
-      </button>
+      <div class="flex-row" style="gap: 8px; flex-shrink: 0">
+        <button
+          type="button"
+          class="btn-primary"
+          @click="state.showArrivalGuideModal = true"
+        >
+          📋 抵京出行指引卡
+        </button>
+        <button
+          class="btn-orange"
+          @click="
+            openNavigation({
+              placeName: matchStage === 'live' ? '国际网球中心 P1 推荐停车场' : '文峰公园 P2 推荐停车场',
+              address: matchStage === 'live' ? '湖北省荆门市京山市温泉街道网球大道北侧P1入口' : '湖北省荆门市京山市新市街道文峰路文峰公园南门',
+              lng: matchStage === 'live' ? 113.1185 : 113.1128,
+              lat: matchStage === 'live' ? 31.0226 : 31.0185,
+              distance: '推荐避堵点',
+              driveMin: '约 6 分钟',
+              tip: '已自动避开当前赛期封闭与限行路段，直达推荐停车场',
+            })
+          "
+        >
+          🧭 一键避堵自驾导航
+        </button>
+      </div>
     </div>
 
     <!-- 一、全宽赛事交通管控一张图（上方全景大地图，避免标记拥挤重叠） -->

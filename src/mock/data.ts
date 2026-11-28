@@ -373,11 +373,19 @@ export const INITIAL_COMPLAINTS: ComplaintTicket[] = [
   {
     id: 'FB-1122',
     category: '场馆/场地设施',
+    tag: '场馆设施建议',
     target: '文峰公园网球场',
     content: '建议文峰公园增加夜场直饮水点位，方便夏季夜打补水。',
     status: '已办结 · 反馈满意',
     dept: '市文旅局 / 金源场馆运营',
+    sla: '24小时内办结',
     createdAt: '2026-11-22 19:40',
+    timeline: [
+      { step: '游客一键提交反馈', time: '11-22 19:40', detail: '系统采集关联场馆与标签【场馆设施建议】', done: true },
+      { step: '系统自动分派部门', time: '11-22 19:41', detail: '已自动派单至【市文旅局 / 金源场馆运营】限时办结', done: true },
+      { step: '部门核查与整改落地', time: '11-23 10:15', detail: '已完成文峰公园球场东侧新增2台温热直饮水机安装调试', done: true },
+      { step: '处置结果实时回传', time: '11-23 11:00', detail: '回传现场整改照片，游客评价：非常满意（5星）', done: true },
+    ],
   },
 ]
 

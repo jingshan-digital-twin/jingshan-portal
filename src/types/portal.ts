@@ -2,6 +2,7 @@ export type ModuleId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13
 export type RadiusOption = '500m' | '1公里' | '2公里'
 export type VisitorOrigin =
   | '武汉市（省内游客）'
+  | '北京市（省外游客）'
   | '京山本地市民'
   | '荆门市（周边游客）'
   | '深圳市（省外游客）'
@@ -120,6 +121,8 @@ export interface MatchmakingGame {
   title: string
   hostName: string
   hostOrigin: string
+  matchRole?: '京网陪练' | '同龄球友' | '本地球友'
+  ageGroup?: string
   venueId: string
   venueName: string
   region: '温泉街道' | '新市街道' | '永兴街道'
@@ -283,14 +286,47 @@ export interface FeedbackPost {
   category: string
 }
 
+export interface ComplaintTimelineStep {
+  step: string
+  time: string
+  detail: string
+  done: boolean
+}
+
 export interface ComplaintTicket {
   id: string
   category: string
+  tag?: string
   target: string
   content: string
-  status: '已分办至对应部门' | '已办结 · 反馈满意'
+  status: '已分办至对应部门' | '部门核查处置中' | '已办结 · 反馈满意'
   dept: string
+  sla?: string
   createdAt: string
+  timeline?: ComplaintTimelineStep[]
+}
+
+export interface PointLogItem {
+  id: string
+  title: string
+  category: string
+  delta: number
+  time: string
+}
+
+export interface MerchantRatingItem {
+  id: string
+  name: string
+  category: '球场' | '酒店' | '餐饮' | '教练'
+  starLevel: number
+  rating: number
+  positiveRate: number
+  complaintCount: number
+  reviewCount: number
+  status: '五星诚信' | '四星优质' | '整改预警'
+  badge: string
+  recentReview: string
+  reviewedByMe?: boolean
 }
 
 export interface CouponItem {

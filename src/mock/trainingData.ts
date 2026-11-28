@@ -89,6 +89,23 @@ export interface RehabCenter {
 
 export const CAMP_PROGRAMS: CampProgram[] = [
   {
+    id: 'camp-winter-club',
+    category: '训练营',
+    badge: '❄️ 俱乐部寒假营 · 报名热招',
+    title: '京彩/温泉红土网球俱乐部 · 2027青少年寒假专项训练营',
+    targetAudience: '7–16岁青少年（按CUTR水平分班）',
+    duration: '5天4晚',
+    scheduleDate: '2027年1月18日 / 1月25日 两期开营',
+    venue: '京彩室内空调馆 & 温泉红土网球学院',
+    photo: '/images/indoor_court.jpg',
+    rating: 5.0,
+    price: 1680,
+    priceUnit: '/人/期',
+    remaining: 9,
+    highlights: ['五星俱乐部主教练带队 · 室内恒温+红土双修', '含每日体能监测 + 世杰康复拉伸课', '结营赠五维能力晋升复测与视频动作报告'],
+    desc: '专为中青赛参赛及进阶青少年打造的俱乐部寒假强化训练营：聚焦发球动力学、红土滑步与比赛关键分心理，全程配备室内恒温场与运动恢复指导。',
+  },
+  {
     id: 'camp-1',
     category: '训练营',
     badge: '🏕️ 省网校直营 · 热门爆款',

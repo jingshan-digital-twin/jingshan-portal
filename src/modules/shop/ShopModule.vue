@@ -4,7 +4,18 @@ import PaginationBar from '../../components/PaginationBar.vue'
 import { PRODUCT_CATALOG } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { openProductDetail, openPhoto, openNavigation } = usePortalStore()
+const { openProductDetail, openPhoto, openNavigation, createQuickOrder } = usePortalStore()
+
+function quickOrderSingle(item: (typeof PRODUCT_CATALOG)[number]) {
+  createQuickOrder(
+    '商品',
+    `${item.name} × 1`,
+    `${item.specs[0]?.label ?? '标准装'} · ${item.shipping} · 快递到家`,
+    item.memberPrice,
+    40,
+    0,
+  )
+}
 
 // 主分区切换：特色商品购买 / 纪念品店铺
 const shopView = ref<'goods' | 'stores'>('goods')
@@ -382,9 +393,14 @@ watch(visibleStores, () => {
 
               <div class="shop-goods-foot">
                 <span class="price shop-goods-price">¥{{ item.memberPrice }}</span>
-                <button class="btn-primary shop-goods-btn" @click="openProduct(item.id)">
-                  详情购买
-                </button>
+                <div class="flex-row" style="gap: 4px">
+                  <button class="btn-ghost shop-goods-btn" @click="openProduct(item.id)">
+                    详情
+                  </button>
+                  <button class="btn-primary shop-goods-btn" @click="quickOrderSingle(item)">
+                    快递买
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -6,6 +6,7 @@ const { state, switchModule, showToast } = usePortalStore()
 
 const origins: VisitorOrigin[] = [
   '武汉市（省内游客）',
+  '北京市（省外游客）',
   '京山本地市民',
   '荆门市（周边游客）',
   '深圳市（省外游客）',

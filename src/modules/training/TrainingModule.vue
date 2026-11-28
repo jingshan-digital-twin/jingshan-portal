@@ -1017,12 +1017,23 @@ function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
               <div class="flex-row" style="gap: 6px">
                 <button
                   class="btn-ghost tr-btn-sm"
-                  @click="openNavigation({ placeName: center.name, address: center.address, lng: center.lng, lat: center.lat, distance: center.distance, driveMin: '约 5 分钟', tip: `电话 ${center.phone}` })"
+                  @click="openRehabDetail(center)"
                 >
-                  🧭 导航
+                  详情
                 </button>
-                <button class="btn-primary tr-btn-sm" @click="openRehabDetail(center)">
-                  详情与预订
+                <button
+                  class="btn-orange tr-btn-sm"
+                  @click="
+                    createQuickOrder(
+                      '课程',
+                      `运动康复理疗：${center.name}`,
+                      `${center.services[0]!.name}（${center.services[0]!.duration}） · 赛期绿通`,
+                      center.services[0]!.price,
+                      60,
+                    )
+                  "
+                >
+                  一键预约理疗
                 </button>
               </div>
             </div>
