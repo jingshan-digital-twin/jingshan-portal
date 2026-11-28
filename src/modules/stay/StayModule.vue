@@ -9,7 +9,7 @@ import type { HotelProfile, HotelRoom } from '../../types/portal'
 
 const StayResultsMap = defineAsyncComponent(() => import('./StayResultsMap.vue'))
 const { state, openHotelDetail, openActionModal, openNavigation, createQuickOrder, claimHomeSubsidy } = usePortalStore()
-const PAGE_SIZE = 4
+const PAGE_SIZE = 8
 const promotionMessage = '京山市房管局重磅活动：2026京山网球公开赛期间购房直减 ¥50,000！'
 const typeLabels: Record<HotelProfile['category'], string> = {
   公寓: '网球公寓',
@@ -169,7 +169,7 @@ function bookStay(hotel: HotelProfile, room: HotelRoom) {
 
 <template>
   <section>
-    <form class="stay-search mb-16" aria-label="搜索住宿" @submit.prevent="searchStays">
+    <form class="card card-pad filter-workbench stay-search mb-16" aria-label="搜索住宿" @submit.prevent="searchStays">
       <div class="stay-destination">
         <span>目的地</span>
         <strong>京山市</strong>
@@ -392,20 +392,18 @@ function bookStay(hotel: HotelProfile, room: HotelRoom) {
 <style scoped>
 .stay-search {
   display: grid;
-  grid-template-columns: minmax(115px, 0.7fr) repeat(2, minmax(150px, 1fr)) auto minmax(190px, 1.6fr) auto;
+  grid-template-columns: minmax(105px, 0.65fr) repeat(2, minmax(150px, 1fr)) auto minmax(190px, 1.6fr) auto;
   align-items: end;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--primary);
-  border-radius: 10px;
-  background: var(--surface);
+  border-radius: 0;
 }
 
-.stay-destination { display: grid; gap: 3px; padding: 0 12px 5px; border-right: 1px solid var(--line); }
-.stay-destination span { color: var(--ink-2); font-size: 13px; font-weight: 700; }
-.stay-destination strong { font-size: 18px; }
+.stay-destination { display: grid; gap: 3px; padding: 0 4px 5px; }
+.stay-destination span { color: var(--ink-2); font-size: 13px; font-weight: 800; }
+.stay-destination strong { font-size: 18px; color: var(--ink); }
 .stay-nights { margin-bottom: 8px; border-radius: 20px; }
-.stay-keyword { height: 42px; padding: 0 12px; border: 1.5px solid #cbdcd5; border-radius: 6px; color: var(--ink); font-size: 14px; }
+.stay-keyword { height: 42px; padding: 0 12px; border: 1.5px solid #cbdcd5; border-radius: 6px; color: var(--ink); font-size: 14px; background: #ffffff; }
+.stay-keyword:focus { border-color: var(--primary); outline: none; }
 .stay-search-btn { height: 42px; padding: 0 20px; border-radius: 6px; }
 
 .stay-promo {
@@ -414,7 +412,7 @@ function bookStay(hotel: HotelProfile, room: HotelRoom) {
   height: 78px;
   margin-left: auto;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
   transition: width 280ms ease, height 280ms ease, border-radius 280ms ease, border-width 280ms ease, margin-bottom 280ms ease;
 }

@@ -354,6 +354,8 @@ export interface LightboxPayload {
     | 'amenity'
     | 'store'
     | 'theme'
+    | 'matchmaking'
+  matchmakingGameId?: string
   orderCategory?: PortalOrder['category']
   reviews: (string | LightboxReview)[]
 }

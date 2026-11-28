@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import AbilityRadarChart from '../../components/AbilityRadarChart.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import { BOOKING_DATES, formatHourRange } from '../../mock/schedules'
@@ -27,7 +27,27 @@ const {
 } = usePortalStore()
 
 // 主分区切换：课程培训 / 成长进阶 / 认证机构
-const trainView = ref<'courses' | 'growth' | 'institutions'>('courses')
+const initialParams = new URLSearchParams(window.location.search)
+const initialViewParam = initialParams.get('view')
+const trainView = ref<'courses' | 'growth' | 'institutions'>(
+  initialViewParam === 'growth' || initialViewParam === 'institutions' ? initialViewParam : 'courses',
+)
+
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const v = params.get('view')
+  if (v === 'growth' || v === 'institutions' || v === 'courses') {
+    trainView.value = v
+  }
+  if (params.get('section') === 'tournaments') {
+    trainView.value = 'growth'
+    nextTick(() => {
+      window.setTimeout(() => {
+        document.getElementById('youthTournamentsAnchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 60)
+    })
+  }
+})
 
 // ===== 1. 日常约课（团体课 / 私教课 7日日历） =====
 const lessonMode = ref<'group' | 'private'>('group')
@@ -853,7 +873,7 @@ function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
       </div>
 
       <!-- 青少年网球比赛专区 -->
-      <div class="card" style="padding: 13px 16px">
+      <div id="youthTournamentsAnchor" class="card" style="padding: 13px 16px; scroll-margin-top: 96px">
         <div class="flex-between" style="padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid var(--line)">
           <strong class="tr-sec-title">🏆 青少年网球比赛</strong>
           <div class="flex-row" style="gap: 6px">

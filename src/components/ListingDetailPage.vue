@@ -19,6 +19,7 @@ const {
   toggleFavorite,
   createQuickOrder,
   confirmCourtBooking,
+  joinMatchmakingGame,
   openNavigation,
   openActionModal,
   showToast,
@@ -83,6 +84,17 @@ const venue = computed(() => {
 })
 
 const place = computed(() => (detail.value?.kind === 'place' ? detail.value.data : null))
+const activeMatchmakingGame = computed(() => {
+  const id = place.value?.matchmakingGameId
+  if (!id) return null
+  return state.matchmakingGames.find((g) => g.id === id) ?? null
+})
+const activeMatchmakingDateLabel = computed(() => {
+  const g = activeMatchmakingGame.value
+  if (!g) return ''
+  const dLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date
+  return `${dLabel} ${g.startTime}-${g.endTime}`
+})
 
 // ===== Domain-specific interactive state =====
 // 1. Hotel state
@@ -1622,6 +1634,68 @@ function triggerPrimaryNav() {
                 {{ cinemaSeats.length ? `确认出票（¥${cinemaShowtime.memberPrice * cinemaSeats.length}）` : '请选择座位' }}
               </button>
               <div class="dp-bc-note">影院扫码取票 · 凭影票免费停车 3 小时</div>
+            </template>
+
+            <!-- MATCHMAKING ACTIVITY Right Card Form -->
+            <template v-else-if="place && activeMatchmakingGame">
+              <div class="dp-unified-box">
+                <div class="dp-ub-row-2">
+                  <div class="dp-ub-cell">
+                    <label>活动时间</label>
+                    <div class="dp-ub-static">
+                      {{ activeMatchmakingDateLabel }}
+                    </div>
+                  </div>
+                  <div class="dp-ub-cell">
+                    <label>报名进度</label>
+                    <div class="dp-ub-static" style="color: var(--primary)">
+                      已报 {{ activeMatchmakingGame.currentPlayers }}/{{ activeMatchmakingGame.maxPlayers }} 人
+                    </div>
+                  </div>
+                </div>
+                <div class="dp-ub-row-2">
+                  <div class="dp-ub-cell">
+                    <label>水平要求</label>
+                    <div class="dp-ub-static">CUTR {{ activeMatchmakingGame.cutrBand }}</div>
+                  </div>
+                  <div class="dp-ub-cell">
+                    <label>赛制与环境</label>
+                    <div class="dp-ub-static">{{ activeMatchmakingGame.venueType }} · {{ activeMatchmakingGame.format }}</div>
+                  </div>
+                </div>
+                <div class="dp-ub-cell dp-ub-full">
+                  <label>发起人与要求</label>
+                  <div class="dp-ub-static">
+                    {{ activeMatchmakingGame.hostName }}（{{ activeMatchmakingGame.hostOrigin }}）· 性别：{{ activeMatchmakingGame.gender }}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="dp-bc-cta"
+                :disabled="!activeMatchmakingGame.joinedByMe && activeMatchmakingGame.currentPlayers >= activeMatchmakingGame.maxPlayers"
+                @click="joinMatchmakingGame(activeMatchmakingGame.id)"
+              >
+                {{
+                  activeMatchmakingGame.joinedByMe
+                    ? '已报名（点击取消报名）'
+                    : activeMatchmakingGame.currentPlayers >= activeMatchmakingGame.maxPlayers
+                      ? '本场球局已满员'
+                      : `立即预约加入（¥${activeMatchmakingGame.feePerPerson}/人）`
+                }}
+              </button>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
+                <button type="button" class="btn-ghost" @click="triggerPrimaryNav">🧭 导航去球场</button>
+                <button
+                  type="button"
+                  class="btn-ghost"
+                  @click="openActionModal({ type: 'stub', code: state.ticketStubCode })"
+                >
+                  🎫 电子票根
+                </button>
+              </div>
+              <div class="dp-bc-note">报名成功获赠 +30 金网积分 · 支持开场前取消</div>
             </template>
 
             <!-- PLACE Right Card Form -->

@@ -389,50 +389,21 @@ export function usePortalStore() {
       silent?: boolean
     },
   ) {
-    // 10-13 专栏已下线：统一拦截，避免残留入口打开隐藏页面
-    if (id > 9) {
+    // 10 便民配套专栏已下线：统一拦截，避免残留入口打开隐藏页面
+    if (id === 10) {
       showToast('该栏目已下线')
       return
     }
 
-    // Explicit new-window jump (e.g. clicking "进入完整专区 ↗" inside the fixed summary container)
+    // Explicit new-window jump when specifically requested
     if (options?.newWindow && id !== 1) {
       openModuleInNewWindow(id, options.params, options.silent)
       return
     }
 
-    // Exit detail page if currently viewing one
-    if (state.activeDetail) {
-      state.activeDetail = null
-      try {
-        const cleanUrl = new URL(window.location.href)
-        cleanUrl.searchParams.delete('detail')
-        window.history.replaceState({ moduleId: id }, '', cleanUrl.toString())
-      } catch {
-        // ignore
-      }
-    }
-
-    // Standalone detail page mode (?module=2..13)
-    if (state.isStandalonePage) {
-      if (id === 1) {
-        persistStateNow()
-        window.location.href = buildModuleUrl(1)
-        return
-      }
-      state.activeModule = id
-      const nextUrl = buildModuleUrl(id, options?.params)
-      window.history.pushState({ moduleId: id }, '', nextUrl)
-      updateDocumentTitle(id, true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-
-    // Home page mode: switch the fixed summary container in-place without jumping away
-    state.activeModule = id
     if (options?.params?.surface) {
       const s = options.params.surface
-      if (s === '全部' || s === '硬地' || s === '红土' || s === '室内风雨') {
+      if (s === '全部' || s === '硬地' || s === '红土' || s === '室内风雨' || s === '匹克球') {
         state.courtSurfaceFilter = s
       }
     }
@@ -442,28 +413,35 @@ export function usePortalStore() {
         state.courtRegionFilter = r
       }
     }
+
+    const previousModule = state.activeModule
+    const targetStandalone = id !== 1
+    if (state.isStandalonePage === targetStandalone && state.activeModule === id && !state.activeDetail && !options?.params) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    state.activeDetail = null
+    state.isStandalonePage = targetStandalone
+    state.activeModule = id
+    persistStateNow()
+    try {
+      const nextUrl = buildModuleUrl(id, options?.params)
+      window.history.replaceState({ ...window.history.state, moduleId: previousModule }, '')
+      window.history.pushState({ moduleId: id, returnToPortalPage: targetStandalone }, '', nextUrl)
+    } catch {
+      // ignore history errors
+    }
+    updateDocumentTitle(id, targetStandalone)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function switchModule(id: ModuleId, params?: Record<string, string | undefined>) {
     openModulePage(id, { newWindow: false, params })
   }
 
-  function navigateToModulePage(id: ModuleId) {
-    if (state.isStandalonePage && state.activeModule === id && !state.activeDetail) return
-    const previousModule = state.activeModule
-    state.activeDetail = null
-    state.isStandalonePage = id !== 1
-    state.activeModule = id
-    persistStateNow()
-    try {
-      const nextUrl = buildModuleUrl(id)
-      window.history.replaceState({ ...window.history.state, moduleId: previousModule }, '')
-      window.history.pushState({ moduleId: id, returnToPortalPage: true }, '', nextUrl)
-    } catch {
-      // ignore history errors
-    }
-    updateDocumentTitle(id, id !== 1)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  function navigateToModulePage(id: ModuleId, params?: Record<string, string | undefined>) {
+    openModulePage(id, { newWindow: false, params })
   }
 
   function openOrderSuccess(payload: OrderSuccessModalPayload) {
@@ -561,15 +539,7 @@ export function usePortalStore() {
 
     openModulePage(targetId, { newWindow: false, params, silent: true })
     const meta = getModuleMeta(targetId)
-    if (!state.isStandalonePage) {
-      const stageEl = document.getElementById('moduleStageAnchor')
-      stageEl?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-    showToast(
-      state.isStandalonePage
-        ? `已为您找到相关服务：${meta.title}`
-        : `已为您切换至「${meta.title}」`,
-    )
+    showToast(`已为您进入「${meta.title}」`)
   }
 
   function openPhoto(payload: LightboxPayload) {
@@ -1092,10 +1062,7 @@ export function usePortalStore() {
         state.courtRegionFilter = parseRegionFromUrl()
       } else {
         state.isStandalonePage = false
-        const previousModule = (window.history.state as { moduleId?: ModuleId } | null)?.moduleId
-        state.activeModule = previousModule && Number.isInteger(previousModule) && previousModule >= 1 && previousModule <= 13
-          ? previousModule
-          : 1
+        state.activeModule = 1
       }
 
       if (urlDetail) {

@@ -2,14 +2,12 @@
 import { computed, onMounted } from 'vue'
 import ActionDetailModal from './components/ActionDetailModal.vue'
 import EventPopupModal from './components/EventPopupModal.vue'
-import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import HeroSpotlightCarousel from './components/HeroSpotlightCarousel.vue'
-import HomeSummaryStage from './components/HomeSummaryStage.vue'
 import ListingDetailPage from './components/ListingDetailPage.vue'
 import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
+import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
 import ReservationDialog from './components/ReservationDialog.vue'
-import SubPageNavBar from './components/SubPageNavBar.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
 import FeedbackModule from './modules/feedback/FeedbackModule.vue'
@@ -54,28 +52,27 @@ onMounted(() => {
   <div>
     <PortalHeader />
 
-    <!-- 独立全屏详情页模式（参考爱彼迎大屏详情页布局） -->
+    <!-- 独立全屏详情页模式 -->
     <template v-if="state.activeDetail">
       <ListingDetailPage />
     </template>
 
-    <!-- 首页模式：顶部焦点轮播 + 金刚区 + 下方固定热门概览容器 -->
+    <!-- 首页模式：首屏焦点图延伸至顶部频道栏下方 + 全板块信息总览与概括 -->
     <template v-else-if="!state.isStandalonePage">
-      <!-- 核心热点/赛事/活动轮播宣传区 + 右侧三合一快捷办理卡 -->
-      <HeroSpotlightCarousel />
+      <HeroSpotlightCarousel>
+        <template #top-nav>
+          <ModuleKingKongBar overlaid />
+        </template>
+      </HeroSpotlightCarousel>
 
-      <!-- 13 模块切换摘要金刚区 -->
-      <ModuleKingKongBar />
-
-      <!-- 下方固定容器：按当前选中板块展示精炼摘要，并提供新窗口完整页面跳转入口 -->
-      <main id="moduleStageAnchor" class="container stage-wrap" style="scroll-margin-top: 90px">
-        <HomeSummaryStage />
+      <main id="moduleStageAnchor" class="container stage-wrap home-overview-stage" style="scroll-margin-top: 90px">
+        <OverviewModule />
       </main>
     </template>
 
-    <!-- 独立专区页面（新窗口打开）：顶部面包屑导航 + 完整业务模块工作台 -->
+    <!-- 业务专区页面：统一频道导航 + 完整业务模块 -->
     <template v-else>
-      <SubPageNavBar />
+      <ModuleKingKongBar />
       <main id="moduleStageAnchor" class="container stage-wrap subpage-stage" style="scroll-margin-top: 90px">
         <component :is="activeComponent" />
       </main>

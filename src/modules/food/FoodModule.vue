@@ -4,7 +4,7 @@ import PaginationBar from '../../components/PaginationBar.vue'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { openPhoto } = usePortalStore()
-const PAGE_SIZE = 4
+const PAGE_SIZE = 8
 const FOOD_CATEGORIES = ['联盟85折', '农家菜', '夜市'] as const
 const foodCategory = ref<(typeof FOOD_CATEGORIES)[number] | ''>('')
 const foodKeyword = ref('')
@@ -364,7 +364,7 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 
     <div class="mb-16">
       <p v-if="!visibleShops.length" class="card card-pad food-empty" role="status">没有符合条件的餐厅</p>
-      <div v-else class="grid-2 food-grid">
+      <div v-else class="food-grid">
         <article v-for="shop in pagedShops" :key="shop.name" class="card food-card">
           <div class="food-card-media">
             <img class="food-card-photo" :src="shop.photo" alt="" />
@@ -379,10 +379,16 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
             <div class="food-card-meta">
               <span class="rating-pill"><span aria-hidden="true">★</span> {{ shop.rating }} 分</span>
               <span>{{ shop.reviews }} 条评价</span>
-              <span>人均 <strong>¥{{ shop.avg }}</strong></span>
+              <span>{{ shop.dist }}</span>
             </div>
-            <p>{{ shop.dist }}</p>
-            <p><strong>推荐菜</strong> {{ shop.dishes.join('、') }}</p>
+            <p class="food-card-dishes"><strong>推荐菜</strong> {{ shop.dishes.join('、') }}</p>
+          </div>
+          <div class="food-card-side">
+            <div class="food-card-price">
+              <small>人均</small>
+              <strong>¥{{ shop.avg }}</strong>
+            </div>
+            <span class="btn-primary food-card-cta" aria-hidden="true">查看详情 →</span>
           </div>
         </article>
       </div>
@@ -411,7 +417,9 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 }
 
 .food-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .food-empty {
@@ -422,11 +430,11 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 .food-card {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 36%) minmax(0, 1fr);
-  align-items: start;
-  gap: 18px;
-  padding: 12px;
-  border-radius: 8px;
+  grid-template-columns: 224px minmax(0, 1fr) 168px;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 18px;
+  border-radius: 0;
 }
 
 .food-card-media {
@@ -436,17 +444,54 @@ function openShopDetail(shop: (typeof restaurants)[number]) {
 .food-card-photo {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  height: 132px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 .food-card-content {
-  display: grid;
-  align-content: start;
-  gap: 5px;
-  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
   color: var(--ink-2);
+  font-size: 13.5px;
+}
+
+.food-card-dishes {
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+
+.food-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  padding-left: 18px;
+  border-left: 1px dashed var(--line);
+}
+
+.food-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.food-card-price small {
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.food-card-price strong {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.food-card-cta {
+  padding: 7px 14px;
   font-size: 13px;
 }
 

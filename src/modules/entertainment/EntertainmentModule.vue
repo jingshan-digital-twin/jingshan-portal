@@ -6,7 +6,7 @@ import { CINEMA_MOVIES } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const { openPhoto, openCinemaDetail, openNavigation } = usePortalStore()
-const PAGE_SIZE = 4
+const PAGE_SIZE = 8
 const entCategory = ref<'全部' | '农庄' | '采摘' | '亲子' | '康养' | 'KTV/电影'>('全部')
 const entScene = ref<'全部' | '亲子家庭' | '赛后放松' | '好友聚会'>('全部')
 const entBudget = ref<'全部' | '80以下' | '80-150' | '150以上'>('全部')
@@ -158,16 +158,17 @@ watch(visibleItems, () => {
       <button class="btn-primary" @click="resetEntFilters">重置全部筛选</button>
     </div>
 
-    <div v-else class="grid-2">
+    <div v-else style="display: flex; flex-direction: column; gap: 12px">
       <div
         v-for="e in pagedItems"
         :key="e.id"
         class="card"
+        style="display: grid; grid-template-columns: 256px 1fr; overflow: hidden"
         :style="e.id === 'ent-6' ? 'border: 2px solid #6f42c1' : ''"
       >
         <div
           class="photo-box"
-          style="height: 172px"
+          style="height: 100%; min-height: 176px"
           @click="openEntDetail(e)"
         >
           <img :src="e.photo" :alt="e.name" />

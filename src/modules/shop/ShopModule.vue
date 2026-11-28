@@ -10,7 +10,7 @@ const { openProductDetail, openPhoto, openActionModal, openNavigation } = usePor
 const shopView = ref<'goods' | 'stores'>('goods')
 
 const GOODS_PAGE_SIZE = 10
-const STORE_PAGE_SIZE = 4
+const STORE_PAGE_SIZE = 8
 
 // ===== 一、特色商品购买搜索与下拉筛选 =====
 const shopKeyword = ref('')
@@ -462,14 +462,14 @@ watch(visibleStores, () => {
       </div>
 
       <template v-else>
-        <div class="grid-2">
+        <div style="display: flex; flex-direction: column; gap: 12px">
           <div
             v-for="store in pagedStores"
             :key="store.id"
             class="card"
-            style="display: grid; grid-template-columns: 180px 1fr"
+            style="display: grid; grid-template-columns: 236px 1fr"
           >
-            <div class="photo-box" style="height: 100%; min-height: 186px" @click="openStoreDetail(store)">
+            <div class="photo-box" style="height: 158px" @click="openStoreDetail(store)">
               <img :src="store.photo" :alt="store.name" />
               <span class="badge-tl">{{ store.category }}</span>
             </div>
@@ -488,38 +488,39 @@ watch(visibleStores, () => {
                 </div>
               </div>
 
-              <div class="flex-row" style="padding-top: 10px; border-top: 1px dashed var(--line)">
-                <button
-                  class="btn-ghost"
-                  style="flex: 1"
-                  @click="
-                    openNavigation({
-                      placeName: store.name,
-                      address: `湖北省荆门市京山市${store.address}`,
-                      lng: store.lng,
-                      lat: store.lat,
-                      distance: store.distance,
-                      driveMin: store.driveMin,
-                      tip: store.benefit,
-                    })
-                  "
-                >
-                  🧭 导航到店
-                </button>
-                <button
-                  class="btn-primary"
-                  style="flex: 1"
-                  @click="
-                    openActionModal({
-                      type: 'inquiry',
-                      title: `${store.name} · 到店体验 / 快递代寄`,
-                      subtitle: `${store.address} · ${store.benefit}`,
-                      submitLabel: '提交体验 / 代寄预约',
-                    })
-                  "
-                >
-                  📦 体验 / 代寄
-                </button>
+              <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
+                <span style="font-size: 13px; color: var(--primary); font-weight: 700">{{ store.benefit }}</span>
+                <div class="flex-row" style="gap: 8px; flex-shrink: 0">
+                  <button
+                    class="btn-ghost"
+                    @click="
+                      openNavigation({
+                        placeName: store.name,
+                        address: `湖北省荆门市京山市${store.address}`,
+                        lng: store.lng,
+                        lat: store.lat,
+                        distance: store.distance,
+                        driveMin: store.driveMin,
+                        tip: store.benefit,
+                      })
+                    "
+                  >
+                    🧭 导航到店
+                  </button>
+                  <button
+                    class="btn-primary"
+                    @click="
+                      openActionModal({
+                        type: 'inquiry',
+                        title: `${store.name} · 到店体验 / 快递代寄`,
+                        subtitle: `${store.address} · ${store.benefit}`,
+                        submitLabel: '提交体验 / 代寄预约',
+                      })
+                    "
+                  >
+                    📦 体验 / 代寄
+                  </button>
+                </div>
               </div>
             </div>
           </div>

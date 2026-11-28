@@ -24,7 +24,7 @@ const tourTabs = [
 const activeSection = ref<(typeof tourTabs)[number]['id']>('scenic')
 
 // 1. 景区 / 乡村 / 网红 / 夜市 筛选、搜索与分页（每页4项）
-const PAGE_SIZE = 4
+const PAGE_SIZE = 8
 const spotKeyword = ref('')
 const spotPage = ref(1)
 const visitDate = ref(BOOKING_DATES[0]!.iso)
@@ -238,16 +238,16 @@ const visibleTrails = computed(() =>
       </div>
 
       <div v-else>
-        <div class="grid-2">
+        <div style="display: flex; flex-direction: column; gap: 12px">
           <div
             v-for="spot in pagedSpots"
             :key="spot.id"
             class="card"
-            style="display: grid; grid-template-columns: 200px 1fr; overflow: hidden"
+            style="display: grid; grid-template-columns: 240px 1fr; overflow: hidden"
           >
             <div
               class="photo-box"
-              style="height: 100%; min-height: 196px"
+              style="height: 156px"
               @click="openSpotDetail(spot)"
             >
               <img :src="spot.photo" :alt="spot.name" />
@@ -360,14 +360,14 @@ const visibleTrails = computed(() =>
         </div>
       </div>
 
-      <div class="grid-2">
+      <div style="display: flex; flex-direction: column; gap: 12px">
         <div
           v-for="pkg in pagedPackages"
           :key="pkg.id"
           class="card"
-          style="display: grid; grid-template-columns: 205px 1fr; overflow: hidden"
+          style="display: grid; grid-template-columns: 240px 1fr; overflow: hidden"
         >
-          <div class="photo-box" style="height: 100%; min-height: 215px" @click="openPackageDetail(pkg)">
+          <div class="photo-box" style="height: 164px" @click="openPackageDetail(pkg)">
             <img :src="pkg.photo" :alt="pkg.title" />
             <span class="badge-tl">{{ pkg.scope }} · {{ pkg.duration }}</span>
           </div>

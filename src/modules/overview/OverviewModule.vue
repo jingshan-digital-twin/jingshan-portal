@@ -7,8 +7,7 @@ import type { ModuleId } from '../../types/portal'
 
 const {
   state,
-  activeOrdersCount,
-  openModulePage,
+  navigateToModulePage,
   openPhoto,
   openHotelDetail,
   openProductDetail,
@@ -21,7 +20,7 @@ const {
 const activeTheme = ref<'全部' | '网球+文旅' | '网球+研学' | '网球+康养'>('全部')
 
 function openNewPage(id: ModuleId) {
-  openModulePage(id, { newWindow: true })
+  navigateToModulePage(id)
 }
 
 const themes = [
@@ -48,7 +47,7 @@ const themes = [
     ],
     price: '¥498',
     extra: '/人起 · 会员9折',
-    btn: '文旅专区 ↗',
+    btn: '文旅专区 →',
     target: 3 as const,
   },
   {
@@ -74,7 +73,7 @@ const themes = [
     ],
     price: '¥2,480',
     extra: '/期 · 积+200分',
-    btn: '研学专区 ↗',
+    btn: '研学专区 →',
     target: 9 as const,
   },
   {
@@ -100,7 +99,7 @@ const themes = [
     ],
     price: '¥2,999',
     extra: '/人起 · 票根立减',
-    btn: '立即查看 ↗',
+    btn: '立即查看 →',
     target: 3 as const,
     orange: true,
   },
@@ -218,21 +217,31 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
 <template>
   <section class="home-fixed-overview">
     <!-- 01 首页总览与网球主题专区 -->
-    <div class="module-toolbar">
-      <div class="mh-tabs">
+    <div class="home-overview-bar mb-18">
+      <div class="home-overview-bar-left">
+        <h2 class="summary-stage-title">全城服务总览与热门精选</h2>
+      </div>
+      <div class="flex-row">
+        <div class="home-theme-pills">
+          <button
+            v-for="tab in (['全部', '网球+文旅', '网球+研学', '网球+康养'] as const)"
+            :key="tab"
+            type="button"
+            class="home-theme-pill"
+            :class="{ active: activeTheme === tab }"
+            @click="activeTheme = tab"
+          >
+            {{ tab === '全部' ? '全部主题' : tab }}
+          </button>
+        </div>
         <button
-          v-for="tab in (['全部', '网球+文旅', '网球+研学', '网球+康养'] as const)"
-          :key="tab"
-          class="m-tab"
-          :class="{ active: activeTheme === tab }"
-          @click="activeTheme = tab"
+          type="button"
+          class="hdr-pill hdr-pill-event"
+          style="height: 36px"
+          @click="state.showEventModal = true"
         >
-          {{ tab === '全部' ? '全部主题' : tab }}
+          赛事福利
         </button>
-        <button class="m-tab" style="background: #fff3eb; border-color: #f9c8ae; color: #c93f14" @click="state.showEventModal = true">
-          🏆 赛事重磅福利
-        </button>
-        <button class="m-tab" @click="openNewPage(2)">完整赛况大厅 ↗</button>
       </div>
     </div>
 
@@ -257,11 +266,8 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               color: #fff;
             "
           >
-            <div style="font-size: 23px; font-weight: 900; margin-bottom: 8px">以球塑城、以赛兴业：欢迎来到生态京山</div>
             <div class="flex-between">
-              <span style="font-size: 14px; color: rgba(255, 255, 255, 0.9)">
-                全市 356 片标准球场 · 电子票根直享 79 家联盟商家特惠
-              </span>
+              <div style="font-size: 23px; font-weight: 900">以球塑城、以赛兴业：欢迎来到生态京山</div>
               <div class="flex-row">
                 <button
                   class="btn-orange"
@@ -289,8 +295,8 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             </span>
           </div>
           <div class="flex-row">
-            <button class="btn-primary" @click="openNewPage(2)">进入订场专区 ↗</button>
-            <button class="btn-ghost" @click="openNewPage(13)">我的能力卡 ↗</button>
+            <button class="btn-primary" @click="openNewPage(2)">进入订场专区 →</button>
+            <button class="btn-ghost" @click="openNewPage(13)">我的能力卡 →</button>
           </div>
         </div>
       </div>
@@ -308,7 +314,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           </div>
           <div class="flex-between">
             <span class="tag gold">含网球公寓长短租</span>
-            <button class="btn-orange" @click="openNewPage(5)">查看政策与公寓 ↗</button>
+            <button class="btn-orange" @click="openNewPage(5)">查看政策与公寓 →</button>
           </div>
         </div>
         <div v-else class="card card-pad flex-between" style="background: #fff9ef">
@@ -319,7 +325,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
         <div class="card card-pad">
           <div class="flex-between" style="margin-bottom: 12px">
             <strong style="font-size: 17px">🏆 近期焦点赛事</strong>
-            <button class="home-more-link" @click="openNewPage(2)">实时比分 ↗</button>
+            <button class="home-more-link" @click="openNewPage(2)">实时比分 →</button>
           </div>
           <div style="display: flex; flex-direction: column; gap: 10px">
             <div class="flex-between" style="background: #f5faf8; padding: 11px 13px; border-radius: 0">
@@ -327,14 +333,14 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
                 <div style="font-size: 14.5px; font-weight: 800">2026中青赛总决赛 <span class="tag red">进行中</span></div>
                 <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/24–12/3 · 国际网球中心</div>
               </div>
-              <button class="btn-primary" @click="openNewPage(2)">赛况 ↗</button>
+              <button class="btn-primary" @click="openNewPage(2)">赛况 →</button>
             </div>
             <div class="flex-between" style="background: #fff8f4; padding: 11px 13px; border-radius: 0">
               <div>
                 <div style="font-size: 14.5px; font-weight: 800">京山周末分级赛 <span class="tag orange">余12位</span></div>
                 <div style="font-size: 13px; color: var(--ink-3); margin-top: 2px">11/29 文峰公园 · 匹配 {{ state.abilityLevel }}</div>
               </div>
-              <button class="btn-orange" @click="openNewPage(2)">报名 ↗</button>
+              <button class="btn-orange" @click="openNewPage(2)">报名 →</button>
             </div>
           </div>
         </div>
@@ -371,8 +377,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <span class="badge-tl">{{ t.badge }}</span>
         </div>
         <div class="card-pad">
-          <div style="font-size: 17px; font-weight: 800; margin-bottom: 6px">{{ t.title }}</div>
-          <div style="font-size: 13.5px; color: var(--ink-2); margin-bottom: 14px">{{ t.desc }}</div>
+          <div style="font-size: 17px; font-weight: 800; margin-bottom: 14px">{{ t.title }}</div>
           <div class="flex-between">
             <span class="price">{{ t.price }}<small>{{ t.extra }}</small></span>
             <button :class="t.orange ? 'btn-orange' : 'btn-primary'" @click="openNewPage(t.target)">{{ t.btn }}</button>
@@ -389,7 +394,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <h2 class="home-sec-title">热门球场推荐 & 实时赛况</h2>
         </div>
         <button class="home-jump-btn" @click="openNewPage(2)">
-          查看全部球场（356片） ↗
+          查看全部球场（356片） →
         </button>
       </div>
 
@@ -400,7 +405,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <span class="tag" style="background: var(--lime); color: #0b251d">📊 网球记实时比分</span>
             <span style="font-size: 14px; color: rgba(255, 255, 255, 0.9)">2026中青赛总决赛焦点对阵</span>
           </div>
-          <button class="home-live-jump" @click="openNewPage(2)">全部赛况 ↗</button>
+          <button class="home-live-jump" @click="openNewPage(2)">全部赛况 →</button>
         </div>
         <div class="score-grid">
           <div v-for="m in state.liveMatches" :key="m.id" class="score-card" style="cursor: pointer" @click="openNewPage(2)">
@@ -467,7 +472,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               <span style="font-size: 13px; color: var(--primary); font-weight: 700">
                 🅿️ 剩{{ venue.parkingRemain }} · ⚡ 闲{{ venue.chargerRemain }}
               </span>
-              <button class="home-more-link" @click="openNewPage(2)">更多时段 ↗</button>
+              <button class="home-more-link" @click="openNewPage(2)">更多时段 →</button>
             </div>
           </div>
         </div>
@@ -483,7 +488,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <span class="home-sec-badge" style="background: linear-gradient(135deg, #f25c43, #c93722)">吃</span>
             <h2 class="home-panel-title">热门美食与票根联盟</h2>
           </div>
-          <button class="home-jump-btn sm" @click="openNewPage(4)">全部美食 ↗</button>
+          <button class="home-jump-btn sm" @click="openNewPage(4)">全部美食 →</button>
         </div>
 
         <div class="home-mini-list">
@@ -516,7 +521,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <span class="home-sec-badge" style="background: linear-gradient(135deg, #3385f0, #195cc2)">住</span>
             <h2 class="home-panel-title">精选网球公寓与酒店</h2>
           </div>
-          <button class="home-jump-btn sm" @click="openNewPage(5)">全部住宿 ↗</button>
+          <button class="home-jump-btn sm" @click="openNewPage(5)">全部住宿 →</button>
         </div>
 
         <div class="home-mini-list">
@@ -552,7 +557,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
           <span class="home-sec-badge" style="background: linear-gradient(135deg, #2eb36a, #168249)">游</span>
           <h2 class="home-sec-title">全域网旅延伸线路</h2>
         </div>
-        <button class="home-jump-btn" @click="openNewPage(3)">全部线路与导览 ↗</button>
+        <button class="home-jump-btn" @click="openNewPage(3)">全部线路与导览 →</button>
       </div>
 
       <div class="grid-3">
@@ -585,8 +590,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             <span class="badge-tl">{{ route.scope }} · {{ route.duration }}</span>
           </div>
           <div class="card-pad">
-            <strong style="font-size: 16.5px; display: block; margin-bottom: 6px">{{ route.title }}</strong>
-            <div style="font-size: 13.5px; color: var(--ink-2); margin-bottom: 12px">{{ route.desc }}</div>
+            <strong style="font-size: 16.5px; display: block; margin-bottom: 14px">{{ route.title }}</strong>
             <div class="flex-between">
               <span class="price" style="font-size: 20px">¥{{ route.price }}<small>/人起</small></span>
               <div class="flex-row" style="gap: 8px">
@@ -596,7 +600,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
                 >
                   🎧 导览
                 </button>
-                <button class="btn-primary" @click="openNewPage(3)">详情 ↗</button>
+                <button class="btn-primary" @click="openNewPage(3)">详情 →</button>
               </div>
             </div>
           </div>
@@ -629,7 +633,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               </strong>
             </div>
           </div>
-          <button class="home-quad-cta" @click="openNewPage(6)">进入出行专区 ↗</button>
+          <button class="home-quad-cta" @click="openNewPage(6)">进入出行专区 →</button>
         </div>
 
         <!-- 购 · 特色商品 -->
@@ -655,7 +659,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               </div>
             </div>
           </div>
-          <button class="home-quad-cta" @click="openNewPage(7)">进入好物商城 ↗</button>
+          <button class="home-quad-cta" @click="openNewPage(7)">进入好物商城 →</button>
         </div>
 
         <!-- 娱 · 休闲娱乐 -->
@@ -681,7 +685,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               </div>
             </div>
           </div>
-          <button class="home-quad-cta" @click="openNewPage(8)">进入娱乐专区 ↗</button>
+          <button class="home-quad-cta" @click="openNewPage(8)">进入娱乐专区 →</button>
         </div>
 
         <!-- 训 · 培训研学 -->
@@ -696,47 +700,60 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
             • 五维复测晋升认证<br />
             • 运动康复绿色通道
           </div>
-          <button class="home-quad-cta" @click="openNewPage(9)">进入培训专区 ↗</button>
+          <button class="home-quad-cta" @click="openNewPage(9)">进入培训专区 →</button>
         </div>
       </div>
     </div>
 
-    <!-- 06 便民配套 / 互动反馈 / 小程序互通 / 个人中心 底栏速览 -->
-    <div class="grid-4">
-      <button class="home-service-card" @click="openNewPage(10)">
+    <!-- 06 互动反馈 / 小程序互通 / 个人中心 底栏速览 -->
+    <div class="grid-3">
+      <button type="button" class="home-service-card" @click="openNewPage(11)">
         <div class="flex-between">
-          <strong style="font-size: 16px">📍 便民配套服务</strong>
-          <span class="home-service-arrow">↗</span>
+          <div class="home-sec-left">
+            <span class="home-svc-icon" style="background: linear-gradient(135deg, #0e8f67, #085f44)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a8.5 8.5 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 21l1.5-5.1A8.5 8.5 0 1 1 21 12z" />
+              </svg>
+            </span>
+            <strong style="font-size: 16px">互动反馈社区</strong>
+          </div>
+          <span class="home-service-arrow">→</span>
         </div>
-        <div class="home-service-desc">公厕 / 医疗急救 / 母婴室 / 天气 19°C</div>
-        <div class="home-service-foot">查看点位与路况</div>
+        <div class="home-service-foot" style="margin-top: 12px">进入评价打卡与信用公示</div>
       </button>
 
-      <button class="home-service-card" @click="openNewPage(11)">
+      <button type="button" class="home-service-card" @click="openNewPage(12)">
         <div class="flex-between">
-          <strong style="font-size: 16px">💬 互动反馈社区</strong>
-          <span class="home-service-arrow">↗</span>
+          <div class="home-sec-left">
+            <span class="home-svc-icon" style="background: linear-gradient(135deg, #1c6fe3, #114ba3)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" />
+                <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" />
+                <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
+                <path d="M14 17h6M17 14v6" />
+              </svg>
+            </span>
+            <strong style="font-size: 16px">小程序互联互通</strong>
+          </div>
+          <span class="home-service-arrow">→</span>
         </div>
-        <div class="home-service-desc">{{ state.posts.length }} 条评价 · 12345 自动分办</div>
-        <div class="home-service-foot">评价打卡 / 信用公示</div>
+        <div class="home-service-foot" style="margin-top: 12px">进入全部互通服务</div>
       </button>
 
-      <button class="home-service-card" @click="openNewPage(12)">
+      <button type="button" class="home-service-card highlight" @click="openNewPage(13)">
         <div class="flex-between">
-          <strong style="font-size: 16px">🔗 小程序互联互通</strong>
-          <span class="home-service-arrow">↗</span>
+          <div class="home-sec-left">
+            <span class="home-svc-icon" style="background: linear-gradient(135deg, #d89922, #a66d09)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20a7 7 0 0 1 14 0" />
+              </svg>
+            </span>
+            <strong style="font-size: 16px">个人中心</strong>
+          </div>
+          <span class="home-service-arrow">→</span>
         </div>
-        <div class="home-service-desc">政务 / 文旅 / 赛事 / 出行直连</div>
-        <div class="home-service-foot">进入全部互通服务</div>
-      </button>
-
-      <button class="home-service-card highlight" @click="openNewPage(13)">
-        <div class="flex-between">
-          <strong style="font-size: 16px">👤 个人中心</strong>
-          <span class="home-service-arrow">↗</span>
-        </div>
-        <div class="home-service-desc">{{ activeOrdersCount }} 笔订单 · {{ state.points }} 积分</div>
-        <div class="home-service-foot">管理订单与电子票根</div>
+        <div class="home-service-foot" style="margin-top: 12px">管理订单、积分与电子票根</div>
       </button>
     </div>
   </section>

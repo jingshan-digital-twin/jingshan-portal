@@ -7,31 +7,43 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
 <template>
   <header class="header">
     <div class="container">
-      <div class="brand" role="button" tabindex="0" @click="switchModule(1)" @keyup.enter="switchModule(1)">
-        <div class="brand-logo" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="10.8" stroke="#D2F854" stroke-width="2.2" />
-            <path
-              d="M6.4 7.7C10.2 10.6 10.2 17.4 6.4 20.3M21.6 7.7C17.8 10.6 17.8 17.4 21.6 20.3"
-              stroke="#D2F854"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-            <circle cx="14" cy="14" r="2.2" fill="#FFFFFF" />
-          </svg>
-        </div>
-        <div class="brand-text">
-          <div class="brand-name">
-            <span>京山网球</span>
-            <span class="brand-tag">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 3l7 3v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V6l7-3z" />
-                <path d="M9.2 12.2l1.9 1.9 3.8-4" />
-              </svg>
-              官方服务平台
-            </span>
+      <div class="header-left">
+        <div class="brand" role="button" tabindex="0" @click="switchModule(1)" @keyup.enter="switchModule(1)">
+          <div class="brand-logo" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="10.8" stroke="#D2F854" stroke-width="2.2" />
+              <path
+                d="M6.4 7.7C10.2 10.6 10.2 17.4 6.4 20.3M21.6 7.7C17.8 10.6 17.8 17.4 21.6 20.3"
+                stroke="#D2F854"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+              <circle cx="14" cy="14" r="2.2" fill="#FFFFFF" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <div class="brand-name">
+              <span>京山网球</span>
+              <span class="brand-tag">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3l7 3v5c0 5-3.2 8.7-7 10-3.8-1.3-7-5-7-10V6l7-3z" />
+                  <path d="M9.2 12.2l1.9 1.9 3.8-4" />
+                </svg>
+                官方服务平台
+              </span>
+            </div>
           </div>
         </div>
+
+        <template v-if="state.isStandalonePage || state.activeDetail">
+          <span class="hdr-divider" aria-hidden="true" />
+          <button type="button" class="hdr-home-btn" @click="switchModule(1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5z" />
+            </svg>
+            <span>返回首页</span>
+          </button>
+        </template>
       </div>
 
       <div class="search-bar">

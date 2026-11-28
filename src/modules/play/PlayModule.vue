@@ -7,16 +7,16 @@ import PaginationBar from '../../components/PaginationBar.vue'
 import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
-import type { CutrBand, RadiusOption } from '../../types/portal'
+import type { CutrBand, MatchmakingGame, RadiusOption } from '../../types/portal'
 
 const {
   state,
   memberTier,
+  openPhoto,
   openVenueDetail,
   openBookingModal,
   openNavigation,
   refreshLiveScores,
-  joinMatchmakingGame,
   publishMatchmakingGame,
   showToast,
 } = usePortalStore()
@@ -130,7 +130,7 @@ function resetCourtFilters() {
   onlyBookable.value = true
 }
 
-const PAGE_SIZE = 4
+const PAGE_SIZE = 8
 const courtPage = ref(1)
 const gamePage = ref(1)
 
@@ -180,6 +180,42 @@ const mgTimeStart = ref('00:00')
 const mgTimeEnd = ref('24:00')
 const mgAmenities = ref<string[]>([])
 const mgScopeTab = ref<'全部' | '我报名的' | '可加入'>('全部')
+function openGameDetail(g: MatchmakingGame) {
+  const matchedVenue = state.courts.find((c) => c.id === g.venueId)
+  const dateLabel = BOOKING_DATES.find((d) => d.iso === g.date)?.fullTitle ?? g.date
+  const remain = Math.max(0, g.maxPlayers - g.currentPlayers)
+  openPhoto({
+    title: g.title,
+    category: `同城约球 · ${g.activityType} · ${g.format}`,
+    photo: matchedVenue?.photo ?? '/images/hero.jpg',
+    rating: matchedVenue?.rating ?? 4.9,
+    reviewCount: matchedVenue?.reviewCount ?? 86,
+    subtitle: `CUTR ${g.cutrBand} ｜ ${g.venueType} · ${g.format} ｜ 已报 ${g.currentPlayers}/${g.maxPlayers} 人`,
+    intro: `${g.note} 本场活动由球友「${g.hostName}」（${g.hostOrigin}）发起，地点位于${g.venueName}，时间 ${dateLabel} ${g.startTime}-${g.endTime}，性别要求：${g.gender}，当前剩余 ${remain} 个席位。`,
+    openHours: `${dateLabel} ${g.startTime}-${g.endTime}`,
+    priceInfo: g.feePerPerson === 0 ? 'AA 免费' : `¥${g.feePerPerson} / 人`,
+    priceNum: g.feePerPerson,
+    priceUnit: ' / 人',
+    address: matchedVenue?.address ?? `湖北省荆门市京山市${g.region}${g.venueName}`,
+    lng: matchedVenue?.lng ?? 113.1128,
+    lat: matchedVenue?.lat ?? 31.0185,
+    distance: `距您 ${g.distanceKm} km`,
+    driveMin: matchedVenue ? `驾车约 ${Math.max(4, Math.round(g.distanceKm * 2.5))} 分钟` : '约 6 分钟',
+    phone: matchedVenue?.phone,
+    tags: [`CUTR ${g.cutrBand}`, g.venueType, g.activityType, g.format, ...g.amenities],
+    highlights: [
+      `活动时间：${dateLabel} ${g.startTime}-${g.endTime}`,
+      `水平匹配：CUTR ${g.cutrBand} · 性别要求 ${g.gender}`,
+      `发起球友：${g.hostName}（${g.hostOrigin}）· AA费用 ¥${g.feePerPerson}/人`,
+      `场地配套：${g.amenities.join('、') || '标准球场与免费停车'}`,
+    ],
+    actionKind: 'matchmaking',
+    matchmakingGameId: g.id,
+    orderCategory: '场地',
+    reviews: matchedVenue?.quote ? [matchedVenue.quote] : [],
+  })
+}
+
 const showPublishModal = ref(false)
 
 const mgAmenityOptions = ['有空调', '免费停车', '有充电桩', '有休息区', '好停车']
@@ -463,7 +499,7 @@ function submitNewGame() {
       </div>
 
       <template v-if="!showCourtMap">
-        <div class="grid-2 play-court-results">
+        <div class="play-court-results">
           <div v-if="filteredCourts.length === 0" class="card card-pad" style="text-align: center; padding: 48px 20px">
             <div style="font-size: 32px; margin-bottom: 10px">🎾</div>
             <strong style="font-size: 16.5px; display: block; margin-bottom: 8px">当前筛选条件下暂无匹配场馆</strong>
@@ -474,13 +510,12 @@ function submitNewGame() {
           <div
             v-for="venue in pagedCourts"
             :key="venue.id"
-            class="court-item-compact"
+            class="court-item-compact play-court-row"
             :class="{ selected: selectedVenue?.id === venue.id }"
             @click="activeVenueId = venue.id"
           >
             <div
-              class="photo-box"
-              style="height: 138px"
+              class="photo-box play-court-photo"
               @click.stop="
                 activeVenueId = venue.id;
                 openVenueDetail(venue.id, { date: selectedCourtDate })
@@ -490,11 +525,10 @@ function submitNewGame() {
               <span class="badge-tl" style="font-size: 12px; padding: 3px 8px">★ {{ venue.rating }} · {{ venue.distanceKm }}km</span>
             </div>
 
-            <div class="court-compact-body">
-              <!-- 第1行：名称 + 最低价 -->
-              <div class="flex-between" style="gap: 8px">
+            <div class="play-court-info">
+              <div class="play-court-title-row">
                 <strong
-                  style="font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer"
+                  class="play-court-name"
                   @click.stop="
                     activeVenueId = venue.id;
                     openVenueDetail(venue.id, { date: selectedCourtDate })
@@ -502,53 +536,32 @@ function submitNewGame() {
                 >
                   {{ venue.name.split('（')[0] }}
                 </strong>
-                <strong style="font-size: 18px; color: var(--accent); flex-shrink: 0">
-                  {{ venue.minPrice === 0 ? '免费' : `¥${venue.minPrice}起` }}
-                </strong>
+                <span class="tag green">余 {{ getVenueAvailableCount(venue.id, selectedCourtDate, courtTimePeriod) }} 场</span>
+                <span v-for="sf in venue.surfaces.slice(0, 2)" :key="sf" class="tag">{{ sf }}</span>
               </div>
 
-              <!-- 第2行：核心元信息 -->
-              <div style="font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+              <div class="play-court-meta">
                 <span>{{ venue.region }}</span>
-                <span>· {{ venue.openHours }}</span>
-                <span style="color: var(--primary); font-weight: 800">
-                  · 余{{ getVenueAvailableCount(venue.id, selectedCourtDate, courtTimePeriod) }}场
-                </span>
+                <span>·</span>
+                <span>{{ venue.openHours }}</span>
+                <span>·</span>
+                <span>{{ venue.address.replace('湖北省荆门市京山市', '') }}</span>
               </div>
 
-              <!-- 第3行：4个时段 + 订场按钮 -->
-              <div class="court-compact-bottom">
-                <div class="slots-compact">
-                  <button
-                    v-for="item in getVenuePreviewHours(venue.id)"
-                    :key="item.hour"
-                    type="button"
-                    class="slot-mini"
-                    :disabled="item.freeCount === 0"
-                    :style="item.freeCount === 0 ? 'opacity: 0.45; cursor: not-allowed' : ''"
-                    @click.stop="
-                      activeVenueId = venue.id;
-                      openBookingModal({
-                        venueId: venue.id,
-                        venueName: venue.name,
-                        date: selectedCourtDate,
-                        courtId: item.courtId,
-                        slotTime: item.hour,
-                        price: item.price,
-                        memberPrice: item.memberPrice,
-                        parkingName: venue.parkingName,
-                        chargerName: venue.chargerName,
-                      })
-                    "
-                  >
-                    <strong>{{ item.hour }}</strong>
-                    <span>{{ item.freeCount === 0 ? '满' : item.memberPrice === 0 ? '免费' : `¥${item.memberPrice}` }}</span>
-                  </button>
-                </div>
+              <div class="play-court-tags">
+                <span v-for="am in venue.amenities.slice(0, 4)" :key="am" class="play-court-amenity">{{ am }}</span>
+              </div>
+            </div>
 
+            <div class="play-court-action">
+              <div class="play-court-price-row">
+                <strong class="play-court-price">
+                  {{ venue.minPrice === 0 ? '免费' : `¥${venue.minPrice}` }}
+                  <small v-if="venue.minPrice > 0">起</small>
+                </strong>
                 <button
-                  class="btn-primary"
-                  style="padding: 8px 12px; font-size: 13px; flex-shrink: 0"
+                  type="button"
+                  class="btn-primary play-court-book-btn"
                   @click.stop="
                     activeVenueId = venue.id;
                     openBookingModal({
@@ -565,6 +578,34 @@ function submitNewGame() {
                   "
                 >
                   预约 →
+                </button>
+              </div>
+
+              <div class="slots-compact">
+                <button
+                  v-for="item in getVenuePreviewHours(venue.id)"
+                  :key="item.hour"
+                  type="button"
+                  class="slot-mini"
+                  :disabled="item.freeCount === 0"
+                  :style="item.freeCount === 0 ? 'opacity: 0.45; cursor: not-allowed' : ''"
+                  @click.stop="
+                    activeVenueId = venue.id;
+                    openBookingModal({
+                      venueId: venue.id,
+                      venueName: venue.name,
+                      date: selectedCourtDate,
+                      courtId: item.courtId,
+                      slotTime: item.hour,
+                      price: item.price,
+                      memberPrice: item.memberPrice,
+                      parkingName: venue.parkingName,
+                      chargerName: venue.chargerName,
+                    })
+                  "
+                >
+                  <strong>{{ item.hour }}</strong>
+                  <span>{{ item.freeCount === 0 ? '满' : item.memberPrice === 0 ? '免费' : `¥${item.memberPrice}` }}</span>
                 </button>
               </div>
             </div>
@@ -814,35 +855,42 @@ function submitNewGame() {
       </div>
 
       <div v-else>
-        <div class="grid-2">
-          <div v-for="g in pagedGames" :key="g.id" class="card card-pad" style="display: flex; flex-direction: column; justify-content: space-between; background: #fcfefd">
-          <div>
-            <div class="flex-between" style="margin-bottom: 8px">
-              <span class="tag green">CUTR {{ g.cutrBand }}</span>
-              <span class="tag blue">{{ g.venueType }} · {{ g.activityType }} · {{ g.format }}</span>
+        <div class="play-game-list">
+          <div v-for="g in pagedGames" :key="g.id" class="card play-game-row">
+            <div class="play-game-main">
+              <div class="flex-row" style="margin-bottom: 6px; gap: 8px">
+                <span class="tag green">CUTR {{ g.cutrBand }}</span>
+                <span class="tag blue">{{ g.venueType }} · {{ g.activityType }} · {{ g.format }}</span>
+                <strong
+                  style="font-size: 17px; color: var(--ink); cursor: pointer"
+                  @click="openGameDetail(g)"
+                >
+                  {{ g.title }}
+                </strong>
+              </div>
+              <div class="play-game-meta">
+                <span>📅 <strong>{{ BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date }} {{ g.startTime }}-{{ g.endTime }}</strong></span>
+                <span>📍 {{ g.venueName }}（距您 {{ g.distanceKm }} km）</span>
+                <span>👤 发起人：{{ g.hostName }} · 性别：{{ g.gender }}</span>
+              </div>
             </div>
-            <strong style="font-size: 17px; display: block; margin-bottom: 8px">{{ g.title }}</strong>
-            <div style="font-size: 14px; color: var(--ink-2); line-height: 1.75; margin-bottom: 12px">
-              📅 <strong>{{ BOOKING_DATES.find((d) => d.iso === g.date)?.shortDate ?? g.date }} {{ g.startTime }}-{{ g.endTime }}</strong><br />
-              📍 {{ g.venueName }}（距您 {{ g.distanceKm }} km）<br />
-              👤 发起人：{{ g.hostName }} · 性别：{{ g.gender }}
-            </div>
-          </div>
 
-          <div class="flex-between" style="padding-top: 11px; border-top: 1px dashed var(--line)">
-            <div>
-              <strong style="color: var(--accent); font-size: 19px">¥{{ g.feePerPerson }}</strong>
-              <span style="font-size: 13px; color: var(--ink-2)">/人 · 已报 {{ g.currentPlayers }}/{{ g.maxPlayers }}人</span>
+            <div class="play-game-side">
+              <div style="text-align: right">
+                <strong style="color: var(--accent); font-size: 20px">¥{{ g.feePerPerson }}</strong>
+                <span style="font-size: 13px; color: var(--ink-2)">/人</span>
+                <div style="font-size: 12.5px; color: var(--ink-3); margin-top: 2px">已报 {{ g.currentPlayers }}/{{ g.maxPlayers }}人</div>
+              </div>
+              <button
+                type="button"
+                :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-primary'"
+                style="padding: 9px 18px"
+                @click="openGameDetail(g)"
+              >
+                {{ g.joinedByMe ? '已报名 · 查看' : g.currentPlayers >= g.maxPlayers ? '已满员 · 查看' : '立即加入' }}
+              </button>
             </div>
-            <button
-              :class="g.joinedByMe ? 'btn-ghost' : g.currentPlayers >= g.maxPlayers ? 'btn-ghost' : 'btn-primary'"
-              :disabled="!g.joinedByMe && g.currentPlayers >= g.maxPlayers"
-              @click="joinMatchmakingGame(g.id)"
-            >
-              {{ g.joinedByMe ? '已报名（取消）' : g.currentPlayers >= g.maxPlayers ? '已满员' : '立即加入' }}
-            </button>
           </div>
-        </div>
         </div>
         <PaginationBar
           :total="filteredGames.length"
@@ -951,15 +999,143 @@ function submitNewGame() {
 
 <style scoped>
 .play-court-results {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.play-court-results > .card {
-  grid-column: 1 / -1;
+.play-court-row {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr) 396px;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 18px;
 }
 
-.play-court-results .court-item-compact {
-  grid-template-columns: minmax(128px, 30%) minmax(0, 1fr);
+.play-court-photo {
+  height: 130px;
+}
+
+.play-court-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.play-court-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.play-court-name {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.play-court-name:hover {
+  color: var(--primary);
+}
+
+.play-court-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.play-court-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.play-court-amenity {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: #f4f8f6;
+  border: 1px solid #e2ece7;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+
+.play-court-action {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 18px;
+  border-left: 1px dashed #dfebe5;
+}
+
+.play-court-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.play-court-price {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.play-court-price small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-3);
+  margin-left: 2px;
+}
+
+.play-court-book-btn {
+  padding: 8px 18px;
+  font-size: 13.5px;
+}
+
+.play-game-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.play-game-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  background: #ffffff;
+}
+
+.play-game-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.play-game-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.play-game-side {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+  padding-left: 20px;
+  border-left: 1px dashed var(--line);
 }
 </style>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { HERO_SLIDES } from '../mock/data'
-import { isBookingQuantity } from '../store/reservationFlow'
 import { usePortalStore } from '../store/usePortalStore'
 
 const {
@@ -9,7 +8,6 @@ const {
   switchModule,
   openActionModal,
   claimHomeSubsidy,
-  createQuickOrder,
   showToast,
 } = usePortalStore()
 
@@ -48,8 +46,8 @@ function triggerSlideAction(action: (typeof HERO_SLIDES)[number]['primaryAction'
   }
 }
 
-// Right 3-Tab Quick Action Widget
-const widgetTab = ref<'court' | 'event' | 'package'>('court')
+// Right 2-Tab Quick Action Widget
+const widgetTab = ref<'court' | 'event'>('court')
 const courtDate = ref('今天 11月26日 下午')
 const courtSurface = ref<'全部' | '硬地' | '红土' | '室内风雨'>('全部')
 const courtRegion = ref<'全部' | '温泉街道' | '新市街道' | '永兴街道'>('全部')
@@ -58,9 +56,6 @@ const courtExtra = ref('停车与充电便利')
 const eventChoice = ref('京山周末分级赛（匹配当前等级）')
 const eventGroup = ref('单打/双打积分组')
 
-const pkgChoice = ref('京山网旅四天三晚尊享套餐 · ¥2,999/人')
-const pkgPeople = ref<number | ''>(2)
-
 function submitCourtQuery() {
   state.courtSurfaceFilter = courtSurface.value
   state.courtRegionFilter = courtRegion.value
@@ -68,32 +63,15 @@ function submitCourtQuery() {
     surface: courtSurface.value,
     region: courtRegion.value,
   })
-  const stageEl = document.getElementById('moduleStageAnchor')
-  stageEl?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   showToast(`已为您筛选「${courtDate.value} / ${courtSurface.value} / ${courtRegion.value}」的空闲球场`)
 }
 
 function submitQuickEvent() {
-  const isFree = eventChoice.value.includes('观赛')
-  createQuickOrder(
-    '门票',
-    `${eventChoice.value}（${state.abilityLevel}）`,
-    `${eventGroup.value} · 凭报名凭证享联盟住宿85折与票根券`,
-    isFree ? 0 : 120,
-    120,
-  )
-}
-
-function submitQuickPackage() {
-  const people = pkgPeople.value
-  if (!isBookingQuantity(people)) return
-  const unitPrice = pkgChoice.value.includes('2,999') ? 2999 : pkgChoice.value.includes('688') ? 688 : 498
-  createQuickOrder('门票', pkgChoice.value, `${people} 人 · 持证旅行社保障 · 含电子票根`, unitPrice * people, 180, 0, {
-    fields: [
-      { label: '出行人数', value: `${people} 人` },
-      { label: '游客来源地', value: state.origin },
-    ],
+  switchModule(9, {
+    view: 'growth',
+    section: 'tournaments',
   })
+  showToast(`已为您进入「${eventChoice.value}」赛事报名专区`)
 }
 </script>
 
@@ -105,6 +83,10 @@ function submitQuickPackage() {
   >
     <img :key="currentSlide.id" class="hero-carousel-bg" :src="currentSlide.image" :alt="currentSlide.titleHighlight" />
     <div class="hero-carousel-scrim" />
+
+    <div v-if="$slots['top-nav']" class="hero-top-nav-slot">
+      <slot name="top-nav" />
+    </div>
 
     <div class="container hero-carousel-inner">
       <!-- Left Rotating Spotlight Content -->
@@ -148,17 +130,21 @@ function submitQuickPackage() {
         </div>
       </div>
 
-      <!-- Right Floating 3-Tab Quick Widget -->
+      <!-- Right Floating 2-Tab Quick Widget -->
       <div class="hero-widget">
         <div class="hw-tabs">
-          <button class="hw-tab" :class="{ active: widgetTab === 'court' }" @click="widgetTab = 'court'">
-            🎾 快速订场
+          <button type="button" class="hw-tab" :class="{ active: widgetTab === 'court' }" @click="widgetTab = 'court'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M5.5 6.8c3.3 2.5 3.3 7.9 0 10.4M18.5 6.8c-3.3 2.5-3.3 7.9 0 10.4" />
+            </svg>
+            <span>快速订场</span>
           </button>
-          <button class="hw-tab" :class="{ active: widgetTab === 'event' }" @click="widgetTab = 'event'">
-            🏆 赛事报名
-          </button>
-          <button class="hw-tab" :class="{ active: widgetTab === 'package' }" @click="widgetTab = 'package'">
-            🌿 网旅套餐
+          <button type="button" class="hw-tab" :class="{ active: widgetTab === 'event' }" @click="widgetTab = 'event'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3" />
+            </svg>
+            <span>赛事报名</span>
           </button>
         </div>
 
@@ -200,11 +186,11 @@ function submitQuickPackage() {
               </select>
             </div>
           </div>
-          <button class="hw-cta" @click="submitCourtQuery">查询今日空闲球场（84片可约）</button>
+          <button type="button" class="hw-cta" @click="submitCourtQuery">查询今日空闲球场</button>
         </template>
 
         <!-- Tab 2: Quick Event Register -->
-        <template v-else-if="widgetTab === 'event'">
+        <template v-else>
           <div class="hw-grid">
             <div class="hw-field" style="grid-column: span 2">
               <label>选择热门赛事</label>
@@ -227,48 +213,8 @@ function submitQuickPackage() {
               </select>
             </div>
           </div>
-          <button class="hw-cta" @click="submitQuickEvent">一键报名赛事</button>
+          <button type="button" class="hw-cta" @click="submitQuickEvent">去报名</button>
         </template>
-
-        <!-- Tab 3: Quick Travel Package -->
-        <template v-else>
-          <div class="hw-grid">
-            <div class="hw-field" style="grid-column: span 2">
-              <label>官方精品网旅套餐</label>
-              <select v-model="pkgChoice">
-                <option>京山网旅四天三晚尊享套餐 · ¥2,999/人</option>
-                <option>京山网球+温泉+钟祥明显陵二日游 · ¥688/人</option>
-                <option>周末打球+绿林山峡谷二日游 · ¥498/人</option>
-              </select>
-            </div>
-            <div class="hw-field">
-              <label for="hero-visitor-origin">游客来源地</label>
-              <output id="hero-visitor-origin">{{ state.origin }}</output>
-            </div>
-            <div class="hw-field">
-              <label for="hero-package-people">出行人数</label>
-              <input id="hero-package-people" v-model.number="pkgPeople" type="number" min="1" step="1" />
-            </div>
-          </div>
-          <button class="hw-cta" :disabled="!isBookingQuantity(pkgPeople)" @click="submitQuickPackage">
-            {{ isBookingQuantity(pkgPeople) ? '立即预订网旅套餐' : '请输入有效的出行人数' }}
-          </button>
-        </template>
-
-        <div class="hw-quick-row">
-          <button class="hw-mini" @click="switchModule(2)">
-            <span style="width: 36px; height: 36px; border-radius: 9px; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
-              🏆
-            </span>
-            <div style="font-size: 14px; font-weight: 800; color: var(--ink)">青少年巡回赛</div>
-          </button>
-          <button class="hw-mini" @click="switchModule(5)">
-            <span style="width: 36px; height: 36px; border-radius: 9px; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
-              🏠
-            </span>
-            <div style="font-size: 14px; font-weight: 800; color: var(--ink)">购房补贴 & 公寓</div>
-          </button>
-        </div>
       </div>
     </div>
   </section>
