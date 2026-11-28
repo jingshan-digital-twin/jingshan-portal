@@ -22,6 +22,8 @@
 }
 .portal-map-icon { flex: none; line-height: 1; }
 .portal-map-pin-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.portal-map-pin.is-compact { min-width: 0; width: 28px; padding: 0; }
+.portal-map-pin.is-compact .portal-map-pin-text { display: none; }
 .portal-map-pin::after {
   content: '';
   position: absolute;

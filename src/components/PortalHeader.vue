@@ -2,7 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { PORTAL_ACCOUNTS, usePortalStore } from '../store/usePortalStore'
 
-const { state, currentAccount, switchAccount, memberTier, switchModule, navigateToModulePage, handleSearch } =
+const { state, currentAccount, switchAccount, memberTier, switchModule, navigateToModulePage, handleSearch, openTournamentRegistration } =
   usePortalStore()
 
 const accountMenuOpen = ref(false)
@@ -110,7 +110,7 @@ onUnmounted(() => {
         <button
           type="button"
           class="hdr-pill hdr-pill-event"
-          @click="state.showTourneyRegModal = true"
+          @click="openTournamentRegistration()"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M8 21h8" />

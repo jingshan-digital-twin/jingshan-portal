@@ -272,6 +272,7 @@ export interface PortalOrder {
   amount: number
   status: '待核销' | '已确认' | '待使用' | '待上课' | '已取消'
   cancellable?: boolean
+  tournamentEntry?: { eventId: string; groupId: string; playerName: string; unit: string; level: string }
 }
 
 export interface FeedbackPost {

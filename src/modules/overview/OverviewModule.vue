@@ -15,6 +15,7 @@ const {
   openCinemaDetail,
   openBookingModal,
   openActionModal,
+  openTournamentRegistration,
   createQuickOrder,
 } = usePortalStore()
 
@@ -347,7 +348,7 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               </div>
               <div class="flex-row" style="gap: 6px">
                 <button class="btn-ghost" style="padding: 6px 10px; font-size: 13px" @click="navigateToModulePage(2, { tab: 'events' })">赛事信息</button>
-                <button class="btn-orange" style="padding: 6px 12px; font-size: 13px" @click="state.showTourneyRegModal = true">一键报名</button>
+                <button class="btn-orange" style="padding: 6px 12px; font-size: 13px" @click="openTournamentRegistration('tourney-weekend-2026')">一键报名</button>
               </div>
             </div>
             <div class="flex-between" style="background: #fff8f4; padding: 11px 13px; border-radius: 0">

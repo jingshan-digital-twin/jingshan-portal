@@ -101,7 +101,20 @@ const activeMatchmakingDateLabel = computed(() => {
 // 1. Hotel state
 const checkIn = ref(BOOKING_DATES[0]!.iso)
 const checkOut = ref(BOOKING_DATES[2]!.iso)
-const hotelCheckOutOptions = computed(() => BOOKING_DATES.filter((day) => day.iso > checkIn.value))
+const stayWeekday = new Intl.DateTimeFormat('zh-CN', { weekday: 'short', timeZone: 'UTC' })
+const hotelDateOptions = computed(() => {
+  const days = BOOKING_DATES.map(({ iso, shortDate, weekday }) => ({ iso, shortDate, weekday }))
+  const stay = detail.value?.kind === 'hotel' ? detail.value.stay : undefined
+  if (stay) {
+    for (const iso of [stay.checkIn, stay.checkOut]) {
+      if (!days.some((day) => day.iso === iso)) {
+        days.push({ iso, shortDate: iso.slice(5).replace('-', '/'), weekday: stayWeekday.format(new Date(iso)) })
+      }
+    }
+  }
+  return days.sort((a, b) => a.iso.localeCompare(b.iso))
+})
+const hotelCheckOutOptions = computed(() => hotelDateOptions.value.filter((day) => day.iso > checkIn.value))
 watch(hotelCheckOutOptions, (options) => {
   if (checkOut.value <= checkIn.value && options[0]) checkOut.value = options[0].iso
 })
@@ -141,8 +154,8 @@ function submitHotelBooking(targetRoom?: NonNullable<typeof hotel.value>['rooms'
   }
   const isLong = rm.leaseUnit === '/月' || rm.leaseUnit === '/周'
   const total = rm.eventPrice * count * (isLong ? 1 : hotelNights.value)
-  const inLabel = BOOKING_DATES.find((d) => d.iso === checkIn.value)?.shortDate ?? checkIn.value
-  const outLabel = BOOKING_DATES.find((d) => d.iso === checkOut.value)?.shortDate ?? checkOut.value
+  const inLabel = hotelDateOptions.value.find((d) => d.iso === checkIn.value)?.shortDate ?? checkIn.value
+  const outLabel = hotelDateOptions.value.find((d) => d.iso === checkOut.value)?.shortDate ?? checkOut.value
   const periodDesc = isLong
     ? `${inLabel}起租 · ${count}套`
     : `${inLabel}入住 - ${outLabel}离店（共${hotelNights.value}晚 × ${count}间）`
@@ -1457,7 +1470,7 @@ function triggerPrimaryNav() {
                   <div class="dp-ub-cell">
                     <label>入住日期</label>
                     <select v-model="checkIn">
-                      <option v-for="d in BOOKING_DATES.slice(0, 6)" :key="`ri-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
+                      <option v-for="d in hotelDateOptions.slice(0, -1)" :key="`ri-${d.iso}`" :value="d.iso">{{ d.shortDate }} {{ d.weekday }}</option>
                     </select>
                   </div>
                   <div class="dp-ub-cell">

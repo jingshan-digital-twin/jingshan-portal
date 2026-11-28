@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { getDivisionStatus, getOpenTournamentDivisions, getTournamentEntries } from '../../mock/tournamentRegistration'
 import { PORTAL_TOURNAMENTS, type PortalTournament, type TournamentDivision, type TournamentStatus } from '../../mock/tournamentsData'
 import { usePortalStore } from '../../store/usePortalStore'
 
 const {
   state,
-  registerYouthTournament,
+  openTournamentRegistration,
   refreshLiveScores,
-  showToast,
 } = usePortalStore()
 
 // ===== 列表页状态 =====
@@ -60,15 +60,18 @@ const statDate = ref('')
 const expandedTechIds = ref<string[]>([])
 const activeScheduleDate = ref('')
 
-// 已报名记录（支持演示即时交互）
-const enrolledDivisions = reactive<Record<string, boolean>>({})
-const showEnrollModal = ref(false)
-const enrollTargetDivision = ref<TournamentDivision | null>(null)
-const enrollForm = reactive({
-  playerName: '张小宇',
-  phone: '138****8866',
-  unit: '武汉市参赛代表',
-  level: 'CUTR 3.50-3.99',
+const openDivisions = computed(() => activeTournament.value ? getOpenTournamentDivisions(activeTournament.value, state.orders) : [])
+const divisionRows = computed(() => {
+  const event = activeTournament.value
+  return event?.divisions.map((division) => {
+    const entries = getTournamentEntries(state.orders, event.id, division.id)
+    return {
+      ...division,
+      status: getDivisionStatus(event, division, state.orders),
+      enrolled: division.enrolled + entries.length,
+      enrolledSample: [...entries.map((entry) => ({ name: entry.playerName, unit: entry.unit, level: entry.level })), ...division.enrolledSample],
+    }
+  }) ?? []
 })
 
 function openTournament(t: PortalTournament, tab: typeof activeDetailTab.value = 'info') {
@@ -90,38 +93,8 @@ function backToList() {
   selectedTournamentId.value = null
 }
 
-function openEnrollDialog(div: TournamentDivision) {
-  if (div.status !== '报名中') {
-    showToast(`「${div.name}」当前状态为：${div.status}`)
-    return
-  }
-  enrollTargetDivision.value = div
-  showEnrollModal.value = true
-}
-
-function confirmEnrollDivision() {
-  const t = activeTournament.value
-  const div = enrollTargetDivision.value
-  if (!t || !div) return
-  if (!enrollForm.playerName.trim()) {
-    showToast('请填写参赛选手姓名')
-    return
-  }
-  registerYouthTournament({
-    tournamentName: t.name,
-    playerName: `${enrollForm.playerName.trim()}（${enrollForm.unit}）`,
-    group: div.name,
-    venue: t.venue,
-    fee: div.fee,
-  })
-  enrolledDivisions[div.id] = true
-  div.enrolled += 1
-  div.enrolledSample.unshift({
-    name: enrollForm.playerName.trim(),
-    unit: enrollForm.unit,
-    level: enrollForm.level,
-  })
-  showEnrollModal.value = false
+function openEnrollDialog(division?: TournamentDivision) {
+  if (activeTournament.value) openTournamentRegistration(activeTournament.value.id, division?.id)
 }
 
 const currentDrawGroups = computed(() => {
@@ -358,22 +331,13 @@ watch(activeTournament, (t) => {
 
           <div class="flex-row" style="gap: 8px">
             <button
-              v-if="activeTournament.id === 'tourney-youth-2026'"
+              v-if="openDivisions.length"
               type="button"
               class="btn-orange"
               style="padding: 7px 14px; font-size: 13px"
-              @click="state.showTourneyRegModal = true"
+              @click="openEnrollDialog()"
             >
               ⚡ 一键报名 + 周边空房酒店地图
-            </button>
-            <button
-              v-else-if="activeTournament.divisions.some((d) => d.status === '报名中')"
-              type="button"
-              class="btn-orange"
-              style="padding: 7px 14px; font-size: 13px"
-              @click="openEnrollDialog(activeTournament.divisions.find((d) => d.status === '报名中')!)"
-            >
-              🏆 立即报名参赛
             </button>
           </div>
         </div>
@@ -473,7 +437,7 @@ watch(activeTournament, (t) => {
           <template v-if="infoSubTab === 'divisions'">
             <div style="display: flex; flex-direction: column; gap: 12px">
               <div
-                v-for="(div, idx) in activeTournament.divisions"
+                v-for="(div, idx) in divisionRows"
                 :key="div.id"
                 class="ev-div-card"
                 :class="idx % 2 === 0 ? 'mint' : 'sand'"
@@ -491,12 +455,12 @@ watch(activeTournament, (t) => {
                   </span>
                   <button
                     type="button"
-                    :class="enrolledDivisions[div.id] ? 'btn-ghost' : div.status === '报名中' ? 'btn-primary' : 'btn-ghost'"
+                    :class="div.status === '报名中' ? 'btn-primary' : 'btn-ghost'"
                     :disabled="div.status !== '报名中'"
                     style="padding: 6px 16px; border-radius: 999px; font-size: 13px"
                     @click="openEnrollDialog(div)"
                   >
-                    {{ enrolledDivisions[div.id] ? '✅ 已报名' : div.status === '报名中' ? '立即报名' : div.status }}
+                    {{ div.status === '报名中' ? '立即报名' : div.status }}
                   </button>
                 </div>
 
@@ -834,60 +798,6 @@ watch(activeTournament, (t) => {
       </div>
     </template>
 
-    <!-- 组别报名弹窗 -->
-    <div v-if="showEnrollModal && activeTournament && enrollTargetDivision" class="modal-backdrop" @click.self="showEnrollModal = false">
-      <div class="modal-box" style="width: 540px">
-        <div class="card-pad flex-between" style="background: #0d3c2e; color: #fff">
-          <div>
-            <strong style="font-size: 17.5px">🏆 赛事报名参赛</strong>
-            <div style="font-size: 13px; color: var(--lime); margin-top: 2px">
-              {{ activeTournament.shortName }} · {{ enrollTargetDivision.name }}
-            </div>
-          </div>
-          <button type="button" class="btn-ghost" @click="showEnrollModal = false">✕ 关闭</button>
-        </div>
-
-        <div class="card-pad" style="display: flex; flex-direction: column; gap: 12px">
-          <div class="grid-2" style="gap: 10px">
-            <div>
-              <label class="f-label">参赛选手姓名 *</label>
-              <input v-model="enrollForm.playerName" class="f-input" />
-            </div>
-            <div>
-              <label class="f-label">联系电话 *</label>
-              <input v-model="enrollForm.phone" class="f-input" />
-            </div>
-            <div>
-              <label class="f-label">代表单位 / 来源地</label>
-              <input v-model="enrollForm.unit" class="f-input" />
-            </div>
-            <div>
-              <label class="f-label">技术等级 (CUTR)</label>
-              <select v-model="enrollForm.level" class="f-input">
-                <option>CUTR 3.50-3.99</option>
-                <option>CUTR 3.00-3.49</option>
-                <option>CUTR 4.00-4.49</option>
-                <option>CUTR 2.50-2.99</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
-            <div>
-              <span style="font-size: 13px; color: var(--ink-2)">报名费：</span>
-              <strong style="font-size: 20px; color: var(--accent)">
-                {{ enrollTargetDivision.fee === 0 ? '免费' : `¥${enrollTargetDivision.fee}` }}
-              </strong>
-              <span style="font-size: 12.5px; color: var(--primary); margin-left: 8px">获赠 +120 积分</span>
-            </div>
-            <div class="flex-row" style="gap: 8px">
-              <button type="button" class="btn-ghost" @click="showEnrollModal = false">取消</button>
-              <button type="button" class="btn-orange" @click="confirmEnrollDivision">确认报名参赛</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 

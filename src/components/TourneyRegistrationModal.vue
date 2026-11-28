@@ -2,501 +2,372 @@
 import L from 'leaflet'
 import { computed, nextTick, onUnmounted, reactive, ref, watch } from 'vue'
 import { HOTEL_PROFILES } from '../mock/details'
+import { getOpenTournamentDivisions, getOpenTournamentOptions, getRegistrationEvent, getTournamentStay } from '../mock/tournamentRegistration'
+import { TOUR_PACKAGES } from '../mock/tourData'
 import { usePortalStore } from '../store/usePortalStore'
-import { addPortalMapMarker, createPortalMap, JINGSHAN_MAP_CENTER, MAP_ICONS, setPortalMapTiles } from './portalMap'
+import type { VisitorOrigin } from '../types/portal'
+import { addPortalMapMarker, createPortalMap, MAP_ICONS, setPortalMapTiles } from './portalMap'
 
 const {
-  state,
-  setVisitorOrigin,
-  registerYouthTournament,
-  createQuickOrder,
-  openHotelDetail,
-  switchModule,
-  showToast,
+  state, currentAccount, registerYouthTournament, hasTournamentPackage, bookTournamentPackage, openHotelDetail, switchModule,
 } = usePortalStore()
-
-const step = ref<'form' | 'success'>('form')
-const selectedHotelId = ref<string>('hotel-wenfeng')
-const bookedHotelIds = ref<string[]>([])
-const ordered3dPkg = ref(false)
-const lastRegOrderId = ref('')
-
-const regForm = reactive({
-  tournamentName: '2026 京山网球公开赛 · 城市分级赛（京山站）',
-  playerName: '张先生',
-  group: '公开组单打积分赛（CUTR 3.5）',
-  level: 'CUTR 3.50-3.99',
-  originCity: '武汉市',
-  phone: '138****8866',
-  bundleSpa3d: false,
+const spaPackage = TOUR_PACKAGES.find((item) => item.id === 'pkg-spa-3d')!
+const origins: VisitorOrigin[] = ['武汉市（省内游客）', '北京市（省外游客）', '深圳市（省外游客）', '荆门市（周边游客）', '京山本地市民']
+const dialog = ref<HTMLDialogElement>()
+const playerField = ref<HTMLInputElement>()
+const successHeading = ref<HTMLElement>()
+const mapContainer = ref<HTMLDivElement>()
+const hotelList = ref<HTMLDivElement>()
+const selectedHotelId = ref('')
+const roomChoices = ref<Record<string, string>>({})
+const receipt = ref<{ id: string; groupName: string; player: string }>()
+const registrationPending = ref(false)
+const packagePending = ref(false)
+const form = reactive({
+  eventId: '', groupId: '', player: '', origin: state.origin, unit: '', level: '', addPackage: false,
 })
 
-const nearbyHotels = computed(() =>
-  HOTEL_PROFILES.slice(0, 4).map((h) => {
-    const firstRoom = h.rooms[0]!
-    const totalRemain = h.rooms.reduce((sum, r) => sum + r.remaining, 0)
-    return {
-      hotel: h,
-      room: firstRoom,
-      totalRemain,
-      starsText: h.rating >= 4.9 ? '★★★★★' : '★★★★☆',
-      topReview: h.reviews[0]?.content ?? '赛场周边口碑优选，凭电子票根享85折礼遇。',
-      reviewer: h.reviews[0]?.user ?? '参赛球友',
-    }
-  }),
-)
+const event = computed(() => getRegistrationEvent(form.eventId))
+const venue = computed(() => state.courts.find((court) => court.id === event.value?.venueId))
+const eventChoices = computed(() => getOpenTournamentOptions(state.orders).map((item) => item.event))
+const divisions = computed(() => event.value ? getOpenTournamentDivisions(event.value, state.orders) : [])
+const division = computed(() => divisions.value.find((item) => item.id === form.groupId))
+const stay = computed(() => getTournamentStay(event.value?.dateRange ?? ''))
+const stayLabel = computed(() => stay.value.checkIn + ' 入住 — ' + stay.value.checkOut + ' 离店（' + stay.value.nights + ' 晚）')
+const packageOrder = computed(() => ({
+  title: spaPackage.title,
+  subtitle: stayLabel.value + ' · ' + spaPackage.includes.join(' · '),
+  amount: spaPackage.price,
+  fields: [
+    { label: '出行日期', value: stayLabel.value },
+    { label: '套餐内容', value: spaPackage.includes.join(' · ') },
+  ],
+}))
+const packageOrdered = computed(() => hasTournamentPackage(packageOrder.value))
 
-const mapContainer = ref<HTMLDivElement | null>(null)
-let map: L.Map | null = null
-let layerGroup: L.LayerGroup | null = null
-const markers = new Map<string, L.Marker>()
+watch(divisions, (groups) => {
+  if (!receipt.value && !groups.some((group) => group.id === form.groupId)) form.groupId = groups[0]?.id ?? ''
+})
 
-function destroyMap() {
-  if (map) {
-    map.remove()
-    map = null
-    layerGroup = null
-    markers.clear()
+const nearbyHotels = computed(() => {
+  if (!venue.value) return []
+  const center = L.latLng(venue.value.lat, venue.value.lng)
+  return HOTEL_PROFILES.flatMap((hotel) => {
+    const distance = center.distanceTo([hotel.lat, hotel.lng])
+    const rooms = hotel.rooms.filter((room) => room.remaining > 0 && room.leaseUnit !== '/周' && room.leaseUnit !== '/月')
+    const room = rooms.find((item) => item.name.includes('网球主题')) ?? rooms[0]
+    if (!room || distance > 3000) return []
+    return [{
+      hotel, rooms, room, distance,
+      distanceLabel: distance < 1000 ? Math.round(distance) + ' 米' : (distance / 1000).toFixed(1) + ' 公里',
+      totalRemain: rooms.reduce((sum, item) => sum + item.remaining, 0),
+      stars: hotel.rating >= 4.9 ? '★★★★★' : '★★★★☆',
+      review: hotel.reviews[0],
+    }]
+  }).sort((a, b) =>
+    Number(b.hotel.category === '赛事优惠') - Number(a.hotel.category === '赛事优惠') || a.distance - b.distance,
+  )
+})
+
+type HotelEntry = (typeof nearbyHotels.value)[number]
+const roomFor = (entry: HotelEntry) => entry.rooms.find((room) => room.id === roomChoices.value[entry.hotel.id]) ?? entry.room
+
+async function selectHotel(id: string) {
+  selectedHotelId.value = id
+  await nextTick()
+  if (selectedHotelId.value !== id) return
+  const list = hotelList.value
+  const card = list?.querySelector('.trm-hotel-card.active')
+  if (!list || !card) return
+  const listBounds = list.getBoundingClientRect()
+  const cardBounds = card.getBoundingClientRect()
+  if (cardBounds.top < listBounds.top || cardBounds.bottom > listBounds.bottom) {
+    list.scrollTop += cardBounds.top - listBounds.top
   }
 }
 
-function initHotelMap() {
-  destroyMap()
-  if (!mapContainer.value) return
-  map = createPortalMap(mapContainer.value, JINGSHAN_MAP_CENTER, 14)
-  setPortalMapTiles(L.layerGroup().addTo(map), 'vector', () => {})
-  layerGroup = L.layerGroup().addTo(map)
+let map: L.Map | undefined
+const markers = new Map<string, L.Marker>()
+const basemapUnavailable = ref(false)
 
-  addPortalMapMarker(layerGroup, JINGSHAN_MAP_CENTER, {
-    title: '京山国际网球中心（赛场）',
-    icon: MAP_ICONS.court,
-    label: '比赛主场馆',
-    description: '2026中青赛总决赛主场馆 · 温泉街道网球大道1号',
-    highlight: '赛场中心',
-  }, 600)
+function destroyMap() {
+  map?.remove()
+  map = undefined
+  markers.clear()
+}
 
-  const points: L.LatLngTuple[] = [JINGSHAN_MAP_CENTER]
-  for (const item of nearbyHotels.value) {
-    const { hotel, room, totalRemain } = item
+function buildHotelMap(canvas: HTMLDivElement) {
+  const court = venue.value
+  if (!court) return
+  const center: L.LatLngTuple = [court.lat, court.lng]
+  map = createPortalMap(canvas, center, 15)
+  setPortalMapTiles(L.layerGroup().addTo(map), 'vector', (unavailable) => { basemapUnavailable.value = unavailable })
+  const layers = L.layerGroup().addTo(map)
+  const points: L.LatLngTuple[] = [center]
+  addPortalMapMarker(layers, center, {
+    title: court.name, label: '比赛场馆', icon: MAP_ICONS.court, description: court.address, photo: court.photo,
+  }, 500)
+
+  for (const entry of nearbyHotels.value) {
+    const { hotel, room, stars, distanceLabel, review, totalRemain } = entry
     points.push([hotel.lat, hotel.lng])
-    const marker = addPortalMapMarker(layerGroup, [hotel.lat, hotel.lng], {
-      title: `${hotel.name}`,
+    const marker = addPortalMapMarker(layers, [hotel.lat, hotel.lng], {
+      title: hotel.name,
+      label: '京网推荐 · 余 ' + totalRemain + ' 间',
+      compact: true,
       icon: MAP_ICONS.hotel,
-      label: `京网推荐 ¥${room.eventPrice} · 余${totalRemain}间`,
       photo: hotel.photo,
-      description: `京网推荐 ${item.starsText} ${hotel.rating.toFixed(1)}分 ｜ ${hotel.distanceToCourt} ｜ 点评：“${item.topReview}”`,
-      highlight: `空房余 ${totalRemain} 间 · ¥${room.eventPrice}${room.leaseUnit ?? '/晚'}`,
-      actions: [
-        {
-          label: '立即预订',
-          run: () => quickBookHotel(hotel.id),
-        },
-      ],
-    }, hotel.id === selectedHotelId.value ? 550 : 300)
-    marker.on('click', () => {
-      selectedHotelId.value = hotel.id
-    })
+      description: '京网推荐 ' + stars + ' ' + hotel.rating.toFixed(1) + ' 分 · 距赛场 ' + distanceLabel
+        + (review ? ' · 住客点评 ' + review.user + '：“' + review.content + '”' : ''),
+      highlight: '¥' + room.eventPrice + (room.leaseUnit ?? '/晚') + ' · 余 ' + totalRemain + ' 间',
+      actions: [{ label: '详情与选房', run: () => viewHotel(entry) }],
+    }, 300)
+    marker.on('popupopen', () => { void selectHotel(hotel.id) })
     markers.set(hotel.id, marker)
   }
 
-  map.fitBounds(L.latLngBounds(points), { padding: [36, 40], maxZoom: 15, animate: false })
-  markers.get(selectedHotelId.value)?.openPopup()
+  if (points.length > 1) map.fitBounds(L.latLngBounds(points), { padding: [36, 42], maxZoom: 16, animate: false })
+  markers.get(nearbyHotels.value[0]?.hotel.id ?? '')?.openPopup()
 }
 
-function focusHotelOnMap(hotelId: string) {
-  selectedHotelId.value = hotelId
-  const marker = markers.get(hotelId)
-  if (marker && map) {
-    map.panTo(marker.getLatLng(), { animate: true })
-    marker.openPopup()
+watch(mapContainer, (canvas) => {
+  destroyMap()
+  if (canvas) buildHotelMap(canvas)
+}, { flush: 'post' })
+onUnmounted(destroyMap)
+
+watch(() => state.tournamentRegistration, async (selection) => {
+  if (!selection) {
+    dialog.value?.close()
+    return
   }
-}
+  receipt.value = undefined
+  selectedHotelId.value = ''
+  roomChoices.value = {}
+  Object.assign(form, {
+    eventId: selection.eventId, groupId: selection.groupId,
+    player: currentAccount.value.name, origin: state.origin, unit: '', level: state.abilityLevel, addPackage: false,
+  })
+  dialog.value?.showModal()
+  await nextTick()
+  playerField.value?.focus()
+})
 
 function close() {
-  state.showTourneyRegModal = false
+  state.tournamentRegistration = null
 }
 
 async function submitRegistration() {
-  if (!regForm.playerName.trim()) {
-    showToast('请输入参赛选手姓名')
-    return
-  }
-  const originMap = {
-    武汉市: '武汉市（省内游客）',
-    北京市: '北京市（省外游客）',
-    深圳市: '深圳市（省外游客）',
-    荆门市: '荆门市（周边游客）',
-  } as const
-  const mappedOrigin = originMap[regForm.originCity as keyof typeof originMap]
-  if (mappedOrigin) setVisitorOrigin(mappedOrigin)
-
-  lastRegOrderId.value = registerYouthTournament({
-    tournamentName: regForm.tournamentName,
-    playerName: `${regForm.playerName.trim()}（${regForm.originCity}）`,
-    group: regForm.group,
-    venue: '京山国际网球中心',
-    fee: 120,
-  })
-  if (regForm.bundleSpa3d && !ordered3dPkg.value) {
-    await orderThreeDayPackage(true)
-  }
-  step.value = 'success'
-  await nextTick()
-  window.setTimeout(initHotelMap, 60)
-}
-
-async function orderThreeDayPackage(silent = false) {
-  if (ordered3dPkg.value) {
-    showToast('您已下单“打网球＋泡温泉”三天两晚套餐')
-    return
-  }
-  if (silent) {
-    const orderId = `ORD-${Date.now().toString().slice(-6)}`
-    state.orders.unshift({
-      id: orderId,
-      category: '门票',
-      title: '“打网球＋泡温泉”三天两晚精品套餐',
-      subtitle: '含4h标准订场 + 2晚主题酒店 + 天沐温泉通票 + 电子票根85折',
-      time: '11/27–11/29',
-      amount: 1688,
-      status: '已确认',
-      cancellable: true,
-    })
-    ordered3dPkg.value = true
-    return
-  }
-  const ok = await createQuickOrder(
-    '门票',
-    '“打网球＋泡温泉”三天两晚精品套餐',
-    '含4h标准订场 + 2晚主题/温泉酒店 + 天沐天然温泉通票 + 电子票根85折',
-    1688,
-    180,
-    0,
-    {
-      fields: [
-        { label: '套餐内容', value: '4小时订场 + 2晚精选住宿 + 天沐温泉通票' },
-        { label: '出行日期', value: '11/27 入住 — 11/29 离店（3天2晚）' },
-        { label: '专属福利', value: '自动激活 79 家网球联盟 85 折电子票根' },
-      ],
-      successTitle: '三天两晚套餐下单成功',
-      successMessage: '已同步至个人中心，获赠 180 金网积分。',
-    },
-  )
-  if (ok) ordered3dPkg.value = true
-}
-
-async function quickBookHotel(hotelId: string) {
-  const entry = nearbyHotels.value.find((x) => x.hotel.id === hotelId)
-  if (!entry) return
-  const ok = await createQuickOrder(
-    '住宿',
-    `${entry.hotel.name} · ${entry.room.name}`,
-    `11/27入住 - 11/29离店（2晚） · 京网推荐${entry.starsText} · 已核销电子票根 ${state.ticketStubCode}`,
-    entry.room.eventPrice * 2,
-    120,
-    0,
-    {
-      fields: [
-        { label: '酒店名称', value: `${entry.hotel.name}（京网推荐 ${entry.hotel.rating.toFixed(1)}分）` },
-        { label: '预订房型', value: `${entry.room.name}（${entry.room.breakfast}）` },
-        { label: '入住晚数', value: '11/27 — 11/29（共 2 晚）' },
-        { label: '距赛场', value: entry.hotel.distanceToCourt },
-      ],
-      successTitle: '网球主题酒店预订成功',
-      successMessage: '已锁定空房并获赠 120 金网积分，抵京出行指引已就绪！',
-    },
-  )
-  if (ok && !bookedHotelIds.value.includes(hotelId)) {
-    bookedHotelIds.value.push(hotelId)
+  if (registrationPending.value || receipt.value || !division.value || !form.player.trim()) return
+  const player = form.player.trim()
+  const group = division.value
+  const addOn = form.addPackage && !packageOrdered.value ? packageOrder.value : undefined
+  registrationPending.value = true
+  try {
+    const id = await registerYouthTournament({
+      eventId: form.eventId, groupId: group.id, playerName: player, unit: form.unit.trim() || form.origin, level: form.level.trim(),
+    }, form.origin, addOn)
+    if (!id) return
+    receipt.value = { id, groupName: group.name, player }
+    await nextTick()
+    successHeading.value?.focus()
+  } finally {
+    registrationPending.value = false
   }
 }
 
-function openArrivalGuide() {
-  state.showTourneyRegModal = false
-  state.showArrivalGuideModal = true
+async function bookSpaPackage() {
+  if (packagePending.value || packageOrdered.value) return
+  packagePending.value = true
+  try {
+    await bookTournamentPackage(packageOrder.value)
+  } finally {
+    packagePending.value = false
+  }
 }
 
-watch(
-  () => state.showTourneyRegModal,
-  (open) => {
-    if (!open) {
-      destroyMap()
-      return
-    }
-    if (step.value === 'success') {
-      nextTick(() => window.setTimeout(initHotelMap, 60))
-    }
-  },
-)
+function viewHotel(entry: HotelEntry) {
+  const { checkIn, checkOut } = stay.value
+  close()
+  openHotelDetail(entry.hotel.id, { checkIn, checkOut, roomId: roomFor(entry).id })
+}
 
-onUnmounted(destroyMap)
+function showModule(id: 5 | 13) {
+  close()
+  switchModule(id)
+}
 </script>
 
 <template>
-  <div v-if="state.showTourneyRegModal" class="modal-backdrop" @click.self="close">
-    <div class="modal-box" :style="{ width: step === 'success' ? '1040px' : '640px', maxWidth: '96vw' }">
-      <!-- 顶部栏 -->
-      <div class="card-pad flex-between" style="background: linear-gradient(135deg, #092d22, #0d684a); color: #fff">
+  <dialog ref="dialog" class="tourney-dialog" :class="{ 'tourney-dialog-wide': receipt }" aria-labelledby="tourney-heading" @cancel.prevent="close" @click.self="close">
+    <div v-if="state.tournamentRegistration && event">
+      <header class="tourney-heading card-pad flex-between">
         <div>
-          <div class="flex-row" style="gap: 8px; margin-bottom: 4px">
-            <span class="tag" style="background: var(--lime); color: #0b251d">
-              {{ step === 'form' ? '🏆 京山网球赛事 · 一键报名' : '✅ 报名成功 · 赛场周边空房酒店地图推荐' }}
-            </span>
-            <span v-if="step === 'success'" style="font-size: 13px; color: rgba(255,255,255,0.85)">报名号：{{ lastRegOrderId }}</span>
-          </div>
-          <strong style="font-size: 19px">{{ regForm.tournamentName }}</strong>
+          <h2 id="tourney-heading" ref="successHeading" tabindex="-1">{{ receipt ? '报名成功' : '赛事一键报名' }}</h2>
+          <p>{{ event.name }}</p>
         </div>
-        <div class="flex-row" style="gap: 8px">
-          <button
-            v-if="step === 'success'"
-            type="button"
-            class="btn-ghost"
-            style="background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.3); padding: 6px 12px; font-size: 13px"
-            @click="step = 'form'"
-          >
-            重新报名
-          </button>
-          <button type="button" class="btn-ghost" @click="close">✕ 关闭</button>
-        </div>
-      </div>
+        <button type="button" class="btn-ghost" @click="close">关闭</button>
+      </header>
 
-      <!-- STEP 1: 一键报名表单 -->
-      <div v-if="step === 'form'" class="card-pad" style="display: flex; flex-direction: column; gap: 14px">
-        <div style="background: #f4faf7; border: 1px solid #cce6da; padding: 12px 14px; font-size: 13.5px; color: var(--ink-2)">
-          📅 赛期：<strong>2026年11月24日 – 12月3日</strong> ｜ 📍 赛场：<strong>京山国际网球中心</strong> ｜ 🎁 报名即激活 79 家联盟 85 折电子票根并赠 <strong>+120 积分</strong>
+      <form v-if="!receipt" class="card-pad tourney-form" @submit.prevent="submitRegistration">
+        <div class="grid-2 tourney-fields">
+          <label class="dd-field">
+            <span class="dd-field-label">可报名赛事</span>
+            <select v-model="form.eventId" class="dd-select">
+              <option v-if="!eventChoices.some((item) => item.id === event?.id)" :value="event.id">{{ event.name }}</option>
+              <option v-for="item in eventChoices" :key="item.id" :value="item.id">{{ item.name }}</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">参赛组别</span>
+            <select v-model="form.groupId" class="dd-select" :disabled="!divisions.length">
+              <option v-if="!divisions.length" value="">暂无可报名组别</option>
+              <option v-for="item in divisions" :key="item.id" :value="item.id">{{ item.name }} · ¥{{ item.fee }}</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">参赛选手姓名</span>
+            <input ref="playerField" v-model="form.player" class="f-input" required autocomplete="name" />
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">报名来源地</span>
+            <select v-model="form.origin" class="dd-select">
+              <option v-for="origin in origins" :key="origin">{{ origin }}</option>
+            </select>
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">代表单位（选填）</span>
+            <input v-model="form.unit" class="f-input" />
+          </label>
+          <label class="dd-field">
+            <span class="dd-field-label">技术等级</span>
+            <input v-model="form.level" class="f-input" />
+          </label>
         </div>
+        <p>{{ event.dateRange }} · {{ event.venue }}</p>
+        <p v-if="event.noticeList[0]" class="tourney-notice">{{ event.noticeList[0] }}</p>
 
-        <div class="grid-2" style="gap: 12px">
-          <div>
-            <label class="f-label">参赛选手姓名 *</label>
-            <input v-model="regForm.playerName" class="f-input" placeholder="如：张先生" />
-          </div>
-          <div>
-            <label class="f-label">报名来源地（自动同步行程推荐）</label>
-            <select v-model="regForm.originCity" class="f-input">
-              <option value="武汉市">武汉市（省内游客）</option>
-              <option value="北京市">北京市（省外北上客源）</option>
-              <option value="深圳市">深圳市（省外南下客源）</option>
-              <option value="荆门市">荆门市（周边游客）</option>
-            </select>
-          </div>
-          <div>
-            <label class="f-label">参赛组别</label>
-            <select v-model="regForm.group" class="f-input">
-              <option>公开组单打积分赛（CUTR 3.5）</option>
-              <option>公开组双打积分赛（CUTR 3.5+）</option>
-              <option>U14 青少年单打积分组</option>
-              <option>U16 青少年单打积分组</option>
-            </select>
-          </div>
-          <div>
-            <label class="f-label">当前技术等级（匹配赛间约球）</label>
-            <select v-model="regForm.level" class="f-input">
-              <option>CUTR 3.50-3.99</option>
-              <option>CUTR 3.00-3.49</option>
-              <option>CUTR 4.00-4.49</option>
-              <option>CUTR 2.50-2.99</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 顺手加购三天两晚套餐 -->
-        <label
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            background: #fff8f3;
-            border: 1.5px solid #f7c7a8;
-            padding: 13px 16px;
-            cursor: pointer;
-          "
-        >
-          <div style="display: flex; align-items: flex-start; gap: 10px">
-            <input v-model="regForm.bundleSpa3d" type="checkbox" style="margin-top: 4px; width: 16px; height: 16px" />
-            <div>
-              <div style="font-size: 15px; font-weight: 800; color: #542600">
-                ♨️ 顺手下单：“打网球＋泡温泉”三天两晚精品套餐
-                <span class="tag orange" style="margin-left: 6px">省 ¥492</span>
-              </div>
-              <div style="font-size: 13px; color: var(--ink-2); margin-top: 3px">
-                含 4h 标准订场 + 2晚主题/温泉酒店 + 天沐天然温泉通票 + 联盟美食85折
-              </div>
-            </div>
-          </div>
-          <strong style="font-size: 20px; color: var(--accent); flex-shrink: 0">¥1,688</strong>
+        <label class="tourney-addon">
+          <input v-model="form.addPackage" type="checkbox" :disabled="packageOrdered" />
+          <span>
+            <strong>{{ spaPackage.title }}</strong>
+            <small>{{ spaPackage.includes.join(' · ') }}</small>
+            <small>{{ packageOrdered ? '该出行日期已下单' : '勾选后与赛事报名一起确认' }}</small>
+          </span>
+          <strong class="price">¥{{ spaPackage.price.toLocaleString('zh-CN') }}</strong>
         </label>
 
-        <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
-          <span style="font-size: 13.5px; color: var(--ink-2)">
-            赛事报名费：<strong style="color: var(--accent); font-size: 18px">¥120</strong>
-            <span v-if="regForm.bundleSpa3d"> + 套餐 ¥1,688</span>
-          </span>
-          <div class="flex-row" style="gap: 10px">
-            <button type="button" class="btn-ghost" @click="close">稍后报名</button>
-            <button type="button" class="btn-orange" style="padding: 10px 22px; font-size: 15px" @click="submitRegistration">
-              一键报名并查看周边空房酒店 →
+        <div class="flex-between tourney-actions">
+          <span v-if="division">报名费 <strong class="price">¥{{ division.fee }}</strong></span>
+          <button type="submit" class="btn-orange" :disabled="registrationPending || !division || !form.player.trim()">一键报名并查看周边酒店</button>
+        </div>
+      </form>
+
+      <div v-else class="card-pad tourney-form">
+        <div class="flex-between tourney-receipt">
+          <div>
+            <strong>{{ receipt.player }} · {{ receipt.groupName }}</strong>
+            <p>报名号 {{ receipt.id }}</p>
+          </div>
+          <button type="button" class="btn-ghost" @click="showModule(13)">查看订单</button>
+        </div>
+
+        <div class="flex-between tourney-actions">
+          <div>
+            <h3>赛场周边空房酒店</h3>
+            <p>{{ stayLabel }} · {{ nearbyHotels.length }} 家可订 · 示例房态与点评</p>
+          </div>
+          <div class="tourney-package-status">
+            <span v-if="packageOrdered" class="tag green" role="status">已下单三天两晚套餐</span>
+            <button v-else type="button" class="btn-orange" :disabled="packagePending" @click="bookSpaPackage">
+              {{ packagePending ? '等待确认套餐' : '加购三天两晚套餐 ¥' + spaPackage.price.toLocaleString('zh-CN') }}
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- STEP 2: 报名成功 + 赛场周边空房酒店地图推荐 -->
-      <div v-else class="card-pad" style="display: flex; flex-direction: column; gap: 14px; max-height: 78vh; overflow-y: auto">
-        <div class="flex-between" style="background: #eefaf4; border: 1px solid #bce4d0; padding: 11px 15px; flex-wrap: wrap; gap: 10px">
-          <div style="font-size: 14px; color: #0a593d">
-            <strong>🎉 已为 {{ regForm.playerName }} 锁定「{{ regForm.group }}」参赛资格！</strong>
-            系统已为您定位赛场周边 <strong>4 家有空房合作酒店</strong>，清晰标注“京网推荐”星级与真实点评：
-          </div>
-          <button
-            type="button"
-            :class="ordered3dPkg ? 'btn-ghost' : 'btn-orange'"
-            style="padding: 6px 14px; font-size: 13px; flex-shrink: 0"
-            @click="orderThreeDayPackage(false)"
-          >
-            {{ ordered3dPkg ? '✅ 已下单三天两晚套餐' : '♨️ 顺手下单“打网球+泡温泉”三天两晚套餐 (¥1,688)' }}
-          </button>
         </div>
 
         <div class="trm-map-grid">
-          <!-- 左侧实时空房地图 -->
           <div class="trm-map-wrap">
-            <div ref="mapContainer" class="trm-map-canvas" />
-            <div class="trm-map-legend">
-              <span>🎾 赛场主场馆</span>
-              <span>🏨 京网推荐空房酒店（点击查看星级与点评）</span>
-            </div>
+            <div ref="mapContainer" class="trm-map-canvas" aria-label="赛场周边酒店地图" />
+            <p v-if="basemapUnavailable" class="portal-map-notice" role="status">暂时无法加载地图底图</p>
           </div>
-
-          <!-- 右侧空房酒店推荐列表 -->
-          <div class="trm-hotel-list">
-            <div
-              v-for="item in nearbyHotels"
-              :key="item.hotel.id"
-              class="trm-hotel-card"
-              :class="{ active: selectedHotelId === item.hotel.id }"
-              @click="focusHotelOnMap(item.hotel.id)"
-            >
-              <div class="flex-between" style="gap: 8px; margin-bottom: 4px">
-                <strong style="font-size: 15px; color: var(--ink)">{{ item.hotel.name }}</strong>
-                <span class="tag green" style="flex-shrink: 0">余 {{ item.totalRemain }} 间空房</span>
+          <div ref="hotelList" class="trm-hotel-list">
+            <p v-if="!nearbyHotels.length" role="status">赛场 3 公里内暂无可订酒店。</p>
+            <article v-for="entry in nearbyHotels" :key="entry.hotel.id" class="trm-hotel-card" :class="{ active: selectedHotelId === entry.hotel.id }">
+              <div class="flex-between">
+                <button type="button" class="trm-hotel-name" :aria-pressed="selectedHotelId === entry.hotel.id" @click="markers.get(entry.hotel.id)?.openPopup()">{{ entry.hotel.name }}</button>
+                <span class="tag green">余 {{ entry.totalRemain }} 间</span>
               </div>
-              <div class="flex-row" style="gap: 8px; margin-bottom: 5px; flex-wrap: wrap">
-                <span class="tag gold">🏅 京网推荐 {{ item.starsText }} {{ item.hotel.rating.toFixed(1) }}</span>
-                <span style="font-size: 12.5px; color: var(--ink-3)">{{ item.hotel.reviewCount }}条真实点评 · {{ item.hotel.distanceToCourt.split('（')[0] }}</span>
+              <p><span class="tag gold">京网推荐 {{ entry.stars }} {{ entry.hotel.rating.toFixed(1) }}</span> · 距赛场 {{ entry.distanceLabel }}</p>
+              <blockquote v-if="entry.review" class="trm-review-quote">{{ entry.review.user }}：“{{ entry.review.content }}”</blockquote>
+              <label class="dd-field">
+                <span class="dd-field-label">可订房型</span>
+                <select :value="roomFor(entry).id" class="dd-select" @change="roomChoices[entry.hotel.id] = ($event.target as HTMLSelectElement).value">
+                  <option v-for="room in entry.rooms" :key="room.id" :value="room.id">{{ room.name }} · ¥{{ room.eventPrice }}{{ room.leaseUnit ?? '/晚' }}</option>
+                </select>
+              </label>
+              <div class="flex-between tourney-actions">
+                <span><strong class="price">¥{{ roomFor(entry).eventPrice * stay.nights }}</strong> / {{ stay.nights }} 晚</span>
+                <button type="button" class="btn-primary" @click="viewHotel(entry)">详情与选房</button>
               </div>
-              <div class="trm-review-quote">
-                💬 {{ item.reviewer }}：“{{ item.topReview }}”
-              </div>
-              <div class="flex-between" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line)">
-                <div>
-                  <strong style="font-size: 18px; color: var(--accent)">¥{{ item.room.eventPrice }}</strong>
-                  <small style="font-size: 12px; color: var(--ink-3)">{{ item.room.leaseUnit ?? '/晚' }} · 票根85折</small>
-                </div>
-                <div class="flex-row" style="gap: 6px">
-                  <button
-                    type="button"
-                    class="btn-ghost"
-                    style="padding: 4px 10px; font-size: 12.5px"
-                    @click.stop="close(); openHotelDetail(item.hotel.id)"
-                  >
-                    房型详情
-                  </button>
-                  <button
-                    type="button"
-                    :class="bookedHotelIds.includes(item.hotel.id) ? 'btn-ghost' : 'btn-primary'"
-                    style="padding: 5px 12px; font-size: 12.5px"
-                    @click.stop="quickBookHotel(item.hotel.id)"
-                  >
-                    {{ bookedHotelIds.includes(item.hotel.id) ? '✅ 已预订' : '预订此酒店' }}
-                  </button>
-                </div>
-              </div>
-            </div>
+            </article>
           </div>
         </div>
-
-        <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
-          <button
-            type="button"
-            class="btn-ghost"
-            @click="close(); switchModule(5)"
-          >
-            前往“住 · 住宿服务”查看全部酒店 →
-          </button>
-          <div class="flex-row" style="gap: 10px">
-            <button type="button" class="btn-orange" @click="openArrivalGuide">
-              🚦 下一步：查看抵京出行指引卡 →
-            </button>
-          </div>
+        <div class="flex-between tourney-actions">
+          <button type="button" class="btn-ghost" @click="showModule(5)">查看全部住宿</button>
+          <button type="button" class="btn-ghost" @click="close(); state.showArrivalGuideModal = true">抵京出行指引</button>
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 </template>
 
 <style scoped>
-.trm-map-grid {
+.tourney-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(700px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+}
+.tourney-dialog-wide { width: min(1100px, calc(100vw - 32px)); }
+.tourney-dialog::backdrop { background: rgb(15 38 31 / 45%); }
+.tourney-heading { background: linear-gradient(135deg, #092d22, #0d684a); color: white; }
+.tourney-heading h2 { color: white; font-size: 20px; }
+.tourney-heading p { margin-top: 4px; }
+.tourney-form { display: grid; gap: 14px; }
+.tourney-fields { gap: 12px; }
+.tourney-notice { color: var(--ink-2); font-size: 13px; }
+.tourney-addon {
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 14px;
-  align-items: stretch;
-}
-.trm-map-wrap {
-  position: relative;
-  border: 1px solid var(--line);
-  background: #e8f1ed;
-  min-height: 410px;
-  display: flex;
-  flex-direction: column;
-}
-.trm-map-canvas {
-  flex: 1;
-  width: 100%;
-  min-height: 376px;
-}
-.trm-map-legend {
-  display: flex;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 7px 12px;
-  background: #f5faf8;
-  border-top: 1px solid var(--line);
-  font-size: 12.5px;
-  color: var(--ink-2);
-  font-weight: 700;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #f7c7a8;
+  background: #fff8f3;
 }
-.trm-hotel-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 420px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-.trm-hotel-card {
-  border: 1px solid var(--line);
-  background: #ffffff;
-  padding: 11px 13px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-.trm-hotel-card:hover {
-  border-color: #9ec8b8;
-  background: #fafdfc;
-}
-.trm-hotel-card.active {
-  border-color: var(--primary);
-  border-left: 4px solid var(--primary);
-  background: #f2faf6;
-}
-.trm-review-quote {
-  font-size: 12.5px;
-  color: var(--ink-2);
-  background: #f6faf8;
-  padding: 6px 9px;
-  line-height: 1.5;
-  border-left: 2px solid #c2dfd3;
+.tourney-addon small { display: block; color: var(--ink-2); }
+.tourney-actions { flex-wrap: wrap; }
+.tourney-actions > button:last-child { margin-left: auto; }
+.tourney-package-status { display: flex; justify-content: flex-end; align-items: center; min-height: 39px; margin-left: auto; }
+.tourney-package-status button:disabled { filter: none; transform: none; }
+.tourney-dialog button:disabled { cursor: not-allowed; opacity: 0.55; }
+.tourney-receipt { padding: 12px; background: var(--primary-light); }
+.trm-map-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.trm-map-wrap { position: relative; isolation: isolate; }
+.trm-map-canvas { width: 100%; height: 420px; background: #e8f1ed; }
+.trm-hotel-list { display: grid; align-content: start; gap: 10px; max-height: 420px; overflow: auto; }
+.trm-hotel-card { display: grid; gap: 7px; padding: 12px; border: 1px solid var(--line); }
+.trm-hotel-card.active { border-color: var(--primary); background: #f2faf6; }
+.trm-hotel-name { border: 0; background: transparent; color: var(--primary-dark); font: inherit; font-weight: 800; text-align: left; }
+.trm-review-quote { padding: 7px 9px; border-left: 3px solid var(--primary-light); font-size: 13px; color: var(--ink-2); }
+@media (max-width: 760px) {
+  .tourney-fields, .trm-map-grid { grid-template-columns: minmax(0, 1fr); }
+  .trm-map-canvas { height: 340px; }
 }
 </style>

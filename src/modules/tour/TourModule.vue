@@ -276,7 +276,7 @@ const visibleTrails = computed(() =>
       <!-- 一、赛后精选（所有游客常驻可见：温泉 / 夜市美食 / 钟祥明显陵·莫愁湖） -->
       <div class="rt-section">
         <div class="rt-sec-head">
-          <h2>赛后精选 · 游 / 吃 / 娱</h2>
+          <h2>赛后精选</h2>
           <span class="tag green">完赛即享票根优惠</span>
         </div>
 

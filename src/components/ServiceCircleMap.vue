@@ -2,7 +2,7 @@
 import L from 'leaflet'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { usePortalStore } from '../store/usePortalStore'
-import { VENUE_POIS, type MapPoiCategory, type MapPoi } from '../mock/venuePois'
+import { getVenuePois, type MapPoiCategory, type MapPoi } from '../mock/venuePois'
 import { REHAB_CENTERS, rehabDetail } from '../mock/trainingData'
 import { INITIAL_COURTS } from '../mock/data'
 import { HOTEL_PROFILES } from '../mock/details'
@@ -19,7 +19,6 @@ import {
   type MapBasemap,
 } from './portalMap'
 
-export type { MapPoiCategory } from '../mock/venuePois'
 const { openVenueDetail, openHotelDetail, openCinemaDetail, openDetailPage, openPhoto } = usePortalStore()
 
 export interface AmenityMapPoint {
@@ -75,6 +74,10 @@ const amenityIcons: Record<AmenityMapPoint['key'], string> = {
 }
 const courtLegend = [
   { icon: MAP_ICONS.court, label: '球场' },
+  { icon: MAP_ICONS.serviceDesk, label: '服务台' },
+  { icon: MAP_ICONS.restroom, label: '卫生间' },
+  { icon: MAP_ICONS.restArea, label: '休息区' },
+  { icon: MAP_ICONS.equipment, label: '器材服务' },
   { icon: MAP_ICONS.hotel, label: '酒店' },
   { icon: MAP_ICONS.food, label: '美食' },
   { icon: MAP_ICONS.parking, label: '停车' },
@@ -94,16 +97,27 @@ const activeCenter = computed<[number, number]>(() =>
 )
 
 const radiusMeters = computed(() => props.radius === '500m' ? 500 : props.radius === '2公里' ? 2000 : 1000)
+const poiCategory = computed(() => props.poiCategory ?? '全部')
 const nearbyRehab = computed(() => {
+  if (!props.selectedVenue || (poiCategory.value !== '全部' && poiCategory.value !== '康复理疗')) return []
   const center = L.latLng(activeCenter.value)
-  return REHAB_CENTERS.filter(item => center.distanceTo([item.lat, item.lng]) <= radiusMeters.value)
+  return REHAB_CENTERS.filter((item) => center.distanceTo([item.lat, item.lng]) <= radiusMeters.value)
 })
 
 const activePois = computed(() => {
-  const venueId = props.selectedVenue?.id ?? 'venue-international'
-  const all = VENUE_POIS[venueId] ?? VENUE_POIS['venue-international']!
-  if (!props.poiCategory || props.poiCategory === '全部') return all
-  return all.filter((p) => p.category === props.poiCategory)
+  const venue = props.selectedVenue
+  if (!venue) return []
+  const center = L.latLng(venue.lat, venue.lng)
+  return getVenuePois(venue.id).filter((poi) =>
+    (poiCategory.value === '全部' || poi.category === poiCategory.value)
+    && center.distanceTo([poi.lat, poi.lng]) <= radiusMeters.value,
+  )
+})
+
+const visibleCourtLegend = computed(() => {
+  const icons = new Set([MAP_ICONS.court, ...activePois.value.map((poi) => poi.badgeIcon)])
+  if (nearbyRehab.value.length) icons.add(MAP_ICONS.rehab)
+  return courtLegend.filter((entry) => icons.has(entry.icon))
 })
 
 function registerLocation(id: string, marker: L.Marker) {
@@ -270,10 +284,45 @@ function renderAmenities(layers: L.LayerGroup) {
 function openPoiDetail(poi: MapPoi) {
   if (poi.hotelId) return openHotelDetail(poi.hotelId)
   if (poi.badgeIcon === MAP_ICONS.cinema) return openCinemaDetail()
-  openDetailPage({ kind: 'map-point', source: props.selectedVenue?.id ?? 'venue-international', id: poi.name })
+  if (props.selectedVenue) openDetailPage({ kind: 'map-point', source: props.selectedVenue.id, id: poi.name })
 }
 
-function renderOverlays(animatePan = false) {
+function renderCourtPois(layers: L.LayerGroup) {
+  const compact = poiCategory.value === '全部' || radiusMeters.value === 2000
+  for (const poi of activePois.value) {
+    addPortalMapMarker(layers, [poi.lat, poi.lng], {
+      title: poi.name,
+      icon: poi.badgeIcon,
+      label: poi.label ?? poi.name,
+      compact,
+      photo: poi.hotelId ? hotelPhotos.get(poi.hotelId) : undefined,
+      description: poi.desc,
+      highlight: poi.simulated ? '模拟点位' : poi.priceOrMeta,
+      actions: poi.simulated ? undefined : [
+        { label: '查看详情', run: () => openPoiDetail(poi) },
+        ...mapNavigationActions(poi.name, poi.desc, poi.lat, poi.lng),
+      ],
+    })
+  }
+  for (const center of nearbyRehab.value) {
+    const detail = rehabDetail(center)
+    addPortalMapMarker(layers, [center.lat, center.lng], {
+      title: center.name,
+      icon: MAP_ICONS.rehab,
+      photo: center.photo,
+      label: center.name,
+      compact,
+      description: `${center.address} · ${center.openHours}`,
+      highlight: detail.priceInfo,
+      actions: [
+        { label: '查看理疗项目', run: () => openPhoto(detail) },
+        ...mapNavigationActions(center.name, center.address, center.lat, center.lng),
+      ],
+    }, 450)
+  }
+}
+
+function renderOverlays(animatePan = false, fitCourtView = true) {
   if (!map || !overlayGroup) return
   overlayGroup.clearLayers()
   locationMarkers.clear()
@@ -294,13 +343,12 @@ function renderOverlays(animatePan = false) {
   const meters = radiusMeters.value
   const targetZoom = meters === 2000 ? 14 : 15
 
-  if (animatePan && !focusedVenueId) {
-    map.flyTo(center, targetZoom, { duration: 0.55 })
-  } else {
-    map.setView(center, targetZoom)
+  if (props.mode !== 'courts') {
+    if (animatePan) map.flyTo(center, targetZoom, { duration: 0.55 })
+    else map.setView(center, targetZoom)
   }
 
-  L.circle(center, {
+  const serviceCircle = L.circle(center, {
     radius: meters,
     color: '#0D7A58',
     weight: 2,
@@ -309,45 +357,14 @@ function renderOverlays(animatePan = false) {
     interactive: false,
   }).addTo(overlayGroup)
 
+  if (props.mode === 'courts' && fitCourtView) {
+    map.fitBounds(serviceCircle.getBounds(), { padding: [68, 46], maxZoom: 17, animate: false })
+  }
   renderVenues(overlayGroup)
   if (props.mode === 'amenities') {
     renderAmenities(overlayGroup)
   } else {
-    for (const poi of activePois.value) {
-      addPortalMapMarker(overlayGroup, [poi.lat, poi.lng], {
-        title: poi.name,
-        icon: poi.badgeIcon,
-        label: poi.priceOrMeta,
-        photo: poi.hotelId ? hotelPhotos.get(poi.hotelId) : undefined,
-        description: poi.desc,
-        highlight: poi.priceOrMeta,
-        actions: [
-          { label: '查看详情', run: () => openPoiDetail(poi) },
-          ...mapNavigationActions(poi.name, poi.desc, poi.lat, poi.lng),
-        ],
-      })
-    }
-    if (!props.poiCategory || props.poiCategory === '全部' || props.poiCategory === '康复理疗') {
-      for (const center of nearbyRehab.value) {
-        const detail = rehabDetail(center)
-        addPortalMapMarker(overlayGroup, [center.lat, center.lng], {
-          title: center.name,
-          icon: MAP_ICONS.rehab,
-          photo: center.photo,
-          label: detail.priceInfo!,
-          description: center.address,
-          highlight: center.openHours,
-          actions: [
-            { label: '查看理疗项目', run: () => openPhoto(detail) },
-            ...mapNavigationActions(center.name, center.address, center.lat, center.lng),
-          ],
-        }, 450)
-      }
-    }
-    if (props.poiCategory !== '康复理疗' && !focusedVenueId && !animatePan && props.venues?.length) {
-      const bounds = L.latLngBounds(props.venues.map((venue) => [venue.lat, venue.lng]))
-      map.fitBounds(bounds, { padding: [45, 45], maxZoom: targetZoom, animate: false })
-    }
+    renderCourtPois(overlayGroup)
   }
   if (focusedVenueId) venueMarkers.get(focusedVenueId)?.openPopup()
 }
@@ -361,6 +378,7 @@ function updateBasemap() {
 onMounted(() => {
   if (!mapEl.value) return
   map = createPortalMap(mapEl.value, activeCenter.value, 15)
+  if (props.mode === 'courts') map.options.zoomSnap = 0.5
   tileLayers = L.layerGroup().addTo(map)
   overlayGroup = L.layerGroup().addTo(map)
   updateBasemap()
@@ -375,8 +393,9 @@ watch(() => props.trafficPreviewCenter, () => {
 })
 watch(
   () => [props.venues, props.selectedVenue?.id, props.mode, props.radius, props.poiCategory, props.customAmenities, props.parkingLocations] as const,
-  ([venues, venueId], [previousVenues, previousVenueId]) => {
-    renderOverlays(venueId !== previousVenueId && (props.mode !== 'courts' || venues === previousVenues))
+  ([, venueId, mode, radius], [, previousVenueId, previousMode, previousRadius]) => {
+    const venueChanged = venueId !== previousVenueId
+    renderOverlays(venueChanged, venueChanged || radius !== previousRadius || mode !== previousMode)
   },
 )
 watch(() => props.selectedLocationId, openSelectedLocation)
@@ -387,20 +406,22 @@ onUnmounted(() => map?.remove())
 
 <template>
   <div class="service-map-shell">
-    <p v-if="mode === 'courts' && venues?.length && poiCategory === '康复理疗' && !nearbyRehab.length" class="rehab-empty" role="status">当前范围内暂无康复理疗机构</p>
     <div ref="mapEl" class="service-map-canvas" :aria-label="mode === 'traffic' ? '赛事交通地图' : '球场及周边服务地图'" />
     <MapBasemapSwitch v-model="baseType" />
     <div v-if="mode !== 'traffic'" class="portal-map-legend" aria-label="地图图例">
-      <span v-for="entry in mode === 'courts' ? courtLegend : amenityLegend" :key="entry.label">
+      <span v-for="entry in mode === 'courts' ? visibleCourtLegend : amenityLegend" :key="entry.label">
         <span aria-hidden="true">{{ entry.icon }}</span> {{ entry.label }}
       </span>
     </div>
+    <p v-if="mode === 'courts' && selectedVenue && !activePois.length && !nearbyRehab.length" class="portal-map-notice service-map-empty" role="status">
+      当前范围内暂无匹配点位，可扩大范围或切换分类。
+    </p>
     <p v-if="basemapUnavailable" class="portal-map-notice" role="status">暂时无法加载地图底图</p>
   </div>
 </template>
 
 <style scoped>
-.rehab-empty { margin: 0; padding: 8px 16px; background: #f5faf8; color: var(--ink-2); }
+.service-map-empty { top: 54px; }
 .service-map-shell { position: relative; height: 470px; background: #e8f1ed; isolation: isolate; }
 .service-map-canvas { width: 100%; height: 100%; }
 </style>

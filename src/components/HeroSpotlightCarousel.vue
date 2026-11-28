@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
-import { TOURNAMENT_REGISTRATION_OPTIONS } from '../mock/trainingData'
+import { getOpenTournamentOptions } from '../mock/tournamentRegistration'
 import { HERO_SLIDES } from '../mock/data'
 import { usePortalStore } from '../store/usePortalStore'
 
@@ -55,9 +55,14 @@ const courtSurface = ref<'全部' | '硬地' | '红土' | '室内风雨'>('全�
 const courtRegion = ref<'全部' | '温泉街道' | '新市街道' | '永兴街道'>('全部')
 const courtExtra = ref('停车与充电便利')
 
-const eventChoice = ref(TOURNAMENT_REGISTRATION_OPTIONS[0]!)
-const eventGroup = ref(eventChoice.value.groups[0]?.id)
-watch(eventChoice, event => { eventGroup.value = event.groups[0]?.id })
+const openEvents = computed(() => getOpenTournamentOptions(state.orders))
+const eventId = ref('')
+const eventGroup = ref('')
+const eventChoice = computed(() => openEvents.value.find(({ event }) => event.id === eventId.value) ?? openEvents.value[0])
+watch(eventChoice, (choice) => {
+  eventId.value = choice?.event.id ?? ''
+  if (!choice?.divisions.some((group) => group.id === eventGroup.value)) eventGroup.value = choice?.divisions[0]?.id ?? ''
+}, { immediate: true })
 
 function submitCourtQuery() {
   state.courtSurfaceFilter = courtSurface.value
@@ -70,7 +75,7 @@ function submitCourtQuery() {
 }
 
 function submitQuickEvent() {
-  openTournamentRegistration(eventChoice.value.id, eventGroup.value)
+  if (eventChoice.value && eventGroup.value) openTournamentRegistration(eventChoice.value.event.id, eventGroup.value)
 }
 </script>
 
@@ -192,9 +197,10 @@ function submitQuickEvent() {
         <template v-else>
           <div class="hw-grid">
             <div class="hw-field" style="grid-column: span 2">
-              <label>选择热门赛事</label>
-              <select v-model="eventChoice">
-                <option v-for="event in TOURNAMENT_REGISTRATION_OPTIONS" :key="event.id" :value="event">{{ event.label }}</option>
+              <label for="hero-event">选择可报名赛事</label>
+              <select id="hero-event" v-model="eventId" :disabled="!openEvents.length">
+                <option v-if="!openEvents.length" value="">暂无可报名赛事</option>
+                <option v-for="{ event } in openEvents" :key="event.id" :value="event.id">{{ event.name }}</option>
               </select>
             </div>
             <div class="hw-field">
@@ -202,13 +208,13 @@ function submitQuickEvent() {
               <output id="hero-ability-level">{{ state.abilityLevel }} 官方认证</output>
             </div>
             <div class="hw-field">
-              <label>参赛组别</label>
-              <select v-model="eventGroup">
-                <option v-for="group in eventChoice.groups" :key="group.id" :value="group.id">{{ group.name }}</option>
+              <label for="hero-event-group">参赛组别</label>
+              <select id="hero-event-group" v-model="eventGroup" :disabled="!eventChoice">
+                <option v-for="group in eventChoice?.divisions" :key="group.id" :value="group.id">{{ group.name }}</option>
               </select>
             </div>
           </div>
-          <button type="button" class="hw-cta" @click="submitQuickEvent">一键报名</button>
+          <button type="button" class="hw-cta" :disabled="!eventGroup" @click="submitQuickEvent">一键报名</button>
         </template>
       </div>
     </div>

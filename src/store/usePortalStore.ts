@@ -19,7 +19,7 @@ import {
   INITIAL_MATCHMAKING_GAMES,
   INITIAL_PRIVATE_COACHES,
 } from '../mock/schedules'
-import { TOURNAMENT_REGISTRATION_OPTIONS } from '../mock/trainingData'
+import { getDivisionStatus, getOpenTournamentDivisions, getOpenTournamentOptions, getRegistrationEvent, getTournamentEntries } from '../mock/tournamentRegistration'
 import { TOUR_SPOTS, TOUR_VISIT_SLOTS, type TourSpot } from '../mock/tourData'
 import type {
   AbilityDimensions,
@@ -47,6 +47,13 @@ import type {
 } from '../types/portal'
 
 const STORAGE_KEY = 'jingshan_tennis_portal_state_v4'
+
+interface TournamentPackageOrder {
+  title: string
+  subtitle: string
+  amount: number
+  fields: ReservationSummary['fields']
+}
 
 const INITIAL_POINT_LOGS: PointLogItem[] = [
   { id: 'pt-6', title: '预约陈浩陪练 · 网前截击特训课', category: '参训', delta: 80, time: '11-27 16:00' },
@@ -323,7 +330,7 @@ const state = reactive({
   courtRegionFilter: parseRegionFromUrl(),
   showActivityPopup: true,
   showEventModal: false,
-  showTourneyRegModal: false,
+  tournamentRegistration: null as { eventId: string; groupId: string } | null,
   showArrivalGuideModal: false,
   dismissedEventModal: saved.dismissedEventModal ?? true,
   activeMatchRecapId: null as string | null,
@@ -386,9 +393,14 @@ function getPersistSnapshot(): PersistedState {
   }
 }
 
-function persistStateNow() {
+let lastSyncedSnapshot: string | undefined
+
+function persistStateNow(snapshot = getPersistSnapshot()) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(getPersistSnapshot()))
+    const serialized = JSON.stringify(snapshot)
+    if (serialized === lastSyncedSnapshot) return
+    lastSyncedSnapshot = undefined
+    if (localStorage.getItem(STORAGE_KEY) !== serialized) localStorage.setItem(STORAGE_KEY, serialized)
   } catch {
     // ignore storage errors
   }
@@ -454,6 +466,12 @@ function tourSpotDetail(spot: TourSpot, visit?: TourSpotVisitSelection): DetailP
   }
 }
 
+function isIsoDate(value: string | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(value)
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
 function parseDetailFromUrl(): DetailPagePayload | null {
   try {
     const raw = new URLSearchParams(window.location.search).get('detail')
@@ -464,15 +482,13 @@ function parseDetailFromUrl(): DetailPagePayload | null {
       return { kind, source: id, id: decodeURIComponent(options[0]) }
     }
     if (kind === 'tournament') {
-      const event = TOURNAMENT_REGISTRATION_OPTIONS.find(item => item.id === id)
-      const group = event?.groups.find(item => item.id === options[0]) ?? event?.groups[0]
+      const event = getRegistrationEvent(id ?? '')
+      const group = event?.divisions.find(item => item.id === options[0]) ?? event?.divisions[0]
       return event && group ? { kind, eventId: event.id, groupId: group.id } : null
     }
     if (kind === 'hotel' && id) {
       const [checkIn, checkOut, roomId] = options
-      const stay = checkIn && checkOut && checkOut > checkIn
-        && BOOKING_DATES.some((day) => day.iso === checkIn)
-        && BOOKING_DATES.some((day) => day.iso === checkOut)
+      const stay = isIsoDate(checkIn) && isIsoDate(checkOut) && checkOut > checkIn
         ? { checkIn, checkOut, roomId }
         : undefined
       return { kind: 'hotel', hotelId: id, stay }
@@ -532,13 +548,7 @@ export function buildModuleUrl(
 
 watch(
   () => getPersistSnapshot(),
-  (val) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
-    } catch {
-      // ignore storage errors
-    }
-  },
+  (snapshot) => persistStateNow(snapshot),
   { deep: true },
 )
 
@@ -660,10 +670,15 @@ export function usePortalStore() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  function openTournamentRegistration(eventId: string, groupId?: string) {
-    const event = TOURNAMENT_REGISTRATION_OPTIONS.find(item => item.id === eventId)
-    const group = event?.groups.find(item => item.id === groupId) ?? event?.groups[0]
-    if (event && group) openDetailPage({ kind: 'tournament', eventId, groupId: group.id })
+  function openTournamentRegistration(eventId?: string, groupId?: string) {
+    const event = eventId ? getRegistrationEvent(eventId) : getOpenTournamentOptions(state.orders)[0]?.event
+    const groups = event ? getOpenTournamentDivisions(event, state.orders) : []
+    const group = groupId ? groups.find((item) => item.id === groupId) : groups[0]
+    if (!event || !group) {
+      showToast('当前赛事或组别暂无可报名名额')
+      return
+    }
+    state.tournamentRegistration = { eventId: event.id, groupId: group.id }
   }
 
   function openHotelDetail(hotelId: string, stay?: HotelStaySelection) {
@@ -1141,10 +1156,14 @@ export function usePortalStore() {
     })
   }
 
-  async function saveReservationOrder(order: PortalOrder) {
+  async function submitReservationOrder(order: PortalOrder) {
     if (!USE_MOCK) {
       await apiRequest<PortalOrder>('/orders', { method: 'POST', body: JSON.stringify(order) })
     }
+  }
+
+  async function saveReservationOrder(order: PortalOrder) {
+    await submitReservationOrder(order)
     state.orders.unshift(order)
   }
 
@@ -1411,28 +1430,101 @@ export function usePortalStore() {
     showToast(`已反馈工单 ${t.id} 处置结果：${result}`)
   }
 
-  function registerYouthTournament(payload: {
-    tournamentName: string
-    playerName: string
-    group: string
-    venue: string
-    fee: number
-    time?: string
-  }) {
+  function hasTournamentPackage(packageOrder: TournamentPackageOrder) {
+    return state.orders.some((order) => order.status !== '已取消'
+      && order.title === packageOrder.title && order.subtitle === packageOrder.subtitle)
+  }
+
+  async function prepareTournamentPackage(packageOrder: TournamentPackageOrder) {
+    if (hasTournamentPackage(packageOrder)) throw new ReservationUnavailable('该出行日期的套餐已下单，请返回查看订单。')
     const order: PortalOrder = {
-      id: `ORD-${Date.now().toString().slice(-6)}`,
+      id: `ORD-${Date.now().toString().slice(-6)}-PKG`,
       category: '门票',
-      title: `赛事报名：${payload.tournamentName}`,
-      subtitle: `参赛选手：${payload.playerName} · ${payload.group} · ${payload.venue}`,
-      time: payload.time ?? '11/28 开赛',
-      amount: payload.fee,
-      status: '已确认',
+      title: packageOrder.title,
+      subtitle: packageOrder.subtitle,
+      time: '刚刚下单',
+      amount: packageOrder.amount,
+      status: '待使用',
       cancellable: true,
     }
+    await submitReservationOrder(order)
+    return order
+  }
+
+  function recordTournamentPackage(order: PortalOrder) {
     state.orders.unshift(order)
-    recordPoints(120, `报名${payload.tournamentName}（${payload.group}）`, '参赛')
-    showToast(`报名成功！已为 ${payload.playerName} 锁定「${payload.group}」参赛席位（+120积分）`)
-    return order.id
+    recordPoints(180, order.title, '门票')
+  }
+
+  function bookTournamentPackage(packageOrder: TournamentPackageOrder) {
+    return requestReservation({
+      title: packageOrder.title,
+      fields: packageOrder.fields,
+      amount: packageOrder.amount,
+      successTitle: '三天两晚套餐下单成功',
+      successMessage: '已同步至个人中心，获赠 180 金网积分。',
+    }, async () => {
+      const order = await prepareTournamentPackage(packageOrder)
+      recordTournamentPackage(order)
+      persistStateNow()
+      return order.id
+    })
+  }
+
+  async function registerYouthTournament(entry: NonNullable<PortalOrder['tournamentEntry']>, origin: VisitorOrigin, packageOrder?: TournamentPackageOrder) {
+    const event = getRegistrationEvent(entry.eventId)
+    const group = event?.divisions.find((division) => division.id === entry.groupId)
+    if (!event || !group || !entry.playerName.trim()) return
+    const findExisting = () => getTournamentEntries(state.orders, entry.eventId, entry.groupId)
+      .find((registration) => registration.playerName === entry.playerName)
+    const previous = findExisting()
+    if (!previous && getDivisionStatus(event, group, state.orders) !== '报名中') {
+      showToast('该组别的报名状态已变更，请重新选择')
+      return
+    }
+    const title = `赛事报名：${event.name}`
+    const successTitle = packageOrder ? '报名与套餐预订已确认' : previous ? '原报名记录已确认' : '赛事报名成功'
+    let registrationId: string | undefined
+    const confirmed = await requestReservation({
+      title,
+      fields: [
+        { label: '参赛选手', value: entry.playerName },
+        { label: '组别', value: group.name },
+        { label: '赛期与赛场', value: `${event.dateRange} · ${event.venue}` },
+        { label: '赛事报名费', value: previous ? `已报名（${previous.orderId}）` : `¥${group.fee}` },
+        ...(packageOrder ? [{ label: '套餐加购', value: `${packageOrder.title} · ¥${packageOrder.amount}` }, ...packageOrder.fields] : []),
+      ],
+      amount: (previous ? 0 : group.fee) + (packageOrder?.amount ?? 0),
+      successTitle,
+      successMessage: '可查看赛场周边空房与个人中心订单。',
+    }, async () => {
+      const existing = findExisting()
+      if (existing?.orderId !== previous?.orderId || (!existing && getDivisionStatus(event, group, state.orders) !== '报名中')) {
+        throw new ReservationUnavailable('该组别的报名状态已变更，请返回重新确认。')
+      }
+      const addOn = packageOrder ? await prepareTournamentPackage(packageOrder) : undefined
+      registrationId = existing?.orderId
+      if (!registrationId) {
+        registrationId = `ORD-${Date.now().toString().slice(-6)}`
+        state.orders.unshift({
+          id: registrationId,
+          category: '门票',
+          title,
+          subtitle: `参赛选手：${entry.playerName}${entry.unit ? `（${entry.unit}）` : ''} · ${group.name} · ${event.venue}`,
+          time: event.dateRange,
+          amount: group.fee,
+          status: '已确认',
+          cancellable: true,
+          tournamentEntry: entry,
+        })
+        recordPoints(120, `报名${event.name}（${group.name}）`, '参赛')
+      }
+      if (addOn) recordTournamentPackage(addOn)
+      setVisitorOrigin(origin)
+      persistStateNow()
+      return registrationId
+    })
+    return confirmed ? registrationId : undefined
   }
 
   function toggleFavorite(name: string) {
@@ -1512,7 +1604,9 @@ export function usePortalStore() {
     window.addEventListener('storage', (e) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
+          if (e.newValue !== localStorage.getItem(STORAGE_KEY)) return
           applySavedSnapshot(JSON.parse(e.newValue) as Partial<PersistedState>)
+          lastSyncedSnapshot = JSON.stringify(getPersistSnapshot())
         } catch {
           // ignore invalid storage payload
         }
@@ -1570,6 +1664,8 @@ export function usePortalStore() {
     advanceComplaintProgress,
     rateComplaintSatisfaction,
     registerYouthTournament,
+    hasTournamentPackage,
+    bookTournamentPackage,
     recordPoints,
     toggleFavorite,
     claimHomeSubsidy,

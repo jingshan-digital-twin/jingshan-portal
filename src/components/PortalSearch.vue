@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { HOTEL_PROFILES, PRODUCT_CATALOG } from '../mock/details'
 import { restaurants, restaurantDetail } from '../mock/restaurants'
 import { TOUR_SPOTS } from '../mock/tourData'
-import { TOURNAMENT_REGISTRATION_OPTIONS } from '../mock/trainingData'
+import { getOpenTournamentOptions } from '../mock/tournamentRegistration'
 import { usePortalStore } from '../store/usePortalStore'
 import type { ModuleId } from '../types/portal'
 
@@ -28,7 +28,7 @@ const entries = computed(() => [
   ...restaurants.map(r => ({ name: r.name, group: '美食', terms: r.dishes.join(' '), open: () => portal.openPhoto(restaurantDetail(r)) })),
   ...TOUR_SPOTS.map(s => ({ name: s.name, group: '景点', terms: s.tags.join(' '), open: () => portal.openTourSpotDetail(s) })),
   ...PRODUCT_CATALOG.map(p => ({ name: p.name, group: '商品', terms: '', open: () => portal.openProductDetail(p.id) })),
-  ...TOURNAMENT_REGISTRATION_OPTIONS.map(e => ({ name: e.label, group: '赛事', terms: '报名', open: () => portal.openTournamentRegistration(e.id) })),
+  ...getOpenTournamentOptions(portal.state.orders).map(({ event }) => ({ name: event.name, group: '赛事', terms: '报名 ' + event.venue, open: () => portal.openTournamentRegistration(event.id) })),
   { name: '京山国际影城', group: '娱乐', terms: '电影院 排片 选座', open: portal.openCinemaDetail },
 ])
 

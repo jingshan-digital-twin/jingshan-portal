@@ -1,5 +1,4 @@
 import type { LightboxPayload } from '../types/portal'
-import { PORTAL_TOURNAMENTS } from './tournamentsData'
 
 export interface CampProgram {
   id: string
@@ -445,26 +444,3 @@ export function rehabDetail(center: RehabCenter): LightboxPayload {
     reviews: [center.quote],
   }
 }
-
-const clayTournament = INITIAL_YOUTH_TOURNAMENTS.find(event => event.id === 'yt-2')!
-
-export const TOURNAMENT_REGISTRATION_OPTIONS = [
-  ...['tourney-youth-2026', 'tourney-weekend-2026'].map(id => {
-    const event = PORTAL_TOURNAMENTS.find(item => item.id === id)!
-    return {
-      id, label: event.name, photo: event.photo, venue: event.venue, date: event.dateRange,
-      description: event.summary, notice: event.noticeList[0], badge: event.typeBadge,
-      groups: event.divisions.filter(group => group.status === '报名中').map(group => ({
-        id: group.id, name: group.name, fee: group.fee,
-      })),
-    }
-  }),
-  {
-    id: clayTournament.id, label: clayTournament.name, photo: '/images/tournament_1.jpg',
-    venue: clayTournament.venue, date: clayTournament.dateRange, description: clayTournament.desc,
-    notice: clayTournament.surface, badge: clayTournament.levelBadge,
-    groups: ['单打', '双打'].map((format, index) => ({
-      id: 'clay-' + index, name: clayTournament.groupTag + ' ' + format, fee: clayTournament.fee,
-    })),
-  },
-]

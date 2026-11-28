@@ -4,9 +4,10 @@ import MapResultsLayout from '../../components/MapResultsLayout.vue'
 import MapViewToggle from '../../components/MapViewToggle.vue'
 import MultiSelectDropdown from '../../components/MultiSelectDropdown.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
-import ServiceCircleMap, { type MapPoiCategory } from '../../components/ServiceCircleMap.vue'
+import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES, COURT_HOURS, CUTR_BANDS, formatHourRange } from '../../mock/schedules'
 import { CAMP_PROGRAMS, REHAB_CENTERS } from '../../mock/trainingData'
+import { VENUE_POI_FILTERS, type MapPoiCategory } from '../../mock/venuePois'
 import { usePortalStore } from '../../store/usePortalStore'
 import type { CutrBand, MatchmakingGame, RadiusOption } from '../../types/portal'
 
@@ -38,14 +39,6 @@ const subView = ref<(typeof playTabs)[number]['id']>(
   initialPlayTab === 'events' || initialPlayTab === 'matchmaking' || initialPlayTab === 'nearby' ? initialPlayTab : 'courts',
 )
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
-const mapCategories = [
-  { value: '全部', label: '全部周边' },
-  { value: '酒店', label: '🏨 酒店' },
-  { value: '美食', label: '🍜 美食' },
-  { value: '停车充电', label: '🅿️ 停车/充电' },
-  { value: '便民景点', label: '🏥 医疗/景点' },
-  { value: '康复理疗', label: '🩺 康复理疗' },
-] as const
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
 const showCourtMap = ref(true)
@@ -680,12 +673,14 @@ function submitNewGame() {
               <strong style="font-size: 16.5px; color: var(--ink)">
                 📍 {{ selectedVenue ? (selectedVenue.name.split('（')[0] ?? selectedVenue.name) : '京山球场周边' }}
               </strong>
-              <div class="flex-row" style="gap: 5px">
+              <div class="flex-row" style="gap: 5px" role="group" aria-label="周边范围">
                 <button
                   v-for="r in radii"
                   :key="r"
+                  type="button"
                   class="m-tab"
                   :class="{ active: state.radius === r }"
+                  :aria-pressed="state.radius === r"
                   style="padding: 4px 10px; font-size: 13px"
                   @click="state.radius = r"
                 >
@@ -694,10 +689,11 @@ function submitNewGame() {
               </div>
             </div>
 
-            <div class="flex-row" style="gap: 6px">
+            <div class="flex-row" style="gap: 6px; flex-wrap: wrap" role="group" aria-label="周边服务分类">
               <button
-                v-for="cat in mapCategories"
+                v-for="cat in VENUE_POI_FILTERS"
                 :key="cat.value"
+                type="button"
                 class="filter-pill"
                 :class="{ active: mapPoiCategory === cat.value }"
                 style="padding: 4px 11px; font-size: 13px"

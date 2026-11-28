@@ -12,6 +12,9 @@ export const MAP_ICONS = {
   rehab: '🩺',
   scenic: '🏞️',
   restroom: '🚻',
+  serviceDesk: 'ℹ️',
+  restArea: '🪑',
+  equipment: '🎒',
   atm: '🏧',
   nursery: '👶',
   restriction: '🚦',
@@ -38,7 +41,7 @@ interface MapPopupContent {
 }
 
 export function createPortalMap(element: HTMLElement, center: L.LatLngExpression, zoom: number) {
-  const map = L.map(element, { center, zoom, scrollWheelZoom: false, zoomControl: false })
+  const map = L.map(element, { center, zoom, scrollWheelZoom: true, zoomControl: false })
   L.control.zoom({ position: 'bottomright', zoomInTitle: '放大', zoomOutTitle: '缩小' }).addTo(map)
   L.control.scale({ imperial: false }).addTo(map)
   return map
@@ -155,11 +158,12 @@ export function bindPortalMapPopup(layer: L.Marker | L.Polyline, content: MapPop
 export function addPortalMapMarker(
   layers: L.LayerGroup,
   position: L.LatLngExpression,
-  content: MapPopupContent & { label: string },
+  content: MapPopupContent & { label: string; compact?: boolean },
   zIndexOffset = 0,
 ) {
   const pin = document.createElement('span')
   pin.className = 'portal-map-pin'
+  if (content.compact) pin.classList.add('is-compact')
   const label = document.createElement('span')
   label.className = 'portal-map-pin-text'
   label.textContent = content.label

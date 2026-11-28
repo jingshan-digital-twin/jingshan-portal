@@ -99,6 +99,7 @@ export interface PortalTournament {
   dateText: string
   dateRange: string
   venue: string
+  venueId: string
   photo: string
   summary: string
   guideUnit: string
@@ -134,6 +135,7 @@ export const PORTAL_TOURNAMENTS: PortalTournament[] = [
     dateText: '11.24 – 12.03',
     dateRange: '2026-11-24 08:30:00 至 2026-12-03 18:00:00',
     venue: '京山国际网球中心、京山网球训练基地',
+    venueId: 'venue-international',
     photo: '/images/tournament_2.jpg',
     summary: '中国青少年四大满贯级赛事之一，覆盖全国28个省市自治区768名青少年精英球员，实时同步网球记比分与技术统计。',
     guideUnit: '国家体育总局网球运动管理中心、中国网球协会',
@@ -519,6 +521,7 @@ export const PORTAL_TOURNAMENTS: PortalTournament[] = [
     dateText: '11.06',
     dateRange: '2026-11-06 09:00:00 至 2026-11-08 18:00:00',
     venue: '湖北省京山市网球训练基地',
+    venueId: 'venue-training-base',
     photo: '/images/indoor_court.jpg',
     summary: '中国极具影响力的业余网球团体品牌盛会，公开报名、多组别混合团体赛制，汇聚全国32支精英网球俱乐部齐聚京山挥拍论剑。',
     guideUnit: '中国网球协会、湖北省体育局',
@@ -867,6 +870,7 @@ export const PORTAL_TOURNAMENTS: PortalTournament[] = [
     dateText: '12.12',
     dateRange: '2026-12-12 08:30:00 至 2026-12-14 17:30:00',
     venue: '文峰公园、文峰特色网球村',
+    venueId: 'venue-wenfeng',
     photo: '/images/hero.jpg',
     summary: '国家体育总局群体司指导的全国“村网”旗舰总决赛，扎根文峰特色网球村，展现乡村体育振兴与全民网球烟火气。',
     guideUnit: '国家体育总局群体司',
@@ -975,6 +979,7 @@ export const PORTAL_TOURNAMENTS: PortalTournament[] = [
     dateText: '12.20',
     dateRange: '2026-12-20 08:30:00 至 2026-12-26 18:00:00',
     venue: '京山网球训练基地',
+    venueId: 'venue-training-base',
     photo: '/images/tournament_1.jpg',
     summary: '国际软式网球联合会认证顶级青少年国际赛事，设U15/U18/U21男女单打、双打及团体共12个项目，多国代表队齐聚京山。',
     guideUnit: '国际软式网球联合会（ISTF）、中国网球协会',
@@ -1061,6 +1066,7 @@ export const PORTAL_TOURNAMENTS: PortalTournament[] = [
     dateText: '11.29',
     dateRange: '2026-11-29 08:30:00 至 2026-11-29 18:00:00',
     venue: '京山文峰公园网球场',
+    venueId: 'venue-wenfeng',
     photo: '/images/scenic.jpg',
     summary: '周周有比赛、按CUTR/JS等级分组公平对抗！自动匹配您当前技术等级，完赛同步刷新五维能力档案与个人中心积分。',
     guideUnit: '京山市文化和旅游局（体育局）',
