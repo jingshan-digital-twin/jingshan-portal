@@ -8,6 +8,7 @@ import {
   INITIAL_CLUBS,
   INITIAL_YOUTH_TOURNAMENTS,
   REHAB_CENTERS,
+  rehabDetail,
   type TennisClub,
   type YouthTournament,
 } from '../../mock/trainingData'
@@ -401,39 +402,6 @@ function openClubDetail(club: TennisClub) {
       date: r.date,
       content: r.content,
     })),
-  })
-}
-
-function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
-  const minPrice = Math.min(...center.services.map((s) => s.price))
-  openPhoto({
-    title: center.name,
-    category: '运动康复保障机构',
-    photo: center.photo,
-    rating: center.rating,
-    reviewCount: center.reviewCount,
-    subtitle: `${center.badge} ｜ ${center.doctorInfo}`,
-    intro: `${center.intro} 团队配置：${center.doctorInfo}。咨询电话：${center.phone}。`,
-    openHours: center.openHours,
-    priceInfo: `¥${minPrice} 起`,
-    priceNum: minPrice,
-    priceUnit: ' / 次起',
-    actionKind: 'rehab',
-    orderCategory: '课程',
-    distance: center.distance,
-    phone: center.phone,
-    address: center.address,
-    lng: center.lng,
-    lat: center.lat,
-    tags: [center.badge, '市卫健局认证', '赛期绿色通道'],
-    hotItemsTitle: '🩺 运动康复理疗服务项目',
-    hotItems: center.services.map((s) => ({
-      name: s.name,
-      price: `¥${s.price}`,
-      tag: s.duration,
-      desc: '专业康复师一对一评估与赛后放松理疗',
-    })),
-    reviews: [center.quote],
   })
 }
 </script>
@@ -995,13 +963,13 @@ function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
             class="card tr-photo-card"
           >
             <div>
-              <div class="photo-box tr-photo" @click="openRehabDetail(center)">
+              <div class="photo-box tr-photo" @click="openPhoto(rehabDetail(center))">
                 <img :src="center.photo" :alt="center.name" />
                 <span class="badge-tl">{{ center.badge }}</span>
               </div>
               <div class="tr-photo-body">
                 <div class="flex-between" style="align-items: flex-start; gap: 6px">
-                  <strong class="tr-card-title tr-clamp-1" style="cursor: pointer" :title="center.name" @click="openRehabDetail(center)">{{ center.name }}</strong>
+                  <strong class="tr-card-title tr-clamp-1" style="cursor: pointer" :title="center.name" @click="openPhoto(rehabDetail(center))">{{ center.name }}</strong>
                   <span class="rating-pill" style="flex-shrink: 0">★ {{ center.rating }}</span>
                 </div>
                 <div class="tr-card-meta tr-clamp-1">
@@ -1017,7 +985,7 @@ function openRehabDetail(center: (typeof REHAB_CENTERS)[number]) {
               <div class="flex-row" style="gap: 6px">
                 <button
                   class="btn-ghost tr-btn-sm"
-                  @click="openRehabDetail(center)"
+                  @click="openPhoto(rehabDetail(center))"
                 >
                   详情
                 </button>

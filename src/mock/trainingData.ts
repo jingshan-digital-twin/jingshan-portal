@@ -1,3 +1,6 @@
+import type { LightboxPayload } from '../types/portal'
+import { PORTAL_TOURNAMENTS } from './tournamentsData'
+
 export interface CampProgram {
   id: string
   category: '训练营' | '研学课程' | '团建活动'
@@ -407,5 +410,61 @@ export const REHAB_CENTERS: RehabCenter[] = [
       { name: '肩颈腰背拔罐舒筋 + 中药热敷', duration: '40分钟', price: 78 },
     ],
     quote: '在文峰打完夜场顺路做个中医推拿和热敷，肩背瞬间松快了，凭票根还能打折！',
+  },
+]
+
+export function rehabDetail(center: RehabCenter): LightboxPayload {
+  const minPrice = Math.min(...center.services.map((s) => s.price))
+  return {
+    title: center.name,
+    category: '运动康复保障机构',
+    photo: center.photo,
+    rating: center.rating,
+    reviewCount: center.reviewCount,
+    subtitle: `${center.badge} ｜ ${center.doctorInfo}`,
+    intro: `${center.intro} 团队配置：${center.doctorInfo}。咨询电话：${center.phone}。`,
+    openHours: center.openHours,
+    priceInfo: `¥${minPrice} 起`,
+    priceNum: minPrice,
+    priceUnit: ' / 次起',
+    actionKind: 'rehab',
+    orderCategory: '课程',
+    distance: center.distance,
+    phone: center.phone,
+    address: center.address,
+    lng: center.lng,
+    lat: center.lat,
+    tags: [center.badge, '市卫健局认证', '赛期绿色通道'],
+    hotItemsTitle: '🩺 运动康复理疗服务项目',
+    hotItems: center.services.map((s) => ({
+      name: s.name,
+      price: `¥${s.price}`,
+      tag: s.duration,
+      desc: '专业康复师一对一评估与赛后放松理疗',
+    })),
+    reviews: [center.quote],
+  }
+}
+
+const clayTournament = INITIAL_YOUTH_TOURNAMENTS.find(event => event.id === 'yt-2')!
+
+export const TOURNAMENT_REGISTRATION_OPTIONS = [
+  ...['tourney-youth-2026', 'tourney-weekend-2026'].map(id => {
+    const event = PORTAL_TOURNAMENTS.find(item => item.id === id)!
+    return {
+      id, label: event.name, photo: event.photo, venue: event.venue, date: event.dateRange,
+      description: event.summary, notice: event.noticeList[0], badge: event.typeBadge,
+      groups: event.divisions.filter(group => group.status === '报名中').map(group => ({
+        id: group.id, name: group.name, fee: group.fee,
+      })),
+    }
+  }),
+  {
+    id: clayTournament.id, label: clayTournament.name, photo: '/images/tournament_1.jpg',
+    venue: clayTournament.venue, date: clayTournament.dateRange, description: clayTournament.desc,
+    notice: clayTournament.surface, badge: clayTournament.levelBadge,
+    groups: ['单打', '双打'].map((format, index) => ({
+      id: 'clay-' + index, name: clayTournament.groupTag + ' ' + format, fee: clayTournament.fee,
+    })),
   },
 ]

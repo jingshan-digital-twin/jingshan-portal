@@ -6,7 +6,7 @@ import ServiceCircleMap from '../../components/ServiceCircleMap.vue'
 import { BOOKING_DATES } from '../../mock/schedules'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, reserveParkingOrCharger, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
+const { state, openDetailPage, reserveParkingOrCharger, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
 
 // 主分区切换：自驾出行 / 便捷出行
 const transitView = ref<'drive' | 'easy'>('drive')
@@ -115,6 +115,7 @@ const visibleLots = computed(() =>
 const parkingLocations = computed(() => visibleLots.value.map((lot) => ({ ...lot })))
 const parkingMapItems = computed(() => parkingLocations.value.map((lot) => ({
   id: lot.id,
+  openDetail: () => openDetailPage({ kind: 'map-point', source: 'parking', id: lot.id }),
   title: lot.name,
   description: lot.note,
   location: lot.address,

@@ -12,6 +12,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  gameDetail: [game: MatchmakingGame]
   join: [gameId: string]
   bookVenue: [venueId: string]
 }>()
@@ -35,6 +36,7 @@ const items = computed(() => [
     const role = g.matchRole ?? '本地球友'
     return {
       id: g.id,
+      openDetail: () => emit('gameDetail', g),
       title: `${roleIcon(g.matchRole)} [${role}] ${g.title}`,
       description: `CUTR ${g.cutrBand} · ${dLabel} ${g.startTime}-${g.endTime} · 已报${g.currentPlayers}/${g.maxPlayers}人`,
       location: `${g.venueName}（${g.region}）`,
@@ -43,6 +45,7 @@ const items = computed(() => [
   }),
   ...props.venues.map((v) => ({
     id: `free-${v.id}`,
+    openDetail: () => emit('bookVenue', v.id),
     title: `🎾 [空闲场地] ${v.name.split('（')[0]}`,
     description: `${v.openHours} · ${v.surfaces.join('/')}`,
     location: v.address.replace('湖北省荆门市京山市', ''),
@@ -84,6 +87,7 @@ function redrawMarkers() {
       description: `CUTR ${g.cutrBand} ｜ ${dLabel} ${g.startTime}-${g.endTime} ｜ 发起：${g.hostName} ｜ ${g.note}`,
       highlight: `${g.format} · 余 ${Math.max(0, g.maxPlayers - g.currentPlayers)} 位 · ¥${g.feePerPerson}/人`,
       actions: [
+        { label: '查看详情', run: () => emit('gameDetail', g) },
         {
           label: g.joinedByMe ? '取消预约' : '一键预约并支付',
           run: () => emit('join', g.id),
@@ -109,7 +113,7 @@ function redrawMarkers() {
       highlight: v.minPrice === 0 ? '公益免费可约' : `会员价 ¥${v.minPrice} 起`,
       actions: [
         {
-          label: '一键订场',
+          label: '查看详情与订场',
           run: () => emit('bookVenue', v.id),
         },
       ],

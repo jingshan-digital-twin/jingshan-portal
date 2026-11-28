@@ -98,8 +98,8 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
 </script>
 
 <template>
-  <div v-if="state.showArrivalGuideModal" class="modal-backdrop" @click.self="close">
-    <div class="modal-box" style="width: 760px; max-width: 95vw">
+  <div v-if="state.showArrivalGuideModal" class="modal-backdrop arrival-backdrop" @click.self="close">
+    <div class="modal-box arrival-guide" role="dialog" aria-modal="true" aria-labelledby="arrival-title">
       <!-- Header -->
       <div class="card-pad flex-between" style="background: linear-gradient(135deg, #103b66, #0b7352); color: #fff">
         <div>
@@ -107,31 +107,31 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
             <span class="tag" style="background: var(--lime); color: #0b251d">📍 抵京智能推送</span>
             <span style="font-size: 13px; color: rgba(255,255,255,0.88)">政府端赛事交通保障方案实时同步</span>
           </div>
-          <strong style="font-size: 20px">🚦 抵京出行指引卡（停车与接驳一站直达）</strong>
+          <h2 id="arrival-title">🚦 抵京出行指引卡<span>（停车与接驳一站直达）</span></h2>
         </div>
         <button type="button" class="btn-ghost" @click="close">✕ 关闭</button>
       </div>
 
-      <div class="card-pad" style="display: flex; flex-direction: column; gap: 14px">
+      <div class="guide-body">
         <!-- 双模式切换 -->
         <div class="module-mode-bar" role="group" aria-label="抵京方式选择">
           <button
             type="button"
             class="module-mode-btn"
-            style="height: 44px; font-size: 15px"
             :aria-pressed="mode === 'drive'"
             @click="mode = 'drive'"
           >
-            🚗 自驾抵京 · 推荐停车场与空余车位
+            <span class="mode-icon" aria-hidden="true">🚗</span>
+            <span>自驾抵京<small>推荐停车场与空余车位</small></span>
           </button>
           <button
             type="button"
             class="module-mode-btn"
-            style="height: 44px; font-size: 15px"
             :aria-pressed="mode === 'rail'"
             @click="mode = 'rail'"
           >
-            🚄 高铁抵京 · 旅游专线巴士与优质司机
+            <span class="mode-icon" aria-hidden="true">🚄</span>
+            <span>高铁抵京<small>旅游专线巴士与优质司机</small></span>
           </button>
         </div>
 
@@ -141,35 +141,34 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
             ⚠️ 赛期交通管控提醒：温泉大道（国际网球中心段）今日 07:30–19:00 临时封闭，以下导航已自动规划避堵绕行路线。
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 10px">
+          <div class="parking-grid">
             <div
               v-for="lot in state.parkingLots"
               :key="lot.id"
-              style="background: #f5faf8; border: 1px solid #d5e8df; padding: 13px 16px"
+              class="parking-card"
             >
-              <div class="flex-between" style="margin-bottom: 5px">
-                <div class="flex-row" style="gap: 8px">
-                  <strong style="font-size: 16px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>
-                  <span class="tag" :class="lot.isCharger ? 'blue' : 'green'">
+              <div class="lot-heading">
+                <strong style="font-size: 16px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>
+              </div>
+              <p class="lot-location">📍 {{ lot.address }}</p>
+              <p class="lot-note">{{ lot.note }}</p>
+              <div class="lot-capacity">
+                <span class="tag" :class="lot.isCharger ? 'blue' : 'green'">
                     实时{{ lot.isCharger ? '闲置' : '空余' }} {{ lot.remain }} / {{ lot.total }} {{ lot.isCharger ? '桩' : '位' }}
-                  </span>
-                </div>
+                </span>
                 <span style="font-size: 12.5px; color: var(--primary); font-weight: 800">
                   空闲率 {{ Math.round((lot.remain / lot.total) * 100) }}%
                 </span>
               </div>
-              <div style="font-size: 13px; color: var(--ink-2); margin-bottom: 8px">
-                📍 {{ lot.address }} ｜ {{ lot.note }}
-              </div>
               <div class="summary-bar-track" style="margin-bottom: 10px">
                 <div class="summary-bar-fill" :style="{ width: `${Math.round((lot.remain / lot.total) * 100)}%` }" />
               </div>
-              <div class="flex-between">
+              <div class="lot-booking">
                 <span v-if="lot.reservedSlot" style="font-size: 13px; color: var(--primary); font-weight: 800">
                   ✔ 已免费锁位：{{ lot.reservedSlot }}
                 </span>
                 <span v-else style="font-size: 12.5px; color: var(--ink-3)">凭参赛/订场电子票根享免费停放 3 小时</span>
-                <div class="flex-row" style="gap: 8px">
+                <div class="lot-actions">
                   <button
                     type="button"
                     class="btn-orange"
@@ -203,9 +202,9 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
         </template>
 
         <!-- Tab 2: 高铁抵京 -->
-        <template v-else>
-          <div>
-            <div class="flex-between" style="margin-bottom: 8px">
+        <div v-else class="rail-grid">
+          <section>
+            <div class="rail-heading">
               <strong style="font-size: 15.5px">🚌 旅游专线巴士 & 赛事免费摆渡班次</strong>
               <span class="tag green">高铁京山南站无缝接驳</span>
             </div>
@@ -222,7 +221,7 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
                     <span class="tag orange">{{ bus.fare }}</span>
                   </div>
                   <div style="font-size: 13px; color: var(--ink-2); margin-top: 3px">
-                    {{ bus.route }} ｜ 🕒 下一班：<strong style="color: var(--primary)">{{ bus.next }}</strong>
+                    {{ bus.route }}<br>🕒 下一班：<strong style="color: var(--primary)">{{ bus.next }}</strong>
                   </div>
                 </div>
                 <button
@@ -245,14 +244,14 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
                 </button>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div>
-            <div class="flex-between" style="margin-bottom: 8px">
+          <section>
+            <div class="rail-heading">
               <strong style="font-size: 15.5px">👨‍✈️ 京网优质出行司机预约（官方实名认证 · 明码一口价）</strong>
               <span class="tag gold">零绕路 · 免费搬球包</span>
             </div>
-            <div class="grid-3" style="gap: 10px">
+            <div class="driver-list">
               <div
                 v-for="drv in recommendedDrivers"
                 :key="drv.id"
@@ -274,10 +273,10 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
                 </div>
               </div>
             </div>
-          </div>
-        </template>
+          </section>
+        </div>
 
-        <div class="flex-between" style="padding-top: 10px; border-top: 1px solid var(--line)">
+        <div class="guide-footer">
           <span style="font-size: 13px; color: var(--ink-3)">💡 提示：进入“行 · 出行服务”还可查看全景管控地图与更多公交线路</span>
           <button
             type="button"
@@ -291,3 +290,117 @@ function bookDriver(drv: (typeof recommendedDrivers)[number]) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.arrival-guide {
+  width: min(1040px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.arrival-backdrop {
+  padding: clamp(8px, 2.5vh, 24px) clamp(8px, 2vw, 24px);
+}
+.arrival-guide > .card-pad {
+  flex: none;
+}
+#arrival-title {
+  margin: 0;
+  font-size: 21px;
+}
+#arrival-title span {
+  display: inline-block;
+  font-size: 0.8em;
+}
+.guide-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(12px, 2vw, 24px);
+  display: grid;
+  gap: 16px;
+}
+.module-mode-btn {
+  height: auto;
+  padding: 9px;
+  gap: 12px;
+  text-align: left;
+}
+.mode-icon {
+  font-size: 24px;
+}
+.module-mode-btn small {
+  display: block;
+  font-size: 12px;
+  letter-spacing: normal;
+  font-weight: 500;
+}
+.parking-grid, .rail-grid {
+  display: grid;
+  gap: 12px;
+}
+.parking-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+}
+.parking-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  background: #f5faf8;
+  border: 1px solid #d5e8df;
+}
+.lot-location, .lot-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.lot-note {
+  margin: 2px 0 16px;
+}
+.lot-capacity, .lot-actions, .guide-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lot-capacity {
+  margin: auto 0 7px;
+}
+.lot-booking {
+  border-top: 1px dashed var(--line);
+  padding-top: 9px;
+}
+.lot-actions {
+  margin-top: 10px;
+  justify-content: flex-start;
+}
+.rail-grid {
+  grid-template-columns: 1.12fr 1fr;
+  gap: 18px;
+}
+.rail-heading, .driver-list {
+  display: grid;
+  gap: 8px;
+}
+.rail-heading {
+  justify-items: start;
+  margin-bottom: 10px;
+}
+.guide-footer {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 800px) {
+  .rail-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .arrival-guide > .card-pad { padding: 12px; align-items: flex-start; }
+  .arrival-guide > .card-pad button { flex-shrink: 0; }
+  #arrival-title { font-size: 17px; }
+  .module-mode-btn { gap: 5px; font-size: 15px; letter-spacing: normal; }
+  .mode-icon { font-size: 18px; }
+  .rail-grid .flex-between { flex-wrap: wrap; }
+  .guide-footer button { width: 100%; }
+}
+</style>

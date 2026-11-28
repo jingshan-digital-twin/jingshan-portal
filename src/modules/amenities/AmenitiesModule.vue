@@ -20,7 +20,7 @@ const amFilter = ref<'卫生间' | '医疗点' | '充电桩' | 'ATM' | '母婴�
 const amKeyword = ref('')
 const amPage = ref(1)
 const mapRadius = ref<RadiusOption>('1公里')
-const showAmenitiesMap = ref(false)
+const showAmenitiesMap = ref(true)
 const selectedAmenity = ref<string>()
 const amenitiesMap = ref<InstanceType<typeof ServiceCircleMap>>()
 
@@ -91,6 +91,7 @@ const visibleAmenities = computed(() => {
 const amenityMapItems = computed(() => visibleAmenities.value.map((amenity) => ({
   id: amenity.name,
   title: amenity.name,
+  openDetail: () => openAmenityDetail(amenity),
   photo: amenity.photo,
   description: amenity.info,
   location: amenity.address,
@@ -114,6 +115,11 @@ watch([visibleAmenities, selectedVenueId], () => {
     selectedAmenity.value = undefined
   }
 })
+
+function openMapAmenity(name: string) {
+  const amenity = visibleAmenities.value.find(item => item.name === name)
+  if (amenity) openAmenityDetail(amenity)
+}
 
 function openAmenityDetail(a: AmenityCardItem) {
   openPhoto({
@@ -332,6 +338,7 @@ function openAmenityDetail(a: AmenityCardItem) {
           :selected-location-id="selectedAmenity"
           @select-venue="selectedVenueId = $event"
           @select-location="selectedAmenity = $event"
+          @amenity-detail="openMapAmenity"
         />
         <div class="card-pad flex-between" style="background: #fafdfc; padding: 13px 18px">
           <span style="font-size: 13.5px; color: var(--ink-2)">

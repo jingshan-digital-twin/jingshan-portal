@@ -4,11 +4,13 @@ import ActionDetailModal from './components/ActionDetailModal.vue'
 import ArrivalGuideModal from './components/ArrivalGuideModal.vue'
 import EventPopupModal from './components/EventPopupModal.vue'
 import HeroSpotlightCarousel from './components/HeroSpotlightCarousel.vue'
+import MapPointDetailPage from './components/MapPointDetailPage.vue'
 import ListingDetailPage from './components/ListingDetailPage.vue'
 import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
 import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
 import ReservationDialog from './components/ReservationDialog.vue'
+import TournamentDetailPage from './components/TournamentDetailPage.vue'
 import TourneyRegistrationModal from './components/TourneyRegistrationModal.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
 import EntertainmentModule from './modules/entertainment/EntertainmentModule.vue'
@@ -56,7 +58,9 @@ onMounted(() => {
 
     <!-- 独立全屏详情页模式 -->
     <template v-if="state.activeDetail">
-      <ListingDetailPage />
+      <TournamentDetailPage v-if="state.activeDetail.kind === 'tournament'" :key="state.activeDetail.eventId + state.activeDetail.groupId" :selection="state.activeDetail" />
+      <MapPointDetailPage v-else-if="state.activeDetail.kind === 'map-point'" :selection="state.activeDetail" />
+      <ListingDetailPage v-else />
     </template>
 
     <!-- 首页模式：首屏焦点图延伸至顶部频道栏下方 + 全板块信息总览与概括 -->
@@ -73,10 +77,12 @@ onMounted(() => {
     </template>
 
     <!-- 业务专区页面：统一频道导航 + 完整业务模块 -->
-    <template v-else>
-      <ModuleKingKongBar />
-      <main id="moduleStageAnchor" class="container stage-wrap subpage-stage" style="scroll-margin-top: 90px">
-        <component :is="activeComponent" />
+    <template v-if="state.isStandalonePage">
+      <ModuleKingKongBar v-if="!state.activeDetail" />
+      <main v-show="!state.activeDetail" id="moduleStageAnchor" class="container stage-wrap subpage-stage" style="scroll-margin-top: 90px">
+        <KeepAlive include="PlayModule,StayModule,AmenitiesModule,TransitModule" :max="1">
+          <component v-if="!state.activeDetail" :is="activeComponent" />
+        </KeepAlive>
       </main>
     </template>
 

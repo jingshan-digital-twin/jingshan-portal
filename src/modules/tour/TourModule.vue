@@ -40,7 +40,7 @@ const bundleIncludeHotel = reactive<Record<string, boolean>>({
   'rt-beijing-2': true,
   'rt-shenzhen-1': true,
 })
-const bundlePeople = ref<number>(2)
+const bundlePeople = 2
 
 function switchOriginPerspective(key: OriginPerspective) {
   originPerspective.value = key
@@ -72,17 +72,16 @@ const wuhanPostHighlights = computed(() =>
 function calcBundleTotal(bundle: ReturnTripBundle) {
   const withHotel = bundleIncludeHotel[bundle.id] ?? true
   const unit = withHotel ? bundle.bundlePrice : bundle.ticketPrice
-  return unit * Math.max(1, bundlePeople.value)
+  return unit * bundlePeople
 }
 
 function bookReturnBundle(bundle: ReturnTripBundle) {
   const withHotel = bundleIncludeHotel[bundle.id] ?? true
-  const people = Math.max(1, bundlePeople.value)
   const total = calcBundleTotal(bundle)
   createQuickOrder(
     '门票',
     `返程联游打包：${bundle.title}`,
-    `${people}人同行 · 含${bundle.ticketsIncluded.join('+')}${withHotel ? ` + 住宿(${bundle.hotelName})` : '（仅门票联票）'}`,
+    `${bundlePeople}人同行 · 含${bundle.ticketsIncluded.join('+')}${withHotel ? ` + 住宿(${bundle.hotelName})` : '（仅门票联票）'}`,
     total,
     180,
     0,
@@ -91,7 +90,7 @@ function bookReturnBundle(bundle: ReturnTripBundle) {
         { label: '联游路线', value: bundle.routeTitle },
         { label: '包含门票', value: bundle.ticketsIncluded.join('、') },
         { label: '包含住宿', value: withHotel ? bundle.hotelName : '不含住宿（仅景区联票）' },
-        { label: '出行人数', value: `${people} 人` },
+        { label: '出行人数', value: `${bundlePeople} 人` },
       ],
       successTitle: '返程顺路游打包预订成功',
       successMessage: '沿途景区入园码与合作酒店确认单已同步至个人中心，获赠 180 金网积分。',
@@ -241,64 +240,30 @@ const visibleTrails = computed(() =>
     <!-- ===== 模块零：赛后游览 & 返程顺路游专题（客源地视角联动） ===== -->
     <div v-if="activeSection === 'postreturn'" class="mb-24" style="display: flex; flex-direction: column; gap: 16px">
       <!-- 客源地视角切换条 -->
-      <div class="card card-pad" style="background: linear-gradient(135deg, #f1faf6, #ffffff); border-color: #b8ded0">
-        <div class="flex-between" style="gap: 12px; flex-wrap: wrap; margin-bottom: 12px">
-          <div>
-            <div class="flex-row" style="gap: 8px; margin-bottom: 4px">
-              <strong style="font-size: 19px">🚄 赛后游览 & 返程顺路游专题</strong>
-              <span class="tag green">按报名来源地自动上架</span>
-            </div>
-            <div style="font-size: 13.5px; color: var(--ink-2)">
-              {{
-                originPerspective === 'beijing'
-                  ? '✨ 已切换【北京客源】视角：系统联动政府端客源分析，自动上架北上返京“京山→钟祥明显陵→襄阳古隆中 / 随州大洪山”联游套餐，支持门票、住宿一键打包预订'
-                  : originPerspective === 'shenzhen'
-                    ? '✨ 已切换【深圳客源】视角：自动上架南下返粤“京山→漳河风景区→宜昌三峡”返程联游合作套餐'
-                    : '📍 当前【武汉客源】视角（张先生一家）：智能推荐京山天沐温泉、文峰河畔夜市美食及“赛后游荆门”钟祥明显陵、莫愁湖线路'
-              }}
-            </div>
-          </div>
-
-          <div class="flex-row" style="gap: 8px; flex-wrap: wrap">
-            <button
-              type="button"
-              :class="originPerspective === 'wuhan' ? 'btn-primary' : 'btn-ghost'"
-              @click="switchOriginPerspective('wuhan')"
-            >
-              📍 武汉客源（赛后游京山/荆门）
-            </button>
-            <button
-              type="button"
-              :class="originPerspective === 'beijing' ? 'btn-orange' : 'btn-ghost'"
-              @click="switchOriginPerspective('beijing')"
-            >
-              🚄 切换“北京客源”视角（北上返程游）
-            </button>
-            <button
-              type="button"
-              :class="originPerspective === 'shenzhen' ? 'btn-primary' : 'btn-ghost'"
-              @click="switchOriginPerspective('shenzhen')"
-            >
-              🌴 深圳客源视角
-            </button>
-          </div>
-        </div>
-
-        <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed #cde3da; font-size: 13px; color: var(--ink-2)">
-          <span>💡 同行打包人数：</span>
-          <div class="flex-row" style="gap: 8px">
-            <button
-              v-for="n in [1, 2, 3, 4]"
-              :key="n"
-              type="button"
-              class="filter-pill"
-              :class="{ active: bundlePeople === n }"
-              style="padding: 3px 12px"
-              @click="bundlePeople = n"
-            >
-              {{ n }} 人同行
-            </button>
-          </div>
+      <div class="card card-pad flex-between" style="gap: 12px; flex-wrap: wrap; background: linear-gradient(135deg, #f1faf6, #ffffff); border-color: #b8ded0">
+        <strong style="font-size: 19px">🚄 赛后游览 & 返程顺路游专题</strong>
+        <div class="flex-row" style="gap: 8px; flex-wrap: wrap">
+          <button
+            type="button"
+            :class="originPerspective === 'wuhan' ? 'btn-primary' : 'btn-ghost'"
+            @click="switchOriginPerspective('wuhan')"
+          >
+            📍 武汉客源
+          </button>
+          <button
+            type="button"
+            :class="originPerspective === 'beijing' ? 'btn-orange' : 'btn-ghost'"
+            @click="switchOriginPerspective('beijing')"
+          >
+            🚄 北京客源
+          </button>
+          <button
+            type="button"
+            :class="originPerspective === 'shenzhen' ? 'btn-primary' : 'btn-ghost'"
+            @click="switchOriginPerspective('shenzhen')"
+          >
+            🌴 深圳客源视角
+          </button>
         </div>
       </div>
 

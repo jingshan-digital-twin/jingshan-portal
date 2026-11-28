@@ -22,6 +22,7 @@ let markerLayer: L.LayerGroup | undefined
 const items = computed(() => props.listings.map(({ hotel, room }) => ({
   id: hotel.id,
   title: hotel.name,
+  openDetail: () => emit('detail', hotel.id, room.id),
   photo: hotel.photo,
   description: `${hotel.rating.toFixed(1)} 分 · ${hotel.reviewCount} 条点评`,
   location: hotel.distanceToCourt,

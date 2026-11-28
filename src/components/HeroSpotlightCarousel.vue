@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { TOURNAMENT_REGISTRATION_OPTIONS } from '../mock/trainingData'
 import { HERO_SLIDES } from '../mock/data'
 import { usePortalStore } from '../store/usePortalStore'
 
@@ -7,6 +8,7 @@ const {
   state,
   switchModule,
   openActionModal,
+  openTournamentRegistration,
   claimHomeSubsidy,
   showToast,
 } = usePortalStore()
@@ -53,8 +55,9 @@ const courtSurface = ref<'全部' | '硬地' | '红土' | '室内风雨'>('全�
 const courtRegion = ref<'全部' | '温泉街道' | '新市街道' | '永兴街道'>('全部')
 const courtExtra = ref('停车与充电便利')
 
-const eventChoice = ref('2026中国青少年网球巡回赛总决赛（京山站）')
-const eventGroup = ref('U14青少年单打积分组')
+const eventChoice = ref(TOURNAMENT_REGISTRATION_OPTIONS[0]!)
+const eventGroup = ref(eventChoice.value.groups[0]?.id)
+watch(eventChoice, event => { eventGroup.value = event.groups[0]?.id })
 
 function submitCourtQuery() {
   state.courtSurfaceFilter = courtSurface.value
@@ -67,7 +70,7 @@ function submitCourtQuery() {
 }
 
 function submitQuickEvent() {
-  state.showTourneyRegModal = true
+  openTournamentRegistration(eventChoice.value.id, eventGroup.value)
 }
 </script>
 
@@ -191,9 +194,7 @@ function submitQuickEvent() {
             <div class="hw-field" style="grid-column: span 2">
               <label>选择热门赛事</label>
               <select v-model="eventChoice">
-                <option>2026中国青少年网球巡回赛总决赛（京山站）</option>
-                <option>京山周末分级赛（匹配当前等级）</option>
-                <option>青少年 U12/U14 红土积分赛</option>
+                <option v-for="event in TOURNAMENT_REGISTRATION_OPTIONS" :key="event.id" :value="event">{{ event.label }}</option>
               </select>
             </div>
             <div class="hw-field">
@@ -203,13 +204,11 @@ function submitQuickEvent() {
             <div class="hw-field">
               <label>参赛组别</label>
               <select v-model="eventGroup">
-                <option>U14青少年单打积分组</option>
-                <option>单打/双打积分组</option>
-                <option>亲子观赛组</option>
+                <option v-for="group in eventChoice.groups" :key="group.id" :value="group.id">{{ group.name }}</option>
               </select>
             </div>
           </div>
-          <button type="button" class="hw-cta" @click="submitQuickEvent">一键报名（报完荐赛场周边酒店）</button>
+          <button type="button" class="hw-cta" @click="submitQuickEvent">一键报名</button>
         </template>
       </div>
     </div>

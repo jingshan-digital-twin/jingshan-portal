@@ -19,6 +19,7 @@ import {
   INITIAL_MATCHMAKING_GAMES,
   INITIAL_PRIVATE_COACHES,
 } from '../mock/schedules'
+import { TOURNAMENT_REGISTRATION_OPTIONS } from '../mock/trainingData'
 import { TOUR_SPOTS, TOUR_VISIT_SLOTS, type TourSpot } from '../mock/tourData'
 import type {
   AbilityDimensions,
@@ -445,6 +446,14 @@ function parseDetailFromUrl(): DetailPagePayload | null {
     if (!raw) return null
     if (raw === 'cinema') return { kind: 'cinema' }
     const [kind, id, ...options] = raw.split(':')
+    if (kind === 'map-point' && id && options[0]) {
+      return { kind, source: id, id: decodeURIComponent(options[0]) }
+    }
+    if (kind === 'tournament') {
+      const event = TOURNAMENT_REGISTRATION_OPTIONS.find(item => item.id === id)
+      const group = event?.groups.find(item => item.id === options[0]) ?? event?.groups[0]
+      return event && group ? { kind, eventId: event.id, groupId: group.id } : null
+    }
     if (kind === 'hotel' && id) {
       const [checkIn, checkOut, roomId] = options
       const stay = checkIn && checkOut && checkOut > checkIn
@@ -471,6 +480,8 @@ function parseDetailFromUrl(): DetailPagePayload | null {
 }
 
 function encodeDetailParam(payload: DetailPagePayload): string {
+  if (payload.kind === 'map-point') return `map-point:${payload.source}:${encodeURIComponent(payload.id)}`
+  if (payload.kind === 'tournament') return `tournament:${payload.eventId}:${payload.groupId}`
   if (payload.kind === 'hotel') {
     const hotel = `hotel:${payload.hotelId}`
     if (!payload.stay) return hotel
@@ -608,6 +619,12 @@ export function usePortalStore() {
     }
     updateDocumentTitle(state.activeModule, state.isStandalonePage)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function openTournamentRegistration(eventId: string, groupId?: string) {
+    const event = TOURNAMENT_REGISTRATION_OPTIONS.find(item => item.id === eventId)
+    const group = event?.groups.find(item => item.id === groupId) ?? event?.groups[0]
+    if (event && group) openDetailPage({ kind: 'tournament', eventId, groupId: group.id })
   }
 
   function openHotelDetail(hotelId: string, stay?: HotelStaySelection) {
@@ -1361,13 +1378,14 @@ export function usePortalStore() {
     group: string
     venue: string
     fee: number
+    time?: string
   }) {
     const order: PortalOrder = {
       id: `ORD-${Date.now().toString().slice(-6)}`,
       category: '门票',
       title: `赛事报名：${payload.tournamentName}`,
       subtitle: `参赛选手：${payload.playerName} · ${payload.group} · ${payload.venue}`,
-      time: '11/28 开赛',
+      time: payload.time ?? '11/28 开赛',
       amount: payload.fee,
       status: '已确认',
       cancellable: true,
@@ -1474,6 +1492,7 @@ export function usePortalStore() {
     openModulePage,
     openModuleInNewWindow,
     openDetailPage,
+    openTournamentRegistration,
     closeDetailPage,
     openHotelDetail,
     openProductDetail,

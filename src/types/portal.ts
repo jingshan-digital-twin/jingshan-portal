@@ -411,6 +411,8 @@ export interface TourSpotVisitSelection {
 }
 
 export type DetailPagePayload =
+  | { kind: 'map-point'; source: string; id: string }
+  | { kind: 'tournament'; eventId: string; groupId: string }
   | { kind: 'hotel'; hotelId: string; stay?: HotelStaySelection }
   | { kind: 'product'; productId: string }
   | { kind: 'venue'; venueId: string; date?: string; courtId?: string; slotTime?: string }

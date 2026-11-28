@@ -7,6 +7,7 @@ export interface MapResultItem {
   photo?: string
   description?: string
   location?: string
+  openDetail?: () => void
   highlight?: string
 }
 
@@ -39,23 +40,26 @@ watch(() => props.selectedId, async (id) => {
       <div class="map-results-side">
         <div ref="list" class="map-results-list" role="region" :aria-label="listLabel" tabindex="0">
           <p v-if="!items.length" class="map-results-empty">{{ emptyText }}</p>
-          <button
-            v-for="item in items"
-            :key="item.id"
-            type="button"
-            class="map-result-item"
-            :class="{ 'map-result-with-photo': item.photo }"
-            :aria-pressed="selectedId === item.id"
-            @click="emit('select', item.id)"
-          >
-            <img v-if="item.photo" :src="item.photo" alt="" />
-            <span>
-              <strong>{{ item.title }}</strong>
-              <small v-if="item.description">{{ item.description }}</small>
-              <small v-if="item.location">{{ item.location }}</small>
-              <span v-if="item.highlight" class="map-result-highlight">{{ item.highlight }}</span>
-            </span>
-          </button>
+          <div v-for="item in items" :key="item.id" class="map-result-row">
+            <button
+              type="button"
+              class="map-result-item"
+              :class="{ 'map-result-with-photo': item.photo }"
+              :aria-pressed="selectedId === item.id"
+              @click="emit('select', item.id)"
+            >
+              <img v-if="item.photo" :src="item.photo" alt="" />
+              <span>
+                <strong>{{ item.title }}</strong>
+                <small v-if="item.description">{{ item.description }}</small>
+                <small v-if="item.location">{{ item.location }}</small>
+                <span v-if="item.highlight" class="map-result-highlight">{{ item.highlight }}</span>
+              </span>
+            </button>
+            <button v-if="item.openDetail" type="button" class="map-result-detail" :aria-label="`查看${item.title}详情`" @click="item.openDetail">
+              查看详情 →
+            </button>
+          </div>
         </div>
       </div>
       <div class="map-results-canvas"><slot /></div>
@@ -93,7 +97,12 @@ watch(() => props.selectedId, async (id) => {
   transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .map-result-with-photo { grid-template-columns: 68px minmax(0, 1fr); }
-.map-result-item + .map-result-item { margin-top: 8px; }
+.map-result-row + .map-result-row { margin-top: 8px; }
+.map-result-row:has(.map-result-detail) { border: 1px solid var(--line); border-radius: 8px; background: white; }
+.map-result-row:has(.map-result-detail) .map-result-item { border: 0; }
+.map-result-row:has([aria-pressed='true']) { border-color: var(--primary); background: var(--primary-light); }
+.map-result-detail { margin: 0 12px 8px; padding: 4px 0; color: var(--primary-dark); background: transparent; border: 0; font-size: 13px; font-weight: 700; }
+.map-result-detail:hover { text-decoration: underline; }
 .map-result-item:hover { background: #f2faf6; border-color: #b7d9cb; }
 .map-result-item[aria-pressed='true'] {
   background: var(--primary-light);

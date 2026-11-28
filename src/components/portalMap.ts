@@ -9,6 +9,7 @@ export const MAP_ICONS = {
   parking: '🅿️',
   charger: '⚡',
   medical: '🏥',
+  rehab: '🩺',
   scenic: '🏞️',
   restroom: '🚻',
   atm: '🏧',

@@ -38,9 +38,17 @@ const subView = ref<(typeof playTabs)[number]['id']>(
   initialPlayTab === 'events' || initialPlayTab === 'matchmaking' || initialPlayTab === 'nearby' ? initialPlayTab : 'courts',
 )
 const radii: RadiusOption[] = ['500m', '1公里', '2公里']
+const mapCategories = [
+  { value: '全部', label: '全部周边' },
+  { value: '酒店', label: '🏨 酒店' },
+  { value: '美食', label: '🍜 美食' },
+  { value: '停车充电', label: '🅿️ 停车/充电' },
+  { value: '便民景点', label: '🏥 医疗/景点' },
+  { value: '康复理疗', label: '🩺 康复理疗' },
+] as const
 const mapPoiCategory = ref<MapPoiCategory>('全部')
 const activeVenueId = ref<string>('venue-wenfeng')
-const showCourtMap = ref(false)
+const showCourtMap = ref(true)
 const courtMap = ref<InstanceType<typeof ServiceCircleMap>>()
 
 // ===== 场地预约多维筛选 =====
@@ -162,6 +170,7 @@ const courtMapItems = computed(() => filteredCourts.value.map((venue) => ({
   photo: venue.photo,
   description: `${venue.rating} 分 · ${venue.distanceKm} km`,
   location: venue.address,
+  openDetail: () => openVenueDetail(venue.id, { date: selectedCourtDate.value }),
   highlight: venue.minPrice === 0 ? '免费' : `¥${venue.minPrice} 起`,
 })))
 
@@ -687,14 +696,15 @@ function submitNewGame() {
 
             <div class="flex-row" style="gap: 6px">
               <button
-                v-for="cat in (['全部', '酒店', '美食', '停车充电', '便民景点'] as const)"
-                :key="cat"
+                v-for="cat in mapCategories"
+                :key="cat.value"
                 class="filter-pill"
-                :class="{ active: mapPoiCategory === cat }"
+                :class="{ active: mapPoiCategory === cat.value }"
                 style="padding: 4px 11px; font-size: 13px"
-                @click="mapPoiCategory = cat"
+                :aria-pressed="mapPoiCategory === cat.value"
+                @click="mapPoiCategory = cat.value"
               >
-                {{ cat === '全部' ? '全部周边' : cat === '酒店' ? '🏨 酒店' : cat === '美食' ? '🍜 美食' : cat === '停车充电' ? '🅿️ 停车/充电' : '🏥 医疗/景点' }}
+                {{ cat.label }}
               </button>
             </div>
           </div>
@@ -705,6 +715,7 @@ function submitNewGame() {
             :radius="state.radius"
             :selected-venue="selectedVenue"
             :venues="filteredCourts"
+            :court-date="selectedCourtDate"
             :poi-category="mapPoiCategory"
             @select-venue="activeVenueId = $event"
           />
@@ -919,6 +930,7 @@ function submitNewGame() {
           :games="filteredGames"
           :venues="filteredMgVenues"
           @join="joinMatchmakingGame"
+          @game-detail="openGameDetail"
           @book-venue="openVenueDetail($event)"
         />
       </div>
