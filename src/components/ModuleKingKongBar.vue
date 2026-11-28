@@ -46,41 +46,40 @@ function isTileActive(id: ModuleId): boolean {
           :aria-current="isTileActive(m.id) ? 'page' : undefined"
           @click="switchModule(m.id)"
         >
-          <div class="kk-icon" :style="overlaid ? undefined : { background: m.bg }">
-            <span v-if="!overlaid && m.badge" class="kk-badge" :style="{ background: m.badgeBg }">{{ m.badge }}</span>
-            <svg v-if="m.id === 2" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <div class="kk-icon">
+            <svg v-if="m.id === 2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M5.5 6.8c3.3 2.5 3.3 7.9 0 10.4M18.5 6.8c-3.3 2.5-3.3 7.9 0 10.4" />
             </svg>
-            <svg v-else-if="m.id === 3" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 3" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 20l6-11 4 6 3-4 5 9H3z" />
               <circle cx="17" cy="6" r="2" />
             </svg>
-            <svg v-else-if="m.id === 4" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 11h18M5 11a7 7 0 0 0 14 0M8 6c0-1.5 1-2 1-3M12 6c0-1.5 1-2 1-3M16 6c0-1.5 1-2 1-3M7 20h10" />
             </svg>
-            <svg v-else-if="m.id === 5" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4" />
             </svg>
-            <svg v-else-if="m.id === 6" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 6" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="5" width="16" height="11" rx="3" />
               <path d="M4 11h16M7 19h2M15 19h2" />
             </svg>
-            <svg v-else-if="m.id === 7" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 7" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 7h12l1 13H5L6 7z" />
               <path d="M9 7V5a3 3 0 0 1 6 0v2" />
             </svg>
-            <svg v-else-if="m.id === 8" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else-if="m.id === 8" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M9 10h.01M15 10h.01M8.5 15a4 4 0 0 0 7 0" />
             </svg>
-            <svg v-else width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 10L12 5 2 10l10 5 10-5z" />
               <path d="M6 12v5c3 2 9 2 12 0v-5" />
             </svg>
           </div>
-          <span class="kk-label">{{ overlaid ? m.label : `${m.verb} · ${m.label}` }}</span>
-          <span v-if="overlaid && m.badge" class="kk-badge">{{ m.badge }}</span>
+          <span class="kk-label">{{ m.label }}</span>
+          <span v-if="m.badge" class="kk-badge">{{ m.badge }}</span>
         </button>
       </div>
     </div>
