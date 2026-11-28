@@ -7,11 +7,12 @@ import {
   TENNIS_BUS_LINES,
   TOUR_PACKAGES,
   TOUR_SPOTS,
+  TOUR_VISIT_SLOTS,
 } from '../../mock/tourData'
 import { isBookingQuantity } from '../../store/reservationFlow'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { openPhoto, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
+const { openPhoto, openTourSpotDetail, openActionModal, openNavigation, createQuickOrder, toggleFavorite } = usePortalStore()
 
 // 模块顶部主视图切换
 const tourTabs = [
@@ -28,7 +29,7 @@ const PAGE_SIZE = 8
 const spotKeyword = ref('')
 const spotPage = ref(1)
 const visitDate = ref(BOOKING_DATES[0]!.iso)
-const visitSlot = ref<'上午 08:30-12:00' | '下午 13:00-17:00' | '夜游 17:30-22:00'>('下午 13:00-17:00')
+const visitSlot = ref<(typeof TOUR_VISIT_SLOTS)[number]>('下午 13:00-17:00')
 
 const activeSpotSection = computed(() => {
   if (activeSection.value === 'scenic') return { title: '🏔️ 景区门票与电子导览', categories: ['景区'] }
@@ -60,16 +61,6 @@ const visitDateLabel = computed(
   () => BOOKING_DATES.find((d) => d.iso === visitDate.value)?.shortDate ?? visitDate.value,
 )
 
-function bookSpotTicket(spot: (typeof TOUR_SPOTS)[number]) {
-  createQuickOrder(
-    '门票',
-    `${spot.name}（1份）`,
-    `${visitDateLabel.value} ${visitSlot.value} · ${spot.duration} · 票根专享价`,
-    spot.stubPrice,
-    spot.stubPrice > 0 ? 60 : 20,
-  )
-}
-
 // 2. 网旅产品专区筛选、搜索与分页（每页4项）
 const pkgScope = ref<'全部' | '京山本地' | '荆门周边' | '湖北省内'>('全部')
 const pkgKeyword = ref('')
@@ -96,30 +87,7 @@ watch([pkgScope, pkgKeyword], () => {
 })
 
 function openSpotDetail(spot: (typeof TOUR_SPOTS)[number]) {
-  openPhoto({
-    title: spot.name,
-    category: `京山${spot.category}详情`,
-    photo: spot.photo,
-    rating: spot.rating,
-    subtitle: `${spot.badge} ｜ ${spot.duration}`,
-    intro: spot.intro,
-    openHours: `${spot.openHours}（推荐：${spot.bestTime}）`,
-    priceInfo: spot.stubPrice === 0 ? '免费预约入园/打卡' : `票根价 ¥${spot.stubPrice}${spot.priceUnit}（原价 ¥${spot.price}）`,
-    priceNum: spot.stubPrice,
-    priceUnit: spot.stubPrice === 0 ? '' : ` ${spot.priceUnit}`,
-    distance: spot.distance,
-    driveMin: spot.driveMin,
-    audioScript: spot.audioScript,
-    audioDuration: spot.duration,
-    address: spot.address,
-    lng: spot.lng,
-    lat: spot.lat,
-    actionKind: 'spot',
-    tags: spot.tags,
-    hotItemsTitle: '✨ 必体验亮点与消费推荐',
-    hotItems: spot.hotItems,
-    reviews: spot.reviews,
-  })
+  openTourSpotDetail(spot, { date: visitDate.value, slot: visitSlot.value })
 }
 
 function openPackageDetail(pkg: (typeof TOUR_PACKAGES)[number]) {
@@ -224,9 +192,7 @@ const visibleTrails = computed(() =>
           <label class="dd-field">
             <span class="dd-field-label">入园时段</span>
             <select v-model="visitSlot" class="dd-select active">
-              <option value="上午 08:30-12:00">上午 08:30-12:00</option>
-              <option value="下午 13:00-17:00">下午 13:00-17:00</option>
-              <option value="夜游 17:30-22:00">夜游 17:30-22:00</option>
+              <option v-for="slot in TOUR_VISIT_SLOTS" :key="slot" :value="slot">{{ slot }}</option>
             </select>
           </label>
         </div>
@@ -300,8 +266,8 @@ const visibleTrails = computed(() =>
                   >
                     🧭 导航
                   </button>
-                  <button class="btn-primary" style="padding: 6px 12px; font-size: 13px" @click="bookSpotTicket(spot)">
-                    预约门票
+                  <button type="button" class="btn-primary" style="padding: 6px 12px; font-size: 13px" @click="openSpotDetail(spot)">
+                    去预定
                   </button>
                 </div>
               </div>

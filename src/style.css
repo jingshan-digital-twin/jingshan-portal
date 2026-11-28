@@ -820,36 +820,65 @@ button {
 }
 .top-channel-bar.is-overlaid {
   background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border-bottom: none;
   box-shadow: none;
-  padding: 14px 0 6px;
+  padding: 16px 0 6px;
+}
+.top-channel-bar.is-overlaid .kk-row-main {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid rgba(227, 249, 237, 0.16);
+  border-radius: var(--radius-lg);
+  background: rgba(10, 34, 28, 0.76);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 28px rgba(5, 21, 16, 0.18);
 }
 .top-channel-bar.is-overlaid .kk-btn {
-  border-color: transparent;
+  flex-direction: row;
+  gap: 7px;
+  padding: 7px 5px;
 }
 .top-channel-bar.is-overlaid .kk-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(225, 250, 235, 0.1);
+  border-color: rgba(225, 250, 235, 0.17);
+  transform: none;
 }
-.top-channel-bar.is-overlaid .kk-btn.active {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(200, 245, 66, 0.55);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-.top-channel-bar.is-overlaid .kk-btn.active::after {
-  background: var(--lime);
+.top-channel-bar.is-overlaid .kk-btn:focus-visible {
+  outline-color: var(--lime);
+  outline-offset: -2px;
 }
 .top-channel-bar.is-overlaid .kk-icon {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  flex: 0 0 28px;
+  height: 28px;
+  margin-bottom: 0;
+  border-radius: var(--radius-sm);
+  background: rgba(206, 244, 220, 0.1);
+  color: #c7ead8;
+  box-shadow: none;
+}
+.top-channel-bar.is-overlaid .kk-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+}
+.top-channel-bar.is-overlaid .kk-btn:hover .kk-icon {
+  background: rgba(206, 244, 220, 0.17);
+  color: #e9faef;
+  transform: none;
 }
 .top-channel-bar.is-overlaid .kk-label {
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  color: #edf7f2;
+  font-weight: 650;
 }
-.top-channel-bar.is-overlaid .kk-btn.active .kk-label {
-  color: var(--lime);
+.top-channel-bar.is-overlaid .kk-badge {
+  position: static;
+  padding: 1px 4px;
+  background: rgba(182, 229, 205, 0.13);
+  color: #c7ead8;
+  font-size: 9px;
+  font-weight: 650;
+  box-shadow: none;
 }
 .kk-shell {
   margin-top: 0;
@@ -979,34 +1008,6 @@ button {
 .home-overview-bar-hint {
   font-size: 13px;
   color: var(--ink-3);
-}
-.home-theme-pills {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px;
-  background: #f0f5f3;
-  border: 1px solid #dce8e2;
-  border-radius: var(--radius-sm);
-}
-.home-theme-pill {
-  border: none;
-  background: transparent;
-  padding: 6px 13px;
-  border-radius: var(--radius-xs);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
-  transition: all 0.16s ease;
-  white-space: nowrap;
-}
-.home-theme-pill:hover {
-  color: var(--primary-dark);
-}
-.home-theme-pill.active {
-  background: #ffffff;
-  color: var(--primary-dark);
-  box-shadow: 0 2px 6px rgba(15, 38, 31, 0.08);
 }
 .home-svc-icon {
   width: 34px;

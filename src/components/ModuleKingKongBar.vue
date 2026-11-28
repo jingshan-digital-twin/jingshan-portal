@@ -10,21 +10,22 @@ const { state, switchModule } = usePortalStore()
 
 interface ChannelTile {
   id: ModuleId
-  title: string
+  verb: string
+  label: string
   bg: string
   badge?: string
   badgeBg?: string
 }
 
 const mainTiles: ChannelTile[] = [
-  { id: 2, title: '打 · 场地服务', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)' },
-  { id: 3, title: '游 · 旅游游览', bg: 'linear-gradient(135deg,#2EB36A,#168249)' },
-  { id: 4, title: '吃 · 美食服务', bg: 'linear-gradient(135deg,#F25C43,#C93722)' },
-  { id: 5, title: '住 · 住宿服务', bg: 'linear-gradient(135deg,#3385F0,#195CC2)' },
-  { id: 6, title: '行 · 出行服务', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)' },
-  { id: 7, title: '购 · 特色商品', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
-  { id: 8, title: '娱 · 休闲娱乐', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
-  { id: 9, title: '训 · 培训研学', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
+  { id: 2, verb: '打', label: '场地服务', bg: 'linear-gradient(135deg,#10996D,#0A6B4D)' },
+  { id: 3, verb: '游', label: '旅游游览', bg: 'linear-gradient(135deg,#2EB36A,#168249)' },
+  { id: 4, verb: '吃', label: '美食服务', bg: 'linear-gradient(135deg,#F25C43,#C93722)' },
+  { id: 5, verb: '住', label: '住宿服务', bg: 'linear-gradient(135deg,#3385F0,#195CC2)' },
+  { id: 6, verb: '行', label: '出行服务', bg: 'linear-gradient(135deg,#5A6FE8,#394AC2)' },
+  { id: 7, verb: '购', label: '特色商品', bg: 'linear-gradient(135deg,#F0A71E,#D17D08)' },
+  { id: 8, verb: '娱', label: '休闲娱乐', bg: 'linear-gradient(135deg,#9B5DE5,#6E35B8)' },
+  { id: 9, verb: '训', label: '培训研学', bg: 'linear-gradient(135deg,#169B9E,#0D7278)', badge: '省网校', badgeBg: '#0D7278' },
 ]
 
 function isTileActive(id: ModuleId): boolean {
@@ -45,8 +46,8 @@ function isTileActive(id: ModuleId): boolean {
           :aria-current="isTileActive(m.id) ? 'page' : undefined"
           @click="switchModule(m.id)"
         >
-          <div class="kk-icon" :style="{ background: m.bg }">
-            <span v-if="m.badge" class="kk-badge" :style="{ background: m.badgeBg }">{{ m.badge }}</span>
+          <div class="kk-icon" :style="overlaid ? undefined : { background: m.bg }">
+            <span v-if="!overlaid && m.badge" class="kk-badge" :style="{ background: m.badgeBg }">{{ m.badge }}</span>
             <svg v-if="m.id === 2" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M5.5 6.8c3.3 2.5 3.3 7.9 0 10.4M18.5 6.8c-3.3 2.5-3.3 7.9 0 10.4" />
@@ -78,7 +79,8 @@ function isTileActive(id: ModuleId): boolean {
               <path d="M6 12v5c3 2 9 2 12 0v-5" />
             </svg>
           </div>
-          <div class="kk-label">{{ m.title }}</div>
+          <span class="kk-label">{{ overlaid ? m.label : `${m.verb} · ${m.label}` }}</span>
+          <span v-if="overlaid && m.badge" class="kk-badge">{{ m.badge }}</span>
         </button>
       </div>
     </div>
