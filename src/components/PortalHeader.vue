@@ -1,7 +1,43 @@
 <script setup lang="ts">
-import { usePortalStore } from '../store/usePortalStore'
+import { onMounted, onUnmounted, ref } from 'vue'
+import { PORTAL_ACCOUNTS, usePortalStore } from '../store/usePortalStore'
 
-const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = usePortalStore()
+const { state, currentAccount, switchAccount, memberTier, switchModule, navigateToModulePage, handleSearch } =
+  usePortalStore()
+
+const accountMenuOpen = ref(false)
+const accountWrapRef = ref<HTMLElement | null>(null)
+
+function selectAccount(id: string) {
+  switchAccount(id)
+  accountMenuOpen.value = false
+}
+
+function goProfile() {
+  accountMenuOpen.value = false
+  navigateToModulePage(13)
+}
+
+function onDocClick(e: MouseEvent) {
+  if (!accountMenuOpen.value) return
+  if (accountWrapRef.value && !accountWrapRef.value.contains(e.target as Node)) {
+    accountMenuOpen.value = false
+  }
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') accountMenuOpen.value = false
+}
+
+onMounted(() => {
+  window.addEventListener('click', onDocClick)
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('click', onDocClick)
+  window.removeEventListener('keydown', onKeydown)
+})
 </script>
 
 <template>
@@ -130,20 +166,173 @@ const { state, memberTier, switchModule, navigateToModulePage, handleSearch } = 
 
         <span class="hdr-divider" aria-hidden="true" />
 
-        <button
-          type="button"
-          class="member-chip"
-          :class="{ active: state.isStandalonePage && state.activeModule === 13 }"
-          @click="navigateToModulePage(13)"
-        >
-          <span class="avatar-sm">张</span>
-          <span class="member-name">张先生</span>
-          <span class="member-tier-badge">{{ memberTier.code }}</span>
-          <svg class="member-chevron" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
+        <div ref="accountWrapRef" class="hdr-account-wrap">
+          <div
+            class="member-chip hdr-account-split"
+            :class="{ active: state.isStandalonePage && state.activeModule === 13 }"
+          >
+            <button type="button" class="hdr-account-main" @click="goProfile">
+              <span class="avatar-sm">{{ currentAccount.avatar }}</span>
+              <span class="member-name">{{ currentAccount.name }}</span>
+              <span class="hdr-city-tag">{{ currentAccount.city }}</span>
+              <span class="member-tier-badge">{{ memberTier.code }}</span>
+            </button>
+            <button
+              type="button"
+              class="hdr-account-caret"
+              aria-label="切换账户"
+              :aria-expanded="accountMenuOpen"
+              @click.stop="accountMenuOpen = !accountMenuOpen"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          </div>
+
+          <div v-if="accountMenuOpen" class="hdr-account-menu" role="menu">
+            <button type="button" class="hdr-acct-item" @click="goProfile">
+              <strong>个人中心</strong>
+              <span>{{ memberTier.code }} · {{ state.points }}分</span>
+            </button>
+            <div class="hdr-acct-divider">切换账户</div>
+            <button
+              v-for="acc in PORTAL_ACCOUNTS"
+              :key="acc.id"
+              type="button"
+              class="hdr-acct-item"
+              :class="{ current: acc.id === currentAccount.id }"
+              @click="selectAccount(acc.id)"
+            >
+              <span class="hdr-acct-row">
+                <span class="hdr-acct-avatar">{{ acc.avatar }}</span>
+                <strong>{{ acc.name }}</strong>
+                <span class="hdr-acct-city">{{ acc.city }}</span>
+              </span>
+              <span v-if="acc.id === currentAccount.id" class="hdr-acct-check">✓</span>
+            </button>
+          </div>
+        </div>
       </nav>
     </div>
   </header>
 </template>
+
+<style scoped>
+.hdr-account-wrap {
+  position: relative;
+}
+.hdr-account-split {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.hdr-account-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 100%;
+  padding: 4px 8px 4px 5px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.hdr-city-tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: rgba(11, 115, 82, 0.1);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.hdr-account-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 100%;
+  border: none;
+  border-left: 1px solid rgba(196, 138, 25, 0.28);
+  background: transparent;
+  color: #8c5a06;
+  transition: background-color 0.14s ease;
+}
+.hdr-account-caret:hover {
+  background: rgba(196, 138, 25, 0.14);
+}
+.hdr-account-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 210px;
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  z-index: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hdr-acct-divider {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  padding: 6px 8px 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.hdr-acct-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  text-align: left;
+  transition: background-color 0.14s ease;
+}
+.hdr-acct-item:hover {
+  background: #f2f9f6;
+}
+.hdr-acct-item.current {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.hdr-acct-item > span:last-child {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.hdr-acct-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.hdr-acct-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e9f3ee;
+  color: var(--primary-dark);
+  font-size: 11.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hdr-acct-city {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+.hdr-acct-check {
+  color: var(--primary) !important;
+  font-weight: 900;
+}
+</style>

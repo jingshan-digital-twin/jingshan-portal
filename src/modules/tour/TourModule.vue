@@ -13,9 +13,8 @@ import {
 } from '../../mock/tourData'
 import { isBookingQuantity } from '../../store/reservationFlow'
 import { usePortalStore } from '../../store/usePortalStore'
-import type { VisitorOrigin } from '../../types/portal'
 
-const { state, openPhoto, openTourSpotDetail, openActionModal, openNavigation, createQuickOrder, showToast } = usePortalStore()
+const { state, currentAccount, switchModule, openPhoto, openTourSpotDetail, openActionModal, openNavigation, createQuickOrder } = usePortalStore()
 
 // 模块顶部主视图切换
 const tourTabs = [
@@ -28,11 +27,17 @@ const tourTabs = [
 ] as const
 const activeSection = ref<(typeof tourTabs)[number]['id']>('postreturn')
 
-// ===== 0. 赛后游览 & 返程顺路游（按客源地自动上架） =====
+// ===== 0. 赛后游览 & 返程顺路游（按登录账户来源地自动匹配） =====
 type OriginPerspective = 'wuhan' | 'beijing' | 'shenzhen'
-const originPerspective = ref<OriginPerspective>(
-  state.origin.includes('北京') ? 'beijing' : state.origin.includes('深圳') ? 'shenzhen' : 'wuhan',
-)
+
+const originPerspective = computed<OriginPerspective>(() => {
+  if (state.origin.includes('北京')) return 'beijing'
+  if (state.origin.includes('深圳')) return 'shenzhen'
+  return 'wuhan'
+})
+
+const bundleDate = ref(BOOKING_DATES[1]?.iso ?? BOOKING_DATES[0]!.iso)
+const bundlePeople = ref<number>(2)
 const bundleIncludeHotel = reactive<Record<string, boolean>>({
   'rt-wuhan-1': true,
   'rt-wuhan-2': true,
@@ -40,60 +45,89 @@ const bundleIncludeHotel = reactive<Record<string, boolean>>({
   'rt-beijing-2': true,
   'rt-shenzhen-1': true,
 })
-const bundlePeople = 2
+const bundleRooms = reactive<Record<string, number>>({})
 
-function switchOriginPerspective(key: OriginPerspective) {
-  originPerspective.value = key
-  const originMap: Record<OriginPerspective, VisitorOrigin> = {
-    wuhan: '武汉市（省内游客）',
-    beijing: '北京市（省外游客）',
-    shenzhen: '深圳市（省外游客）',
-  }
-  state.origin = originMap[key]
-  if (key === 'beijing') {
-    showToast('已切换【北京客源】视角：自动上架“京山→钟祥明显陵→襄阳古隆中/随州大洪山”北上返程联游合作套餐')
-  } else if (key === 'shenzhen') {
-    showToast('已切换【深圳客源】视角：自动上架“京山→漳河→宜昌三峡”南下返程联游合作套餐')
-  } else {
-    showToast('已切换【武汉客源】视角：智能推荐京山温泉、文峰夜市与“赛后游荆门”明显陵线路')
-  }
+function getRoomCount(bundleId: string) {
+  return bundleRooms[bundleId] ?? Math.max(1, Math.ceil(bundlePeople.value / 2))
 }
+
+function adjustRooms(bundleId: string, delta: number) {
+  const next = Math.min(6, Math.max(1, getRoomCount(bundleId) + delta))
+  bundleRooms[bundleId] = next
+}
+
+watch(bundlePeople, (n) => {
+  const suggested = Math.max(1, Math.ceil(n / 2))
+  for (const b of RETURN_TRIP_BUNDLES) {
+    bundleRooms[b.id] = suggested
+  }
+})
 
 const visibleReturnBundles = computed(() =>
   RETURN_TRIP_BUNDLES.filter((b) => b.originKey === originPerspective.value),
 )
 
-const wuhanPostHighlights = computed(() =>
-  ['spot-tianmu', 'spot-wenfeng-night', 'spot-xianling']
-    .map((id) => TOUR_SPOTS.find((s) => s.id === id))
-    .filter((s): s is NonNullable<typeof s> => Boolean(s)),
+const postHighlights = computed(() => {
+  const specs = [
+    { id: 'spot-tianmu', channelTag: '娱 · 温泉', channelModule: 8 as const, channelBtn: '更多娱乐', bookBtn: '预订门票' },
+    { id: 'spot-wenfeng-night', channelTag: '吃 · 夜市美食', channelModule: 4 as const, channelBtn: '美食专区', bookBtn: '领券预订' },
+    { id: 'spot-xianling', channelTag: '游 · 赛后游荆门', channelModule: null, channelBtn: '', bookBtn: '预订联票' },
+  ]
+  return specs
+    .map((sp) => {
+      const spot = TOUR_SPOTS.find((s) => s.id === sp.id)
+      return spot ? { ...sp, spot } : null
+    })
+    .filter((x): x is NonNullable<typeof x> => Boolean(x))
+})
+
+const bookedBundleOrdersCount = computed(
+  () => state.orders.filter((o) => o.status !== '已取消' && /^(返程)?联游打包：/.test(o.title)).length,
 )
 
-function calcBundleTotal(bundle: ReturnTripBundle) {
-  const withHotel = bundleIncludeHotel[bundle.id] ?? true
-  const unit = withHotel ? bundle.bundlePrice : bundle.ticketPrice
-  return unit * bundlePeople
+function isBundleBooked(bundle: ReturnTripBundle) {
+  return state.orders.some(
+    (o) => o.status !== '已取消' && o.title === `联游打包：${bundle.title}`,
+  )
 }
 
-function bookReturnBundle(bundle: ReturnTripBundle) {
+function calcBundlePricing(bundle: ReturnTripBundle) {
+  const people = Math.max(1, bundlePeople.value)
   const withHotel = bundleIncludeHotel[bundle.id] ?? true
-  const total = calcBundleTotal(bundle)
+  const rooms = getRoomCount(bundle.id)
+  const ticketSubtotal = bundle.ticketPrice * people
+  const hotelSubtotal = withHotel ? bundle.hotelRoomPrice * rooms : 0
+  const discount = withHotel ? bundle.bundleDiscount : 0
+  const total = Math.max(1, ticketSubtotal + hotelSubtotal - discount)
+  return { people, withHotel, rooms, ticketSubtotal, hotelSubtotal, discount, total, original: ticketSubtotal + hotelSubtotal }
+}
+
+const bundleDateLabel = computed(
+  () => BOOKING_DATES.find((d) => d.iso === bundleDate.value)?.shortDate ?? bundleDate.value,
+)
+
+function bookReturnBundle(bundle: ReturnTripBundle) {
+  const p = calcBundlePricing(bundle)
+  const hotelSummary = p.withHotel
+    ? `${bundle.hotelName}（${p.rooms}间 × ${bundle.hotelNights}晚）`
+    : '不含住宿（仅景区联票）'
   createQuickOrder(
     '门票',
-    `返程联游打包：${bundle.title}`,
-    `${bundlePeople}人同行 · 含${bundle.ticketsIncluded.join('+')}${withHotel ? ` + 住宿(${bundle.hotelName})` : '（仅门票联票）'}`,
-    total,
-    180,
+    `联游打包：${bundle.title}`,
+    `${bundleDateLabel.value}出发 · ${p.people}人 · ${p.withHotel ? `门票+住宿(${p.rooms}间)` : '仅门票联票'}`,
+    p.total,
+    bundle.pointsGain,
     0,
     {
       fields: [
+        { label: '出发日期', value: bundleDateLabel.value },
         { label: '联游路线', value: bundle.routeTitle },
-        { label: '包含门票', value: bundle.ticketsIncluded.join('、') },
-        { label: '包含住宿', value: withHotel ? bundle.hotelName : '不含住宿（仅景区联票）' },
-        { label: '出行人数', value: `${bundlePeople} 人` },
+        { label: '出行人数', value: `${p.people} 人` },
+        { label: '沿途门票', value: `${bundle.ticketsIncluded.join('、')}（¥${p.ticketSubtotal}）` },
+        { label: '合作住宿', value: p.withHotel ? `${hotelSummary}（¥${p.hotelSubtotal}，打包省¥${p.discount}）` : hotelSummary },
       ],
-      successTitle: '返程顺路游打包预订成功',
-      successMessage: '沿途景区入园码与合作酒店确认单已同步至个人中心，获赠 180 金网积分。',
+      successTitle: '联游套餐预订成功',
+      successMessage: `订单与核销码已同步至个人中心，获赠 +${bundle.pointsGain} 积分。`,
     },
   )
 }
@@ -237,156 +271,210 @@ const visibleTrails = computed(() =>
       </button>
     </div>
 
-    <!-- ===== 模块零：赛后游览 & 返程顺路游专题（客源地视角联动） ===== -->
-    <div v-if="activeSection === 'postreturn'" class="mb-24" style="display: flex; flex-direction: column; gap: 16px">
-      <!-- 客源地视角切换条 -->
-      <div class="card card-pad flex-between" style="gap: 12px; flex-wrap: wrap; background: linear-gradient(135deg, #f1faf6, #ffffff); border-color: #b8ded0">
-        <strong style="font-size: 19px">🚄 赛后游览 & 返程顺路游专题</strong>
-        <div class="flex-row" style="gap: 8px; flex-wrap: wrap">
-          <button
-            type="button"
-            :class="originPerspective === 'wuhan' ? 'btn-primary' : 'btn-ghost'"
-            @click="switchOriginPerspective('wuhan')"
-          >
-            📍 武汉客源
-          </button>
-          <button
-            type="button"
-            :class="originPerspective === 'beijing' ? 'btn-orange' : 'btn-ghost'"
-            @click="switchOriginPerspective('beijing')"
-          >
-            🚄 北京客源
-          </button>
-          <button
-            type="button"
-            :class="originPerspective === 'shenzhen' ? 'btn-primary' : 'btn-ghost'"
-            @click="switchOriginPerspective('shenzhen')"
-          >
-            🌴 深圳客源视角
-          </button>
+    <!-- ===== 模块零：赛后游览 & 返程顺路游专题（按登录账户来源地自动匹配） ===== -->
+    <div v-if="activeSection === 'postreturn'" class="mb-24 rt-stage">
+      <!-- 一、赛后精选（所有游客常驻可见：温泉 / 夜市美食 / 钟祥明显陵·莫愁湖） -->
+      <div class="rt-section">
+        <div class="rt-sec-head">
+          <h2>赛后精选 · 游 / 吃 / 娱</h2>
+          <span class="tag green">完赛即享票根优惠</span>
+        </div>
+
+        <div class="grid-3 rt-spot-grid">
+          <article v-for="item in postHighlights" :key="item.id" class="card rt-spot-card">
+            <div class="photo-box rt-spot-photo" @click="openSpotDetail(item.spot)">
+              <img :src="item.spot.photo" :alt="item.spot.name" />
+              <span class="badge-tl">{{ item.channelTag }}</span>
+            </div>
+            <div class="rt-spot-body">
+              <div class="flex-between" style="gap: 8px; align-items: flex-start">
+                <strong class="rt-spot-title" @click="openSpotDetail(item.spot)">
+                  {{ item.id === 'spot-xianling' ? '钟祥明显陵 · 莫愁湖' : item.spot.name.split('（')[0] }}
+                </strong>
+                <span class="rating-pill">★ {{ item.spot.rating }}</span>
+              </div>
+              <div class="rt-spot-meta">{{ item.spot.distance }} · {{ item.spot.driveMin.split('（')[0] }}</div>
+            </div>
+            <div class="rt-spot-foot">
+              <div class="rt-spot-price">
+                <strong>¥{{ item.spot.stubPrice }}</strong>
+                <span>{{ item.spot.priceUnit.split('（')[0] }}</span>
+              </div>
+              <div class="flex-row" style="gap: 6px">
+                <button
+                  v-if="item.channelModule"
+                  type="button"
+                  class="btn-ghost rt-sm-btn"
+                  @click="switchModule(item.channelModule)"
+                >
+                  {{ item.channelBtn }}
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  class="btn-ghost rt-sm-btn"
+                  @click="openActionModal({ type: 'audio', spotName: item.spot.name, duration: item.spot.duration, script: item.spot.audioScript, photo: item.spot.photo })"
+                >
+                  导览
+                </button>
+                <button type="button" class="btn-primary rt-sm-btn" @click="openSpotDetail(item.spot)">
+                  {{ item.bookBtn }}
+                </button>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
 
-      <!-- 武汉视角先展示：京山温泉、夜市美食及钟祥明显陵 3大精选 -->
-      <div v-if="originPerspective === 'wuhan'" class="grid-3" style="gap: 14px">
-        <div v-for="spot in wuhanPostHighlights" :key="spot.id" class="card" style="display: flex; flex-direction: column; justify-content: space-between">
-          <div>
-            <div class="photo-box" style="height: 150px" @click="openSpotDetail(spot)">
-              <img :src="spot.photo" :alt="spot.name" />
-              <span class="badge-tl">{{ spot.badge }}</span>
-            </div>
-            <div class="card-pad" style="padding: 13px 14px">
-              <div class="flex-between" style="margin-bottom: 4px">
-                <strong style="font-size: 15.5px; cursor: pointer" @click="openSpotDetail(spot)">{{ spot.name }}</strong>
-                <span class="rating-pill">★ {{ spot.rating }}</span>
-              </div>
-              <div style="font-size: 13px; color: var(--ink-2); line-height: 1.5; margin-bottom: 6px">{{ spot.summary }}</div>
-              <div style="font-size: 12.5px; color: var(--ink-3)">📍 {{ spot.distance }} · {{ spot.driveMin }}</div>
-            </div>
+      <!-- 二、返程顺路游合作套餐（按当前登录账户来源地自动上架） -->
+      <div class="rt-section">
+        <div class="rt-sec-head">
+          <div class="flex-row" style="gap: 10px">
+            <h2>{{ originPerspective === 'wuhan' ? '赛后联游打包套餐' : '返程顺路游合作套餐' }}</h2>
+            <span class="tag" :class="originPerspective === 'beijing' ? 'orange' : 'blue'">
+              {{ currentAccount.name }}（{{ currentAccount.city }}）· 自动匹配 {{ visibleReturnBundles.length }} 款
+            </span>
           </div>
-          <div class="flex-between" style="padding: 10px 14px; border-top: 1px dashed var(--line); background: #fafdfc">
-            <strong style="font-size: 18px; color: var(--accent)">
-              ¥{{ spot.stubPrice }}<small style="font-size: 12px; color: var(--ink-3); font-weight: 600">{{ spot.priceUnit }}</small>
-            </strong>
-            <div class="flex-row" style="gap: 6px">
-              <button
-                type="button"
-                class="btn-ghost"
-                style="padding: 5px 10px; font-size: 12.5px"
-                @click="openActionModal({ type: 'audio', spotName: spot.name, duration: spot.duration, script: spot.audioScript, photo: spot.photo })"
-              >
-                🎧 导览
-              </button>
-              <button type="button" class="btn-primary" style="padding: 5px 12px; font-size: 12.5px" @click="openSpotDetail(spot)">
-                立即预订
-              </button>
-            </div>
-          </div>
+          <button
+            v-if="bookedBundleOrdersCount > 0"
+            type="button"
+            class="btn-ghost rt-orders-link"
+            @click="switchModule(13)"
+          >
+            已订 {{ bookedBundleOrdersCount }} 单 · 个人中心查看 →
+          </button>
         </div>
-      </div>
 
-      <!-- 专属返程联游合作套餐（支持可视化沿线节点 + 门票/住宿一键打包预订） -->
-      <div style="display: flex; flex-direction: column; gap: 14px">
-        <div
-          v-for="bundle in visibleReturnBundles"
-          :key="bundle.id"
-          class="card"
-          style="border: 1.5px solid #cde3da; overflow: hidden"
-        >
-          <div style="display: grid; grid-template-columns: 260px 1fr">
-            <div class="photo-box" style="height: 100%; min-height: 230px">
-              <img :src="bundle.photo" :alt="bundle.title" />
-              <span class="badge-tl" style="background: #e85525">{{ bundle.badge }}</span>
-            </div>
+        <!-- 打包公共参数条（出发日期 + 出行人数） -->
+        <div class="card rt-param-bar">
+          <div class="rt-param-group">
+            <label class="rt-param">
+              <span>出发日期</span>
+              <select v-model="bundleDate" class="f-input rt-date-select">
+                <option v-for="d in BOOKING_DATES" :key="`rt-${d.iso}`" :value="d.iso">
+                  {{ d.shortDate }} {{ d.weekday }}
+                </option>
+              </select>
+            </label>
 
-            <div class="card-pad" style="display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
-              <div>
-                <div class="flex-between" style="gap: 8px; margin-bottom: 6px; flex-wrap: wrap">
-                  <strong style="font-size: 18px; color: var(--ink)">{{ bundle.title }}</strong>
-                  <span class="tag blue">{{ bundle.sourceTag }}</span>
-                </div>
-                <div style="font-size: 13.5px; color: var(--primary); font-weight: 700; margin-bottom: 10px">
-                  🛣️ {{ bundle.routeTitle }} ｜ {{ bundle.transportTip }}
-                </div>
-
-                <!-- 沿线文旅节点串联路径 -->
-                <div class="rt-nodes-row">
-                  <div v-for="(node, idx) in bundle.nodes" :key="`${bundle.id}-${idx}`" class="rt-node-item">
-                    <div class="rt-node-card">
-                      <div class="flex-between" style="gap: 6px; margin-bottom: 3px">
-                        <strong style="font-size: 13.5px; color: var(--primary-dark)">{{ idx + 1 }}. {{ node.city }}</strong>
-                        <span class="tag green" style="font-size: 11px; padding: 1px 6px">{{ node.tag }}</span>
-                      </div>
-                      <div style="font-size: 13px; font-weight: 700; color: var(--ink)">{{ node.spot }}</div>
-                      <div style="font-size: 12px; color: var(--ink-3); margin-top: 2px">{{ node.highlight }}</div>
-                    </div>
-                    <div v-if="idx < bundle.nodes.length - 1" class="rt-node-arrow">
-                      <span>→</span>
-                      <small>{{ bundle.nodes[idx + 1]?.driveOrRail }}</small>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 门票 + 住宿打包勾选项 -->
-                <div class="grid-2" style="gap: 10px; margin-top: 10px">
-                  <div style="background: #f5faf8; border: 1px solid #d5e8df; padding: 9px 12px; font-size: 13px">
-                    <div class="flex-between">
-                      <strong>🎫 沿途景区门票联票（必含）</strong>
-                      <strong style="color: var(--primary)">¥{{ bundle.ticketPrice }}/人</strong>
-                    </div>
-                    <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 3px">
-                      {{ bundle.ticketsIncluded.join(' · ') }}
-                    </div>
-                  </div>
-                  <label
-                    style="background: #fff9f5; border: 1px solid #f4d3be; padding: 9px 12px; font-size: 13px; cursor: pointer; display: block"
-                  >
-                    <div class="flex-between">
-                      <span>
-                        <input v-model="bundleIncludeHotel[bundle.id]" type="checkbox" style="margin-right: 6px" />
-                        <strong>🏨 沿线特色合作住宿打包</strong>
-                      </span>
-                      <strong style="color: var(--accent)">+¥{{ bundle.bundlePrice - bundle.ticketPrice }}/人</strong>
-                    </div>
-                    <div style="font-size: 12.5px; color: var(--ink-2); margin-top: 3px">
-                      {{ bundle.hotelName }}
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div class="flex-between" style="padding-top: 10px; border-top: 1px dashed var(--line)">
-                <div>
-                  <span style="font-size: 13px; color: var(--ink-3)">{{ bundle.duration }} · {{ bundlePeople }}人打包价：</span>
-                  <strong style="font-size: 24px; color: var(--accent)">¥{{ calcBundleTotal(bundle) }}</strong>
-                  <s v-if="bundleIncludeHotel[bundle.id]" style="font-size: 13px; color: var(--ink-3); margin-left: 6px">¥{{ bundle.originalPrice * bundlePeople }}</s>
-                </div>
-                <button type="button" class="btn-orange" style="padding: 10px 20px; font-size: 14.5px" @click="bookReturnBundle(bundle)">
-                  {{ bundleIncludeHotel[bundle.id] ? '门票 + 住宿 一键打包预订 →' : '一键预订沿途联票 →' }}
+            <div class="rt-param">
+              <span>出行人数</span>
+              <div class="flex-row" style="gap: 5px">
+                <button
+                  v-for="n in [1, 2, 3, 4]"
+                  :key="n"
+                  type="button"
+                  class="filter-pill rt-ppl-pill"
+                  :class="{ active: bundlePeople === n }"
+                  @click="bundlePeople = n"
+                >
+                  {{ n }}人
                 </button>
               </div>
             </div>
           </div>
+
+          <span class="tag green">门票 + 住宿 一键打包立省</span>
+        </div>
+
+        <div class="rt-bundle-list">
+          <article
+            v-for="bundle in visibleReturnBundles"
+            :key="bundle.id"
+            class="card rt-bundle-card"
+          >
+            <div class="photo-box rt-bundle-photo">
+              <img :src="bundle.photo" :alt="bundle.title" />
+              <span class="badge-tl rt-bundle-badge">{{ bundle.badge }}</span>
+            </div>
+
+            <div class="rt-bundle-body">
+              <!-- 1. 标题与核心交通 -->
+              <div class="rt-bundle-head">
+                <div class="flex-row" style="gap: 8px">
+                  <h3>{{ bundle.title }}</h3>
+                  <span v-if="isBundleBooked(bundle)" class="tag green">已预订</span>
+                </div>
+                <div class="flex-row" style="gap: 6px">
+                  <span class="tag blue">{{ bundle.duration }}</span>
+                  <span class="tag">{{ bundle.transportTip }}</span>
+                </div>
+              </div>
+
+              <!-- 2. 可视化沿线节点链 -->
+              <div class="rt-nodes-row">
+                <div v-for="(node, idx) in bundle.nodes" :key="`${bundle.id}-${idx}`" class="rt-node-item">
+                  <div class="rt-node-card">
+                    <div class="rt-node-city">{{ idx + 1 }}. {{ node.city }}</div>
+                    <div class="rt-node-spot">{{ node.spot }}</div>
+                  </div>
+                  <div v-if="idx < bundle.nodes.length - 1" class="rt-node-arrow">
+                    <span>→</span>
+                    <small>{{ bundle.nodes[idx + 1]?.driveOrRail }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. 门票 + 住宿打包明细（按人数/间数实时算价） -->
+              <div class="grid-2 rt-pack-grid">
+                <div class="rt-pack-box ticket">
+                  <div class="flex-between">
+                    <strong>沿途景区门票（必含）</strong>
+                    <strong class="rt-pack-price primary">
+                      ¥{{ bundle.ticketPrice }} × {{ bundlePeople }}人 = ¥{{ calcBundlePricing(bundle).ticketSubtotal }}
+                    </strong>
+                  </div>
+                  <div class="rt-pack-chips">
+                    <span v-for="tk in bundle.ticketsIncluded" :key="tk" class="rt-mini-chip">{{ tk }}</span>
+                  </div>
+                </div>
+
+                <div class="rt-pack-box hotel" :class="{ off: !bundleIncludeHotel[bundle.id] }">
+                  <div class="flex-between" style="gap: 8px">
+                    <label class="rt-hotel-check">
+                      <input v-model="bundleIncludeHotel[bundle.id]" type="checkbox" />
+                      <strong>合作住宿打包（{{ bundle.hotelNights }}晚）</strong>
+                    </label>
+                    <strong class="rt-pack-price accent">
+                      {{ bundleIncludeHotel[bundle.id] ? `¥${calcBundlePricing(bundle).hotelSubtotal}` : '未选' }}
+                    </strong>
+                  </div>
+                  <div class="flex-between" style="gap: 8px; margin-top: 6px">
+                    <span class="rt-hotel-name">{{ bundle.hotelName }}</span>
+                    <div v-if="bundleIncludeHotel[bundle.id]" class="rt-room-stepper">
+                      <button type="button" @click="adjustRooms(bundle.id, -1)">-</button>
+                      <span>{{ getRoomCount(bundle.id) }}间</span>
+                      <button type="button" @click="adjustRooms(bundle.id, 1)">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. 结算与一键下单 -->
+              <div class="rt-bundle-foot">
+                <div class="rt-total-group">
+                  <span class="rt-total-meta">{{ bundleDateLabel }} · {{ bundlePeople }}人{{ bundleIncludeHotel[bundle.id] ? ` ${getRoomCount(bundle.id)}间` : '' }}</span>
+                  <strong class="rt-total-price">¥{{ calcBundlePricing(bundle).total }}</strong>
+                  <span v-if="calcBundlePricing(bundle).discount > 0" class="tag orange">打包省 ¥{{ calcBundlePricing(bundle).discount }}</span>
+                  <span class="tag green">+{{ bundle.pointsGain }}积分</span>
+                </div>
+
+                <div class="flex-row" style="gap: 8px">
+                  <button
+                    v-if="isBundleBooked(bundle)"
+                    type="button"
+                    class="btn-ghost rt-action-sec"
+                    @click="switchModule(13)"
+                  >
+                    查看订单
+                  </button>
+                  <button type="button" class="btn-orange rt-action-cta" @click="bookReturnBundle(bundle)">
+                    {{ bundleIncludeHotel[bundle.id] ? '门票 + 住宿 一键打包预订' : '一键预订沿途联票' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </div>
@@ -738,6 +826,162 @@ const visibleTrails = computed(() =>
 </template>
 
 <style scoped>
+.rt-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rt-param-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border-color: #d4e6de;
+  flex-wrap: wrap;
+}
+.rt-param-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.rt-param {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rt-date-select {
+  width: 148px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.rt-ppl-pill {
+  padding: 4px 11px;
+  font-size: 13px;
+}
+.rt-orders-link {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--primary-dark);
+  border-color: #b5d9ca;
+  background: #f2faf6;
+}
+
+.rt-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rt-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rt-sec-head h2 {
+  font-size: 17.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+/* 赛后3大精选 */
+.rt-spot-grid {
+  gap: 14px;
+}
+.rt-spot-card {
+  display: flex;
+  flex-direction: column;
+}
+.rt-spot-photo {
+  height: 148px;
+}
+.rt-spot-body {
+  padding: 12px 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rt-spot-title {
+  font-size: 16px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.rt-spot-meta {
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.rt-spot-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px dashed var(--line);
+  background: #fafdfc;
+}
+.rt-spot-price {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.rt-spot-price strong {
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--accent);
+}
+.rt-spot-price span {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.rt-sm-btn {
+  padding: 5px 11px;
+  font-size: 12.5px;
+}
+
+/* 联游打包卡片 */
+.rt-bundle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rt-bundle-card {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  border: 1.5px solid #cde3da;
+}
+.rt-bundle-photo {
+  height: 100%;
+  min-height: 220px;
+  cursor: default;
+}
+.rt-bundle-badge {
+  background: #e85525;
+}
+.rt-bundle-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rt-bundle-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rt-bundle-head h3 {
+  font-size: 17.5px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
 .rt-nodes-row {
   display: flex;
   align-items: stretch;
@@ -748,15 +992,30 @@ const visibleTrails = computed(() =>
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1 1 170px;
+  flex: 1 1 150px;
   min-width: 0;
 }
 .rt-node-card {
   flex: 1;
-  background: #f6fbf8;
+  background: #f5faf8;
   border: 1px solid #d4e8df;
+  border-radius: 8px;
   padding: 8px 10px;
   min-width: 0;
+}
+.rt-node-city {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.rt-node-spot {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .rt-node-arrow {
   display: flex;
@@ -765,14 +1024,126 @@ const visibleTrails = computed(() =>
   justify-content: center;
   color: var(--primary);
   font-weight: 900;
-  font-size: 15px;
+  font-size: 14px;
   flex-shrink: 0;
-  min-width: 48px;
+  min-width: 44px;
 }
 .rt-node-arrow small {
-  font-size: 10.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--ink-3);
   white-space: nowrap;
+}
+
+.rt-pack-grid {
+  gap: 10px;
+}
+.rt-pack-box {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.rt-pack-box.ticket {
+  background: #f6fbf9;
+  border: 1px solid #d5e8df;
+}
+.rt-pack-box.hotel {
+  background: #fff9f5;
+  border: 1px solid #f4d3be;
+}
+.rt-pack-box.hotel.off {
+  background: #f7f9f8;
+  border-color: var(--line);
+  opacity: 0.72;
+}
+.rt-pack-price.primary {
+  color: var(--primary-dark);
+}
+.rt-pack-price.accent {
+  color: var(--accent);
+}
+.rt-pack-chips {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.rt-mini-chip {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #e7f4ee;
+  color: var(--primary-dark);
+}
+.rt-hotel-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.rt-hotel-name {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rt-room-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.rt-room-stepper button {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid #e4c6b3;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1;
+}
+.rt-room-stepper span {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 26px;
+  text-align: center;
+}
+
+.rt-bundle-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  flex-wrap: wrap;
+}
+.rt-total-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.rt-total-meta {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.rt-total-price {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent);
+}
+.rt-action-sec {
+  padding: 8px 14px;
+  font-size: 13.5px;
+}
+.rt-action-cta {
+  padding: 9px 18px;
+  font-size: 14px;
 }
 </style>

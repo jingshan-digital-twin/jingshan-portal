@@ -206,6 +206,20 @@ function hydrateMerchantRatings(savedList?: MerchantRatingItem[]): MerchantRatin
   })
 }
 
+export interface PortalAccount {
+  id: string
+  name: string
+  avatar: string
+  city: string
+  origin: VisitorOrigin
+}
+
+export const PORTAL_ACCOUNTS: PortalAccount[] = [
+  { id: 'acc-wuhan', name: '张先生', avatar: '张', city: '武汉', origin: '武汉市（省内游客）' },
+  { id: 'acc-beijing', name: '王先生', avatar: '王', city: '北京', origin: '北京市（省外游客）' },
+  { id: 'acc-shenzhen', name: '林女士', avatar: '林', city: '深圳', origin: '深圳市（省外游客）' },
+]
+
 export interface ModuleMeta {
   id: ModuleId
   code: string
@@ -303,7 +317,7 @@ const state = reactive({
   isStandalonePage: initialStandaloneModule !== null,
   activeModule: (initialStandaloneModule ?? 1) as ModuleId,
   searchQuery: new URLSearchParams(window.location.search).get('q') ?? '',
-  origin: (saved.origin ?? '武汉市（省内游客）') as VisitorOrigin,
+  origin: ((sessionStorage.getItem('jingshan_active_origin') as VisitorOrigin | null) ?? '武汉市（省内游客）') as VisitorOrigin,
   radius: '1公里' as RadiusOption,
   courtSurfaceFilter: parseSurfaceFromUrl(),
   courtRegionFilter: parseRegionFromUrl(),
@@ -531,6 +545,31 @@ watch(
 let toastTimer: number | undefined
 
 export function usePortalStore() {
+  const currentAccount = computed(
+    () => PORTAL_ACCOUNTS.find((a) => a.origin === state.origin) ?? PORTAL_ACCOUNTS[0]!,
+  )
+
+  function switchAccount(accountId: string) {
+    const target = PORTAL_ACCOUNTS.find((a) => a.id === accountId)
+    if (!target) return
+    state.origin = target.origin
+    try {
+      sessionStorage.setItem('jingshan_active_origin', target.origin)
+    } catch {
+      // ignore storage errors
+    }
+    showToast(`已切换账户：${target.name}（${target.city}）`)
+  }
+
+  function setVisitorOrigin(origin: VisitorOrigin) {
+    state.origin = origin
+    try {
+      sessionStorage.setItem('jingshan_active_origin', origin)
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   const memberTier = computed(() => {
     if (state.points >= 1500) return { code: 'Lv.4', name: '冠军黑金会员', discount: 0.8 }
     if (state.points >= 1000) return { code: 'Lv.3', name: '金网精英会员', discount: 0.85 }
@@ -753,8 +792,8 @@ export function usePortalStore() {
     if (!m || !content.trim()) return
     m.comments.unshift({
       id: `mc-${Date.now()}`,
-      user: '张先生',
-      city: state.origin.slice(0, 2),
+      user: currentAccount.value.name,
+      city: currentAccount.value.city,
       score,
       content: content.trim(),
       likes: 1,
@@ -1013,8 +1052,8 @@ export function usePortalStore() {
     const next: MatchmakingGame = {
       ...payload,
       id: `mg-${Date.now()}`,
-      hostName: '张先生（我发起）',
-      hostOrigin: state.origin.slice(0, 2),
+      hostName: `${currentAccount.value.name}（我发起）`,
+      hostOrigin: currentAccount.value.city,
       currentPlayers: 1,
       joinedByMe: true,
     }
@@ -1237,8 +1276,8 @@ export function usePortalStore() {
     if (payload.mode === 'review') {
       const post: FeedbackPost = {
         id: `post-${Date.now()}`,
-        author: '张先生',
-        origin: state.origin.slice(0, 2),
+        author: currentAccount.value.name,
+        origin: currentAccount.value.city,
         rating: payload.rating,
         title: payload.content.trim(),
         photo: '/images/tournament_1.jpg',
@@ -1307,8 +1346,8 @@ export function usePortalStore() {
     m.myRating = star
     state.posts.unshift({
       id: `post-${Date.now()}`,
-      author: '张先生',
-      origin: state.origin.slice(0, 2),
+      author: currentAccount.value.name,
+      origin: currentAccount.value.city,
       rating: star,
       title: `【${m.name}】${m.recentReview}`,
       photo: m.category === '球场' ? '/images/tournament_1.jpg' : m.category === '酒店' ? '/images/hotel.jpg' : m.category === '餐饮' ? '/images/cuisine.jpg' : '/images/coach_1.jpg',
@@ -1483,6 +1522,9 @@ export function usePortalStore() {
 
   return {
     state,
+    currentAccount,
+    switchAccount,
+    setVisitorOrigin,
     memberTier,
     activeOrdersCount,
     showToast,

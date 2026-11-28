@@ -7,6 +7,7 @@ import { addPortalMapMarker, createPortalMap, JINGSHAN_MAP_CENTER, MAP_ICONS, se
 
 const {
   state,
+  setVisitorOrigin,
   registerYouthTournament,
   createQuickOrder,
   openHotelDetail,
@@ -21,9 +22,9 @@ const ordered3dPkg = ref(false)
 const lastRegOrderId = ref('')
 
 const regForm = reactive({
-  tournamentName: '2026 中国青少年网球巡回赛总决赛（京山站）',
-  playerName: '张小宇',
-  group: 'U14 青少年单打积分组',
+  tournamentName: '2026 京山网球公开赛 · 城市分级赛（京山站）',
+  playerName: '张先生',
+  group: '公开组单打积分赛（CUTR 3.5）',
   level: 'CUTR 3.50-3.99',
   originCity: '武汉市',
   phone: '138****8866',
@@ -120,6 +121,15 @@ async function submitRegistration() {
     showToast('请输入参赛选手姓名')
     return
   }
+  const originMap = {
+    武汉市: '武汉市（省内游客）',
+    北京市: '北京市（省外游客）',
+    深圳市: '深圳市（省外游客）',
+    荆门市: '荆门市（周边游客）',
+  } as const
+  const mappedOrigin = originMap[regForm.originCity as keyof typeof originMap]
+  if (mappedOrigin) setVisitorOrigin(mappedOrigin)
+
   lastRegOrderId.value = registerYouthTournament({
     tournamentName: regForm.tournamentName,
     playerName: `${regForm.playerName.trim()}（${regForm.originCity}）`,
@@ -230,7 +240,7 @@ onUnmounted(destroyMap)
         <div>
           <div class="flex-row" style="gap: 8px; margin-bottom: 4px">
             <span class="tag" style="background: var(--lime); color: #0b251d">
-              {{ step === 'form' ? '🏆 青少年巡回赛 · 一键报名' : '✅ 报名成功 · 赛场周边空房酒店地图推荐' }}
+              {{ step === 'form' ? '🏆 京山网球赛事 · 一键报名' : '✅ 报名成功 · 赛场周边空房酒店地图推荐' }}
             </span>
             <span v-if="step === 'success'" style="font-size: 13px; color: rgba(255,255,255,0.85)">报名号：{{ lastRegOrderId }}</span>
           </div>
@@ -259,10 +269,10 @@ onUnmounted(destroyMap)
         <div class="grid-2" style="gap: 12px">
           <div>
             <label class="f-label">参赛选手姓名 *</label>
-            <input v-model="regForm.playerName" class="f-input" placeholder="如：张小宇" />
+            <input v-model="regForm.playerName" class="f-input" placeholder="如：张先生" />
           </div>
           <div>
-            <label class="f-label">报名来源地（用于智能行程推荐）</label>
+            <label class="f-label">报名来源地（自动同步行程推荐）</label>
             <select v-model="regForm.originCity" class="f-input">
               <option value="武汉市">武汉市（省内游客）</option>
               <option value="北京市">北京市（省外北上客源）</option>
@@ -273,10 +283,10 @@ onUnmounted(destroyMap)
           <div>
             <label class="f-label">参赛组别</label>
             <select v-model="regForm.group" class="f-input">
+              <option>公开组单打积分赛（CUTR 3.5）</option>
+              <option>公开组双打积分赛（CUTR 3.5+）</option>
               <option>U14 青少年单打积分组</option>
               <option>U16 青少年单打积分组</option>
-              <option>U12 青少年红土/硬地组</option>
-              <option>U14 青少年双打组合</option>
             </select>
           </div>
           <div>
