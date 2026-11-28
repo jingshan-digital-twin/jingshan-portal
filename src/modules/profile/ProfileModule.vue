@@ -61,7 +61,7 @@ watch(
             <div>
               <div style="font-size: 20px; font-weight: 900">
                 林先生
-                <span style="font-size: 13px; background: #f5ca69; color: #2f1c00; padding: 3px 9px; border-radius: 0; margin-left: 8px">
+                <span style="font-size: 13px; background: #f5ca69; color: #2f1c00; padding: 3px 10px; border-radius: 999px; margin-left: 8px">
                   👑 {{ memberTier.code }} {{ memberTier.name }}
                 </span>
               </div>

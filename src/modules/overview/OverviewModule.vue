@@ -265,14 +265,14 @@ function getLowestRoom(hotel: (typeof HOTEL_PROFILES)[number]) {
               <div class="flex-row">
                 <button
                   class="btn-orange"
-                  style="border-radius: 0"
+                  style="border-radius: 8px"
                   @click.stop="openActionModal({ type: 'video', title: '《中国网球之城 · 生态京山》官方城市宣传片', duration: '02:15' })"
                 >
                   ▶ 宣传片
                 </button>
                 <button
                   class="btn-ghost"
-                  style="border-radius: 0"
+                  style="border-radius: 8px"
                   @click.stop="openActionModal({ type: 'audio', spotName: '京山网球城市全景导览', duration: '全城2日游推荐', photo: '/images/hero.jpg', script: '欢迎来到中国网球之城——湖北京山。全市拥有356片标准网球场，每万人拥有5.67片，您可以以京山国际网球中心为起点，串联天沐温泉、绿林山、空山洞、文峰夜市与桥米美食，开启挥拍山水间的惬意旅程。' })"
                 >
                   🗺️ 语音导览

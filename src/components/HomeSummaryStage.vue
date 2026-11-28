@@ -312,14 +312,14 @@ function openEntDetail(ent: (typeof ENTERTAINMENT_ITEMS)[number]) {
                   <div class="flex-row">
                     <button
                       class="btn-orange"
-                      style="border-radius: 0; padding: 7px 14px"
+                      style="padding: 7px 15px"
                       @click.stop="openActionModal({ type: 'video', title: '《中国网球之城 · 生态京山》官方城市宣传片', duration: '02:15' })"
                     >
                       ▶ 宣传片
                     </button>
                     <button
                       class="btn-ghost"
-                      style="border-radius: 0; padding: 7px 14px"
+                      style="padding: 7px 15px; background: rgba(255, 255, 255, 0.94); border-color: rgba(255, 255, 255, 0.9)"
                       @click.stop="openActionModal({ type: 'audio', spotName: '京山网球城市全景导览', duration: '全城2日游推荐', photo: '/images/hero.jpg', script: '欢迎来到中国网球之城——湖北京山。全市拥有356片标准网球场，每万人拥有5.67片，您可以以京山国际网球中心为起点，串联天沐温泉、绿林山、空山洞、文峰夜市与桥米美食，开启挥拍山水间的惬意旅程。' })"
                     >
                       🗺️ 语音导览
@@ -346,11 +346,11 @@ function openEntDetail(ent: (typeof ENTERTAINMENT_ITEMS)[number]) {
                 <strong style="font-size: 16px">🏆 近期焦点赛事</strong>
                 <button class="home-more-link" @click="switchModule(2)">实时比分 →</button>
               </div>
-              <div class="flex-between" style="background: #f5faf8; padding: 9px 12px; border-radius: 0">
+              <div class="flex-between" style="background: #f5faf8; padding: 9px 12px; border-radius: 0; border: 1px solid #e5efe9">
                 <div style="font-size: 14px; font-weight: 800">2026中青赛总决赛 <span class="tag red">进行中</span></div>
                 <button class="btn-primary" style="padding: 5px 12px; font-size: 13px" @click="openModuleInNewWindow(2)">赛况 ↗</button>
               </div>
-              <div class="flex-between" style="background: #fff8f4; padding: 9px 12px; border-radius: 0">
+              <div class="flex-between" style="background: #fff8f4; padding: 9px 12px; border-radius: 0; border: 1px solid #fae3d4">
                 <div style="font-size: 14px; font-weight: 800">京山周末分级赛 <span class="tag orange">余12位</span></div>
                 <button class="btn-orange" style="padding: 5px 12px; font-size: 13px" @click="openModuleInNewWindow(2)">报名 ↗</button>
               </div>
