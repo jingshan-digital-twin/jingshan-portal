@@ -4,7 +4,7 @@ import AbilityRadarChart from '../../components/AbilityRadarChart.vue'
 import PaginationBar from '../../components/PaginationBar.vue'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { state, memberTier, switchModule, cancelOrder, redeemPoints, openActionModal } =
+const { state, currentAccount, memberTier, switchModule, cancelOrder, redeemPoints, openActionModal } =
   usePortalStore()
 
 // ===== 会员等级体系 =====
@@ -185,10 +185,11 @@ function pointCatClass(cat: string) {
     <div class="card pf-member-hero">
       <div class="pf-hero-left">
         <div class="pf-user-row">
-          <div class="pf-avatar">张</div>
+          <div class="pf-avatar">{{ currentAccount.avatar }}</div>
           <div>
             <div class="pf-user-name">
-              <strong>张先生</strong>
+              <strong>{{ currentAccount.name }}</strong>
+              <span class="pf-origin-pill">{{ currentAccount.city }}</span>
               <span class="pf-tier-pill">{{ memberTier.code }} {{ memberTier.name }}</span>
             </div>
             <div class="pf-tier-progress-line">
@@ -542,6 +543,14 @@ function pointCatClass(cat: string) {
 .pf-user-name strong {
   font-size: 20px;
   font-weight: 900;
+}
+.pf-origin-pill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 .pf-tier-pill {
   font-size: 12.5px;
