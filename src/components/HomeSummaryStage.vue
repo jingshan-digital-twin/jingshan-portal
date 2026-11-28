@@ -25,7 +25,7 @@ const {
 const currentMeta = computed(() => getModuleMeta(state.activeModule))
 
 const kpiPillsMap = computed<Record<ModuleId, string[]>>(() => ({
-  1: ['356片标准球场', '79家联盟商家', `来源地：${state.origin}`],
+  1: [],
   2: ['全市356片球场', '今日84片可约', `实时${state.liveMatches.length}场焦点赛`],
   3: ['3大旅游圈层', '配智能语音导览', '持证社保障'],
   4: ['79家联盟餐饮', '打球票根85折', '夜市夜宵'],
