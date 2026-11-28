@@ -86,15 +86,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 
       <div class="card-pad" style="display: flex; flex-direction: column; gap: 14px">
         <div class="grid-3" style="gap: 12px">
-          <div style="background: #f3faf6; border: 1px solid #cce6da; border-radius: 0; padding: 13px">
+          <div style="background: #f3faf6; border: 1px solid #cce6da; border-radius: 0; padding: 14px">
             <strong style="font-size: 15px; color: var(--primary)">📊 实时赛况比分</strong>
             <div style="font-size: 13.5px; color: var(--ink-2); margin-top: 5px">同步网球记实时比分与赛期交通指引</div>
           </div>
-          <div style="background: #fff6f2; border: 1px solid #ffd5c2; border-radius: 0; padding: 13px">
+          <div style="background: #fff6f2; border: 1px solid #ffd5c2; border-radius: 0; padding: 14px">
             <strong style="font-size: 15px; color: var(--accent)">🏠 购房直减 5 万元</strong>
             <div style="font-size: 13.5px; color: var(--ink-2); margin-top: 5px">市房管局联合品质楼盘凭凭证直减</div>
           </div>
-          <div style="background: #eef5ff; border: 1px solid #c9defc; border-radius: 0; padding: 13px">
+          <div style="background: #eef5ff; border: 1px solid #c9defc; border-radius: 0; padding: 14px">
             <strong style="font-size: 15px; color: var(--blue)">🎫 联盟商家 85 折</strong>
             <div style="font-size: 13.5px; color: var(--ink-2); margin-top: 5px">凭电子票根享酒店、餐饮与温泉特惠</div>
           </div>

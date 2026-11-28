@@ -105,7 +105,7 @@ function redeemStubAtMerchant() {
           "
         >
           <strong style="font-size: 18px; margin-bottom: 10px">{{ state.actionModal.title }}</strong>
-          <div style="height: 5px; background: rgba(255, 255, 255, 0.25); border-radius: 0; overflow: hidden; margin-bottom: 10px">
+          <div style="height: 5px; background: rgba(255, 255, 255, 0.25); border-radius: 999px; overflow: hidden; margin-bottom: 10px">
             <div :style="{ width: progress + '%', height: '100%', background: 'var(--lime)', transition: 'width 0.4s linear' }" />
           </div>
           <div class="flex-between">
@@ -288,7 +288,7 @@ function redeemStubAtMerchant() {
         <p style="font-size: 14.5px; color: var(--ink-2); line-height: 1.8; background: #f5faf8; padding: 13px 15px; border-radius: 0; margin-bottom: 14px">
           “{{ state.actionModal.script }}”
         </p>
-        <div style="height: 7px; background: #e3ece8; border-radius: 0; overflow: hidden; margin-bottom: 14px">
+        <div style="height: 7px; background: #e3ece8; border-radius: 999px; overflow: hidden; margin-bottom: 14px">
           <div :style="{ width: progress + '%', height: '100%', background: 'var(--primary)', transition: 'width 0.4s linear' }" />
         </div>
         <div class="flex-between">

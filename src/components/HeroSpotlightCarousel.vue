@@ -114,12 +114,11 @@ function submitQuickPackage() {
         </h1>
 
         <div class="hero-cta-row">
-          <button class="btn-orange" style="padding: 11px 22px; font-size: 15px; border-radius: 0" @click="triggerSlideAction(currentSlide.primaryAction)">
+          <button class="btn-orange hero-cta-primary" @click="triggerSlideAction(currentSlide.primaryAction)">
             {{ currentSlide.primaryAction.label }}
           </button>
           <button
-            class="btn-ghost"
-            style="padding: 10px 20px; font-size: 15px; border-radius: 0; background: rgba(255, 255, 255, 0.16); color: #fff; border-color: rgba(255, 255, 255, 0.4)"
+            class="btn-ghost hero-cta-secondary"
             @click="triggerSlideAction(currentSlide.secondaryAction)"
           >
             {{ currentSlide.secondaryAction.label }}
@@ -258,13 +257,13 @@ function submitQuickPackage() {
 
         <div class="hw-quick-row">
           <button class="hw-mini" @click="switchModule(2)">
-            <span style="width: 36px; height: 36px; border-radius: 0; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
+            <span style="width: 36px; height: 36px; border-radius: 9px; background: #fff0ea; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
               🏆
             </span>
             <div style="font-size: 14px; font-weight: 800; color: var(--ink)">青少年巡回赛</div>
           </button>
           <button class="hw-mini" @click="switchModule(5)">
-            <span style="width: 36px; height: 36px; border-radius: 0; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
+            <span style="width: 36px; height: 36px; border-radius: 9px; background: #e9f7f1; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0">
               🏠
             </span>
             <div style="font-size: 14px; font-weight: 800; color: var(--ink)">购房补贴 & 公寓</div>
