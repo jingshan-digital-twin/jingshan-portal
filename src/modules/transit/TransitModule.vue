@@ -101,7 +101,7 @@ const parkDate = ref(BOOKING_DATES[0]!.shortDate)
 const parkSlot = ref('16:00-18:00')
 const parkTypeFilter = ref<'全部' | '停车场' | '充电桩'>('全部')
 const parkSlots = ['08:00-10:00', '10:00-12:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00']
-const showTrafficMap = ref(false)
+const showTrafficMap = ref(true)
 const selectedLotId = ref<string>()
 const trafficMap = ref<InstanceType<typeof ServiceCircleMap>>()
 
@@ -120,9 +120,7 @@ const parkingMapItems = computed(() => parkingLocations.value.map((lot) => ({
   location: lot.address,
   highlight: `${lot.isCharger ? '闲置充电桩' : '剩余车位'} ${lot.remain}/${lot.total}`,
 })))
-const shownLots = computed(() => showTrafficMap.value && selectedLotId.value
-  ? visibleLots.value.filter((lot) => lot.id === selectedLotId.value)
-  : visibleLots.value)
+const shownLots = computed(() => visibleLots.value)
 
 watch(visibleLots, (lots) => {
   if (!lots.some((lot) => lot.id === selectedLotId.value)) selectedLotId.value = undefined
@@ -400,79 +398,85 @@ function bookDriver(drv: RecommendedDriver) {
       </button>
     </div>
 
-    <!-- 一、赛事交通管控地图（封闭/限行 + 停车充电 + 公交线 + 场馆配套）+ 右侧停车充电查询 -->
-    <div class="grid-split" style="align-items: stretch">
-      <!-- 左侧：赛前/赛中保障一张图 + 封闭限行路段清单 -->
-      <div class="card" style="display: flex; flex-direction: column">
-        <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 13px 18px; gap: 10px; flex-wrap: wrap">
+    <!-- 一、全宽赛事交通管控一张图（上方全景大地图，避免标记拥挤重叠） -->
+    <div class="card mb-16" style="display: flex; flex-direction: column">
+      <div class="card-pad flex-between" style="border-bottom: 1px solid var(--line); padding: 13px 18px; gap: 12px; flex-wrap: wrap">
+        <div class="flex-row" style="gap: 12px">
           <strong style="font-size: 17.5px">{{ matchStage === 'live' ? '🗺️ 赛期封闭限行与周边保障一张图' : '🗺️ 赛前周边停车与充电' }}</strong>
-          <div class="flex-row">
-            <MapViewToggle v-model="showTrafficMap" />
-          </div>
+          <span v-if="matchStage === 'live'" class="tag red">红线 · 临时封闭</span>
+          <span v-if="matchStage === 'live'" class="tag orange">橙虚线 · 限行禁停</span>
+          <span class="tag green">🅿️ 停车场</span>
+          <span class="tag blue">⚡ 充电桩</span>
         </div>
+        <div class="flex-row">
+          <MapViewToggle v-model="showTrafficMap" />
+        </div>
+      </div>
 
-        <div v-if="showTrafficMap" class="card-pad">
-          <MapResultsLayout
-            :items="parkingMapItems"
-            :selected-id="selectedLotId"
-            list-label="地图停车充电列表"
-            empty-text="暂无停车充电点位"
-            @select="selectLot"
+      <div v-if="showTrafficMap" class="card-pad" style="padding: 16px">
+        <MapResultsLayout
+          :items="parkingMapItems"
+          :selected-id="selectedLotId"
+          list-label="地图停车充电列表"
+          empty-text="暂无停车充电点位"
+          @select="selectLot"
+        >
+          <ServiceCircleMap
+            ref="trafficMap"
+            mode="traffic"
+            :traffic-preview-center="trafficPreviewCenter"
+            :parking-locations="parkingLocations"
+            :selected-location-id="selectedLotId"
+            @select-location="selectedLotId = $event"
+          />
+        </MapResultsLayout>
+      </div>
+    </div>
+
+    <!-- 二、下方均衡双栏：左侧封闭限行路段明细 + 右侧推荐停车与充电锁位 -->
+    <div class="grid-2" style="align-items: start">
+      <!-- 左侧：封闭与限行路段清晰清单（可直接跳转绕行导航） -->
+      <div class="card card-pad" style="display: flex; flex-direction: column; gap: 12px">
+        <div class="flex-between">
+          <strong style="font-size: 17px">⛔ 当前封闭与限行路段明细</strong>
+          <span class="tag red">共 {{ currentClosures.length }} 条管控路段</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div
+            v-for="rc in currentClosures"
+            :key="rc.id"
+            class="flex-between"
+            style="background: #fcfdfd; border: 1px solid #ead8d8; padding: 12px 14px; gap: 12px"
           >
-            <ServiceCircleMap
-              ref="trafficMap"
-              mode="traffic"
-              :traffic-preview-center="trafficPreviewCenter"
-              :parking-locations="parkingLocations"
-              :selected-location-id="selectedLotId"
-              @select-location="selectedLotId = $event"
-            />
-          </MapResultsLayout>
-        </div>
-
-        <!-- 封闭与限行路段清晰清单（可直接跳转绕行导航） -->
-        <div class="card-pad" style="border-top: 1px solid var(--line); background: #fcfdfd">
-          <div class="flex-between" style="margin-bottom: 10px">
-            <strong style="font-size: 16px">⛔ 当前封闭与限行路段明细（点击可绕行导航）</strong>
-            <span class="tag red">共 {{ currentClosures.length }} 条管控路段</span>
-          </div>
-          <div style="display: flex; flex-direction: column; gap: 8px">
-            <div
-              v-for="rc in currentClosures"
-              :key="rc.id"
-              class="flex-between"
-              style="background: #ffffff; border: 1px solid #ead8d8; padding: 10px 14px; gap: 12px"
-            >
-              <div style="min-width: 0">
-                <div class="flex-row" style="gap: 8px; margin-bottom: 3px">
-                  <span class="tag" :class="rc.status === '临时封闭' ? 'red' : rc.status === '限行禁停' ? 'orange' : 'gold'">
-                    {{ rc.status }}
-                  </span>
-                  <strong style="font-size: 15px">{{ rc.road }}</strong>
-                  <span style="font-size: 13px; color: var(--ink-3)">{{ rc.timeWindow }}</span>
-                </div>
-                <div style="font-size: 13.5px; color: var(--ink-2)">
-                  绕行建议：{{ rc.detourTip }}
-                </div>
+            <div style="min-width: 0">
+              <div class="flex-row" style="gap: 8px; margin-bottom: 4px">
+                <span class="tag" :class="rc.status === '临时封闭' ? 'red' : rc.status === '限行禁停' ? 'orange' : 'gold'">
+                  {{ rc.status }}
+                </span>
+                <strong style="font-size: 15px">{{ rc.road }}</strong>
+                <span style="font-size: 12.5px; color: var(--ink-3)">{{ rc.timeWindow }}</span>
               </div>
-              <button
-                class="btn-ghost"
-                style="padding: 6px 12px; font-size: 13px; flex-shrink: 0"
-                @click="
-                  openNavigation({
-                    placeName: rc.detourDest,
-                    address: rc.detourAddress,
-                    lng: rc.lng,
-                    lat: rc.lat,
-                    distance: '推荐绕行点',
-                    driveMin: '避开封闭段',
-                    tip: rc.detourTip,
-                  })
-                "
-              >
-                🧭 绕行导航
-              </button>
+              <div style="font-size: 13.5px; color: var(--ink-2); line-height: 1.5">
+                绕行建议：{{ rc.detourTip }}
+              </div>
             </div>
+            <button
+              class="btn-ghost"
+              style="padding: 6px 12px; font-size: 13px; flex-shrink: 0"
+              @click="
+                openNavigation({
+                  placeName: rc.detourDest,
+                  address: rc.detourAddress,
+                  lng: rc.lng,
+                  lat: rc.lat,
+                  distance: '推荐绕行点',
+                  driveMin: '避开封闭段',
+                  tip: rc.detourTip,
+                })
+              "
+            >
+              🧭 绕行导航
+            </button>
           </div>
         </div>
       </div>
@@ -480,7 +484,7 @@ function bookDriver(drv: RecommendedDriver) {
       <!-- 右侧：推荐停车场位置与充电桩剩余查询 + 预约锁位 -->
       <div class="card card-pad filter-workbench" style="display: flex; flex-direction: column; gap: 14px">
         <div class="flex-between">
-          <strong style="font-size: 17.5px">🅿️ 推荐停车与充电位置查询</strong>
+          <strong style="font-size: 17px">🅿️ 推荐停车与充电位置查询</strong>
           <span class="dd-count-pill">实时余位</span>
         </div>
 
@@ -513,7 +517,11 @@ function bookDriver(drv: RecommendedDriver) {
           <div
             v-for="lot in shownLots"
             :key="lot.id"
-            style="background: #f5faf8; border: 1px solid #d5e8df; padding: 14px 16px"
+            :style="
+              selectedLotId === lot.id
+                ? 'background: #edf9f3; border: 1px solid var(--primary); border-left: 4px solid var(--primary); padding: 14px 16px'
+                : 'background: #f5faf8; border: 1px solid #d5e8df; padding: 14px 16px'
+            "
           >
             <div class="flex-between" style="margin-bottom: 5px">
               <strong style="font-size: 16px">{{ lot.isCharger ? '⚡' : '🅿️' }} {{ lot.name }}</strong>

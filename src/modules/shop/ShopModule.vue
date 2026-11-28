@@ -4,7 +4,7 @@ import PaginationBar from '../../components/PaginationBar.vue'
 import { PRODUCT_CATALOG } from '../../mock/details'
 import { usePortalStore } from '../../store/usePortalStore'
 
-const { openProductDetail, openPhoto, openActionModal, openNavigation } = usePortalStore()
+const { openProductDetail, openPhoto, openNavigation } = usePortalStore()
 
 // 主分区切换：特色商品购买 / 纪念品店铺
 const shopView = ref<'goods' | 'stores'>('goods')
@@ -508,17 +508,11 @@ watch(visibleStores, () => {
                     🧭 导航到店
                   </button>
                   <button
+                    type="button"
                     class="btn-primary"
-                    @click="
-                      openActionModal({
-                        type: 'inquiry',
-                        title: `${store.name} · 到店体验 / 快递代寄`,
-                        subtitle: `${store.address} · ${store.benefit}`,
-                        submitLabel: '提交体验 / 代寄预约',
-                      })
-                    "
+                    @click="openStoreDetail(store)"
                   >
-                    📦 体验 / 代寄
+                    详情
                   </button>
                 </div>
               </div>

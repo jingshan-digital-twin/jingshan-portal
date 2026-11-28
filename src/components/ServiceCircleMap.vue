@@ -169,15 +169,18 @@ function openVenueLocation(id: string) {
 }
 
 function renderTraffic(layers: L.LayerGroup) {
+  const fitPoints: L.LatLngTuple[] = []
+
   if (!props.trafficPreviewCenter) {
+    fitPoints.push(JINGSHAN_MAP_CENTER)
     addPortalMapMarker(layers, JINGSHAN_MAP_CENTER, {
       title: '京山国际网球中心',
       icon: MAP_ICONS.court,
-      label: '京山国际网球中心',
+      label: '国际网球中心',
       photo: internationalCourtPhoto,
       description: '9片标准硬地/红土与中心赛场 · 07:00–22:00',
       actions: mapNavigationActions('京山国际网球中心', '赛事场馆', ...JINGSHAN_MAP_CENTER),
-    })
+    }, 500)
 
     const roads: { title: string; status: string; description: string; line: L.LatLngTuple[]; pin: L.LatLngTuple; style: L.PathOptions }[] = [
       {
@@ -185,16 +188,16 @@ function renderTraffic(layers: L.LayerGroup) {
         status: '临时封闭',
         description: '中青赛期间 07:30–19:00 临时封闭，社会车辆请绕行京山大道。',
         line: [[31.0234, 113.1142], [31.0228, 113.1195], [31.0222, 113.1258]],
-        pin: [31.0242, 113.1202],
-        style: { color: '#DF2E38', weight: 7, opacity: 0.92 },
+        pin: [31.0235, 113.1138],
+        style: { color: '#DF2E38', weight: 6, opacity: 0.9 },
       },
       {
         title: '京山大道东段',
         status: '限行禁停',
         description: '赛事缓冲限行禁停，推荐驶入 P1/P2 停车场。',
         line: [[31.0285, 113.1186], [31.0218, 113.1189], [31.0155, 113.1191]],
-        pin: [31.0268, 113.1172],
-        style: { color: '#F07C19', weight: 6, dashArray: '10 7', opacity: 0.9 },
+        pin: [31.0278, 113.1187],
+        style: { color: '#F07C19', weight: 5, dashArray: '10 7', opacity: 0.88 },
       },
     ]
     for (const road of roads) {
@@ -205,22 +208,35 @@ function renderTraffic(layers: L.LayerGroup) {
         highlight: road.status,
       }
       bindPortalMapPopup(L.polyline(road.line, road.style).addTo(layers), content)
-      addPortalMapMarker(layers, road.pin, { ...content, label: road.status })
+      addPortalMapMarker(layers, road.pin, { ...content, label: road.status }, 350)
+      fitPoints.push(road.pin)
     }
+  }
+
+  // 为高密度核心区点位做轻量视觉防重叠偏移，点击导航仍使用原始真实坐标
+  const displayPosMap: Record<string, L.LatLngTuple> = {
+    p1: [31.0252, 113.1228],
+    ev1: [31.0204, 113.1258],
   }
 
   for (const location of props.parkingLocations ?? []) {
     const { id, name, address, lat, lng, remain, total, isCharger } = location
     const availability = isCharger ? `闲${remain}/${total} 桩` : `剩${remain}/${total} 位`
-    const marker = addPortalMapMarker(layers, [lat, lng], {
+    const pinPos: L.LatLngTuple = !props.trafficPreviewCenter && displayPosMap[id] ? displayPosMap[id]! : [lat, lng]
+    fitPoints.push(pinPos)
+    const marker = addPortalMapMarker(layers, pinPos, {
       title: name,
       icon: isCharger ? MAP_ICONS.charger : MAP_ICONS.parking,
       label: availability,
       description: address,
       highlight: availability,
       actions: mapNavigationActions(name, address, lat, lng),
-    })
+    }, 400)
     registerLocation(id, marker)
+  }
+
+  if (map && fitPoints.length > 1) {
+    map.fitBounds(L.latLngBounds(fitPoints), { padding: [54, 68], maxZoom: 15, animate: false })
   }
   openSelectedLocation()
 }
