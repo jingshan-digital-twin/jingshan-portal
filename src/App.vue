@@ -10,6 +10,7 @@ import ModuleKingKongBar from './components/ModuleKingKongBar.vue'
 import OrderSuccessModal from './components/OrderSuccessModal.vue'
 import PortalHeader from './components/PortalHeader.vue'
 import ReservationDialog from './components/ReservationDialog.vue'
+import ToastNoticeModal from './components/ToastNoticeModal.vue'
 import TournamentDetailPage from './components/TournamentDetailPage.vue'
 import TourneyRegistrationModal from './components/TourneyRegistrationModal.vue'
 import AmenitiesModule from './modules/amenities/AmenitiesModule.vue'
@@ -106,10 +107,6 @@ onMounted(() => {
     <TourneyRegistrationModal />
     <OrderSuccessModal />
     <ReservationDialog />
-
-    <div v-if="state.toastMessage" class="toast-banner">
-      <span style="color: var(--lime)">✔</span>
-      <span>{{ state.toastMessage }}</span>
-    </div>
+    <ToastNoticeModal />
   </div>
 </template>

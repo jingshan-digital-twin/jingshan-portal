@@ -206,6 +206,41 @@ function hydrateMerchantRatings(savedList?: MerchantRatingItem[]): MerchantRatin
   })
 }
 
+export type ToastTone = 'success' | 'warning' | 'info'
+
+export interface ToastPayload {
+  id: number
+  title: string
+  message: string
+  tone: ToastTone
+}
+
+function inferToastMeta(msg: string): { title: string; tone: ToastTone } {
+  if (/请填写|请输入|请先/.test(msg)) return { title: '请完善信息', tone: 'warning' }
+  if (/积分不足/.test(msg)) return { title: '积分不足', tone: 'warning' }
+  if (/人数已满|名额已满|已满|已被预约|不可预订|最多选择/.test(msg)) return { title: '名额提示', tone: 'warning' }
+  if (/超出|整数/.test(msg)) return { title: '数量提示', tone: 'warning' }
+  if (/已下线|无需重复|您已预约|您已下单|您已领取/.test(msg)) return { title: '温馨提示', tone: 'warning' }
+  if (/已取消/.test(msg)) return { title: '已取消', tone: 'info' }
+  if (/已切换账户|已切换游客来源地/.test(msg)) return { title: '账户已切换', tone: 'info' }
+  if (/已为您进入|已为您筛选|正在为您打开|管用分离|当前状态/.test(msg)) return { title: '操作提示', tone: 'info' }
+  if (/评价|点评|打分|热评/.test(msg)) return { title: '评价成功', tone: 'success' }
+  if (/投诉已受理/.test(msg)) return { title: '投诉已受理', tone: 'success' }
+  if (/已办结回传|已限时办结/.test(msg)) return { title: '投诉已办结', tone: 'success' }
+  if (/进度回传/.test(msg)) return { title: '处置进度回传', tone: 'success' }
+  if (/已反馈工单/.test(msg)) return { title: '反馈已提交', tone: 'success' }
+  if (/兑换成功/.test(msg)) return { title: '兑换成功', tone: 'success' }
+  if (/报名成功/.test(msg)) return { title: '报名成功', tone: 'success' }
+  if (/约球发布成功/.test(msg)) return { title: '发布成功', tone: 'success' }
+  if (/核销成功/.test(msg)) return { title: '核销成功', tone: 'success' }
+  if (/晋升复测/.test(msg)) return { title: '评级已更新', tone: 'success' }
+  if (/领取/.test(msg)) return { title: '领取成功', tone: 'success' }
+  if (/已收藏/.test(msg)) return { title: '收藏成功', tone: 'success' }
+  if (/已复制/.test(msg)) return { title: '复制成功', tone: 'success' }
+  if (/同步最新局分/.test(msg)) return { title: '比分已同步', tone: 'success' }
+  return { title: '操作成功', tone: 'success' }
+}
+
 export interface PortalAccount {
   id: string
   name: string
@@ -360,6 +395,7 @@ const state = reactive({
   bookingDraft: null as BookingDraft | null,
   actionModal: null as ActionModalPayload | null,
   orderSuccessModal: null as OrderSuccessModalPayload | null,
+  toast: null as ToastPayload | null,
   toastMessage: '',
 })
 
@@ -595,12 +631,41 @@ export function usePortalStore() {
     })
   }
 
-  function showToast(msg: string) {
-    state.toastMessage = msg
+  function dismissToast() {
+    if (toastTimer) window.clearTimeout(toastTimer)
+    toastTimer = undefined
+    state.toast = null
+    state.toastMessage = ''
+  }
+
+  function pauseToast() {
+    if (toastTimer) {
+      window.clearTimeout(toastTimer)
+      toastTimer = undefined
+    }
+  }
+
+  function resumeToast() {
+    if (!state.toast) return
     if (toastTimer) window.clearTimeout(toastTimer)
     toastTimer = window.setTimeout(() => {
-      state.toastMessage = ''
-    }, 3600)
+      dismissToast()
+    }, 1800)
+  }
+
+  function showToast(msg: string, opts?: { title?: string; tone?: ToastTone }) {
+    const inferred = inferToastMeta(msg)
+    state.toastMessage = msg
+    state.toast = {
+      id: Date.now() + Math.random(),
+      title: opts?.title ?? inferred.title,
+      message: msg,
+      tone: opts?.tone ?? inferred.tone,
+    }
+    if (toastTimer) window.clearTimeout(toastTimer)
+    toastTimer = window.setTimeout(() => {
+      dismissToast()
+    }, 2800)
   }
 
   function openModuleInNewWindow(
@@ -1528,6 +1593,9 @@ export function usePortalStore() {
     memberTier,
     activeOrdersCount,
     showToast,
+    dismissToast,
+    pauseToast,
+    resumeToast,
     switchModule,
     navigateToModulePage,
     returnFromModulePage,

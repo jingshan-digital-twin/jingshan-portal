@@ -80,7 +80,17 @@ function submitQuickEvent() {
     @mouseenter="paused = true"
     @mouseleave="paused = false"
   >
-    <img :key="currentSlide.id" class="hero-carousel-bg" :src="currentSlide.image" :alt="currentSlide.titleHighlight" />
+    <!-- 多图背景叠化切换 -->
+    <div class="hero-bg-stack" aria-hidden="true">
+      <img
+        v-for="(s, idx) in HERO_SLIDES"
+        :key="s.id"
+        class="hero-carousel-bg"
+        :class="{ active: idx === slideIndex }"
+        :src="s.image"
+        :alt="s.titleHighlight"
+      />
+    </div>
     <div class="hero-carousel-scrim" />
 
     <div v-if="$slots['top-nav']" class="hero-top-nav-slot">
@@ -95,37 +105,115 @@ function submitQuickEvent() {
         </h1>
 
         <div class="hero-cta-row">
-          <button class="btn-orange hero-cta-primary" @click="triggerSlideAction(currentSlide.primaryAction)">
-            {{ currentSlide.primaryAction.label }}
+          <button type="button" class="hero-cta-primary" @click="triggerSlideAction(currentSlide.primaryAction)">
+            <svg
+              v-if="'kind' in currentSlide.primaryAction && currentSlide.primaryAction.kind === 'video'"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <polygon points="6 4 20 12 6 20 6 4" />
+            </svg>
+            <svg
+              v-else-if="'kind' in currentSlide.primaryAction && currentSlide.primaryAction.kind === 'subsidy'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5z" />
+              <path d="M9 21v-6h6v6" />
+            </svg>
+            <svg
+              v-else-if="'kind' in currentSlide.primaryAction && currentSlide.primaryAction.kind === 'stub'"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4V7z" />
+              <path d="M13 7v10" />
+            </svg>
+            <svg
+              v-else
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 3v18h18" />
+              <path d="M7 15l4-4 3 3 5-6" />
+            </svg>
+            <span>{{ currentSlide.primaryAction.label }}</span>
           </button>
+
           <button
-            class="btn-ghost hero-cta-secondary"
+            type="button"
+            class="hero-cta-secondary"
             @click="triggerSlideAction(currentSlide.secondaryAction)"
           >
-            {{ currentSlide.secondaryAction.label }}
+            <span>{{ currentSlide.secondaryAction.label }}</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14" />
+              <path d="M13 6l6 6-6 6" />
+            </svg>
           </button>
         </div>
 
-        <div class="hero-stats-row">
-          <div v-for="st in currentSlide.stats" :key="st.label" class="hero-stat-pill">
+        <!-- 统一三列等宽数据条 -->
+        <div class="hero-stats-bar">
+          <div v-for="st in currentSlide.stats" :key="st.label" class="hero-stat-cell">
             <div class="hero-stat-num">{{ st.num }}</div>
             <div class="hero-stat-lbl">{{ st.label }}</div>
           </div>
         </div>
 
-        <!-- Carousel Indicators -->
+        <!-- 等宽工整轮播切换条 -->
         <div class="carousel-controls">
-          <button class="carousel-arrow" title="上一热点" @click="prevSlide">‹</button>
-          <button
-            v-for="(s, idx) in HERO_SLIDES"
-            :key="s.id"
-            class="carousel-pill"
-            :class="{ active: idx === slideIndex }"
-            @click="slideIndex = idx"
-          >
-            {{ ['生态网球之城', '中青赛比分', '购房补贴', '网旅与温泉'][idx] }}
-          </button>
-          <button class="carousel-arrow" title="下一热点" @click="nextSlide">›</button>
+          <div class="carousel-rail" role="tablist" aria-label="首页轮播主题">
+            <button
+              v-for="(s, idx) in HERO_SLIDES"
+              :key="s.id"
+              type="button"
+              role="tab"
+              class="carousel-pill"
+              :class="{ active: idx === slideIndex }"
+              :aria-selected="idx === slideIndex"
+              @click="slideIndex = idx"
+            >
+              <span class="carousel-num">0{{ idx + 1 }}</span>
+              <span>{{ ['生态网球之城', '中青赛比分', '购房补贴', '网旅与温泉'][idx] }}</span>
+            </button>
+          </div>
+          <div class="carousel-nav-group">
+            <button type="button" class="carousel-arrow" title="上一热点" aria-label="上一热点" @click="prevSlide">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <button type="button" class="carousel-arrow" title="下一热点" aria-label="下一热点" @click="nextSlide">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
