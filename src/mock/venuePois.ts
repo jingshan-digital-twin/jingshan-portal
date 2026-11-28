@@ -1,9 +1,7 @@
 import { MAP_ICONS } from '../components/portalMap'
-import { INITIAL_COURTS } from './data'
 
 export const VENUE_POI_FILTERS = [
   { value: '全部', label: '全部周边' },
-  { value: '场馆配套', label: `${MAP_ICONS.serviceDesk} 场馆配套` },
   { value: '酒店', label: `${MAP_ICONS.hotel} 酒店` },
   { value: '美食', label: `${MAP_ICONS.food} 美食` },
   { value: '停车充电', label: `${MAP_ICONS.parking} 停车/充电` },
@@ -21,7 +19,6 @@ export interface MapPoi {
   lng: number
   badgeIcon: string
   hotelId?: string
-  simulated?: true
   priceOrMeta: string
   desc: string
 }
@@ -76,26 +73,6 @@ export const VENUE_POIS: Record<string, MapPoi[]> = {
   ],
 }
 
-const FACILITY_OFFSETS: (Omit<MapPoi, 'lat' | 'lng' | 'simulated'> & { north: number; east: number })[] = [
-  { name: '场馆服务台', label: '服务台', category: '场馆配套', north: 330, east: -330, badgeIcon: MAP_ICONS.serviceDesk, priceOrMeta: '签到与咨询', desc: '场地签到、预约咨询及失物招领。' },
-  { name: '公共卫生间', label: '卫生间', category: '场馆配套', north: 270, east: 360, badgeIcon: MAP_ICONS.restroom, priceOrMeta: '公共设施', desc: '面向到场球友及陪同人员开放的卫生间示意点。' },
-  { name: '球友休息区', label: '休息区', category: '场馆配套', north: -330, east: 330, badgeIcon: MAP_ICONS.restArea, priceOrMeta: '候场座椅', desc: '球友候场与赛间休息区，设有座椅和饮水点。' },
-  { name: '球拍租借与穿线', label: '器材服务', category: '场馆配套', north: -255, east: -370, badgeIcon: MAP_ICONS.equipment, priceOrMeta: '器材服务', desc: '球拍和训练用球租借、球拍穿线服务示意点。' },
-  { name: '场边急救与 AED', label: '急救/AED', category: '便民景点', north: 10, east: -435, badgeIcon: MAP_ICONS.medical, priceOrMeta: '急救设施', desc: '示意球场周边的急救服务与 AED 配置。' },
-]
-
 export function getVenuePois(venueId: string): MapPoi[] {
-  const nearby = VENUE_POIS[venueId] ?? []
-  const venue = INITIAL_COURTS.find((court) => court.id === venueId)
-  if (!venue) return nearby
-
-  const metersPerDegree = 111_320
-  const metersPerLongitudeDegree = metersPerDegree * Math.cos(venue.lat * Math.PI / 180)
-  const facilities = FACILITY_OFFSETS.map(({ north, east, ...facility }): MapPoi => ({
-    ...facility,
-    lat: venue.lat + north / metersPerDegree,
-    lng: venue.lng + east / metersPerLongitudeDegree,
-    simulated: true,
-  }))
-  return [...nearby, ...facilities]
+  return VENUE_POIS[venueId] ?? []
 }

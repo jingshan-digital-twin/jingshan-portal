@@ -74,10 +74,6 @@ const amenityIcons: Record<AmenityMapPoint['key'], string> = {
 }
 const courtLegend = [
   { icon: MAP_ICONS.court, label: '球场' },
-  { icon: MAP_ICONS.serviceDesk, label: '服务台' },
-  { icon: MAP_ICONS.restroom, label: '卫生间' },
-  { icon: MAP_ICONS.restArea, label: '休息区' },
-  { icon: MAP_ICONS.equipment, label: '器材服务' },
   { icon: MAP_ICONS.hotel, label: '酒店' },
   { icon: MAP_ICONS.food, label: '美食' },
   { icon: MAP_ICONS.parking, label: '停车' },
@@ -297,8 +293,8 @@ function renderCourtPois(layers: L.LayerGroup) {
       compact,
       photo: poi.hotelId ? hotelPhotos.get(poi.hotelId) : undefined,
       description: poi.desc,
-      highlight: poi.simulated ? '模拟点位' : poi.priceOrMeta,
-      actions: poi.simulated ? undefined : [
+      highlight: poi.priceOrMeta,
+      actions: [
         { label: '查看详情', run: () => openPoiDetail(poi) },
         ...mapNavigationActions(poi.name, poi.desc, poi.lat, poi.lng),
       ],
